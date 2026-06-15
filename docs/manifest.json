@@ -1,0 +1,12 @@
+{
+  "name": "Baby Sleep Tracker",
+  "short_name": "Baby Sleep",
+  "description": "Praćenje bebinoga sna",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F4FF",
+  "theme_color": "#7B5EA7",
+  "lang": "hr"
+}

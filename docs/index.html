@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Baby Sleep">
+  <meta name="theme-color" content="#7B5EA7">
+  <link rel="manifest" href="manifest.json">
+  <title>Baby Sleep Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --primary: #7B5EA7;
+      --bg: #F8F4FF;
+      --pink: #FF85A2;
+      --card: #fff;
+      --text: #2D2D2D;
+      --muted: #999;
+      --border: #eee;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    .header {
+      background: var(--bg);
+      padding: 14px 20px 12px;
+      padding-top: calc(14px + env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .header h1 { font-size: 20px; font-weight: 700; color: var(--primary); }
+
+    .main { flex: 1; overflow: hidden; position: relative; }
+
+    .tab {
+      display: none;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab.active { display: block; }
+
+    .nav {
+      display: flex;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .nav-btn {
+      flex: 1;
+      border: none;
+      background: none;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .nav-btn.active { color: var(--primary); }
+    .nav-icon { font-size: 22px; }
+    .nav-label { font-size: 11px; font-weight: 500; }
+
+    /* ── Tracker ─────────────────────────────────────────── */
+    .tracker-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 32px 24px;
+      gap: 10px;
+    }
+
+    .status-emoji { font-size: 80px; margin-bottom: 6px; }
+
+    .status-text { font-size: 26px; font-weight: 600; }
+
+    .timer {
+      font-size: 58px;
+      font-weight: 200;
+      color: var(--primary);
+      letter-spacing: -2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toggle-btn {
+      margin-top: 10px;
+      padding: 18px 52px;
+      border-radius: 50px;
+      border: none;
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .toggle-btn:active { opacity: 0.88; }
+    .toggle-btn.start { background: var(--primary); }
+    .toggle-btn.stop  { background: var(--pink); }
+
+    .started-at { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+    /* ── History ─────────────────────────────────────────── */
+    .list { padding: 16px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 32px; }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .card-left { flex: 1; }
+    .card-date { font-size: 12px; color: #aaa; margin-bottom: 4px; }
+    .card-time { font-size: 16px; font-weight: 500; }
+    .card-duration { font-size: 14px; font-weight: 700; color: var(--primary); margin-top: 5px; }
+
+    .delete-btn {
+      border: none;
+      background: none;
+      color: var(--pink);
+      font-size: 20px;
+      font-weight: 600;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 32px;
+      gap: 10px;
+    }
+
+    .empty-emoji { font-size: 56px; }
+    .empty-text { font-size: 16px; font-weight: 500; color: #555; text-align: center; }
+    .empty-hint { font-size: 13px; color: var(--muted); text-align: center; }
+
+    /* ── Statistics ──────────────────────────────────────── */
+    .stats-content { padding: 16px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }
+
+    .summary-row { display: flex; gap: 10px; }
+
+    .summary-card {
+      flex: 1;
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px 8px;
+      text-align: center;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .summary-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .summary-value { font-size: 17px; font-weight: 700; color: var(--primary); }
+
+    .chart-title { font-size: 15px; font-weight: 600; }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 16px 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+
+    .chart { display: flex; align-items: flex-end; justify-content: space-around; height: 210px; }
+
+    .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; }
+
+    .bar-label-top {
+      font-size: 8px;
+      color: var(--primary);
+      height: 22px;
+      display: flex;
+      align-items: flex-end;
+      text-align: center;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+
+    .bar-track { width: 26px; height: 140px; display: flex; align-items: flex-end; }
+
+    .bar { width: 26px; background: var(--primary); border-radius: 5px 5px 3px 3px; }
+
+    .bar-label { font-size: 11px; color: var(--muted); margin-top: 6px; text-transform: capitalize; }
+    .bar-count  { font-size: 10px; color: #ccc; margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header class="header">
+    <h1>🌙 Baby Sleep</h1>
+  </header>
+  <main class="main">
+    <div id="tab-tracker"    class="tab active"></div>
+    <div id="tab-history"    class="tab"></div>
+    <div id="tab-statistics" class="tab"></div>
+  </main>
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="tracker"    onclick="showTab('tracker')">
+      <span class="nav-icon">🌙</span><span class="nav-label">Praćenje</span>
+    </button>
+    <button class="nav-btn" data-tab="history"    onclick="showTab('history')">
+      <span class="nav-icon">📋</span><span class="nav-label">Povijest</span>
+    </button>
+    <button class="nav-btn" data-tab="statistics" onclick="showTab('statistics')">
+      <span class="nav-icon">📊</span><span class="nav-label">Statistike</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+// ── Storage ────────────────────────────────────────────────────────────────
+const DB_KEY = '@baby_sleep_sessions';
+
+const db = {
+  all() {
+    try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); }
+    catch { return []; }
+  },
+  save(sessions) {
+    localStorage.setItem(DB_KEY, JSON.stringify(sessions));
+  },
+  active() {
+    return this.all().find(s => s.endTime === null) || null;
+  },
+  start() {
+    const sessions = this.all();
+    const s = { id: Date.now().toString(), startTime: Date.now(), endTime: null, duration: null };
+    this.save([s, ...sessions]);
+    return s;
+  },
+  stop() {
+    const sessions = this.all();
+    const i = sessions.findIndex(s => s.endTime === null);
+    if (i === -1) return null;
+    const endTime = Date.now();
+    sessions[i] = { ...sessions[i], endTime, duration: endTime - sessions[i].startTime };
+    this.save(sessions);
+    return sessions[i];
+  },
+  delete(id) {
+    this.save(this.all().filter(s => s.id !== id));
+  },
+};
+
+// ── Formatting ─────────────────────────────────────────────────────────────
+function fmtDuration(ms) {
+  if (!ms || ms <= 0) return '—';
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString('hr-HR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function fmtWeekday(ts) {
+  return new Date(ts).toLocaleDateString('hr-HR', { weekday: 'short' });
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+let activeSession = db.active();
+let timerInterval = null;
+
+// ── Tab nav ────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(t =>
+    t.classList.toggle('active', t.id === `tab-${tab}`)
+  );
+  document.querySelectorAll('.nav-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab)
+  );
+  if (tab === 'tracker')    renderTracker();
+  if (tab === 'history')    renderHistory();
+  if (tab === 'statistics') renderStatistics();
+}
+
+// ── Tracker ────────────────────────────────────────────────────────────────
+function renderTracker() {
+  const el = document.getElementById('tab-tracker');
+  const on = !!activeSession;
+  const elapsed = on ? Date.now() - activeSession.startTime : 0;
+
+  el.innerHTML = `
+    <div class="tracker-content">
+      <div class="status-emoji">${on ? '😴' : '👶'}</div>
+      <div class="status-text">${on ? 'Beba spava' : 'Beba je budna'}</div>
+      ${on ? `<div class="timer" id="live-timer">${fmtDuration(elapsed)}</div>` : ''}
+      <button class="toggle-btn ${on ? 'stop' : 'start'}" onclick="handleToggle()">
+        ${on ? 'Zaustavi praćenje' : 'Počni pratiti'}
+      </button>
+      ${on ? `<div class="started-at">Počelo u ${fmtTime(activeSession.startTime)}</div>` : ''}
+    </div>`;
+
+  clearInterval(timerInterval);
+  if (on) {
+    timerInterval = setInterval(() => {
+      const t = document.getElementById('live-timer');
+      if (t) t.textContent = fmtDuration(Date.now() - activeSession.startTime);
+    }, 1000);
+  }
+}
+
+function handleToggle() {
+  if (activeSession) {
+    db.stop();
+    activeSession = null;
+    clearInterval(timerInterval);
+  } else {
+    activeSession = db.start();
+  }
+  if (navigator.vibrate) navigator.vibrate(30);
+  renderTracker();
+}
+
+// ── History ────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById('tab-history');
+  const sessions = db.all().filter(s => s.endTime !== null);
+
+  if (!sessions.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-emoji">🌙</div>
+        <div class="empty-text">Još nema zabilježenih sesija sna</div>
+        <div class="empty-hint">Idi na „Praćenje" i pokreni prvu sesiju</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="list">
+      ${sessions.map(s => `
+        <div class="card">
+          <div class="card-left">
+            <div class="card-date">${fmtDate(s.startTime)}</div>
+            <div class="card-time">${fmtTime(s.startTime)} – ${fmtTime(s.endTime)}</div>
+            <div class="card-duration">${fmtDuration(s.duration)}</div>
+          </div>
+          <button class="delete-btn" onclick="handleDelete('${s.id}')">✕</button>
+        </div>`).join('')}
+    </div>`;
+}
+
+function handleDelete(id) {
+  if (confirm('Obrisati ovu sesiju?')) {
+    db.delete(id);
+    renderHistory();
+  }
+}
+
+// ── Statistics ─────────────────────────────────────────────────────────────
+function renderStatistics() {
+  const el = document.getElementById('tab-statistics');
+  const sessions = db.all().filter(s => s.endTime !== null);
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  });
+
+  const dayStats = days.map(dayStart => {
+    const ds = sessions.filter(s => s.startTime >= dayStart && s.startTime < dayStart + 86400000);
+    return { dayStart, total: ds.reduce((a, s) => a + s.duration, 0), count: ds.length };
+  });
+
+  const maxTotal = Math.max(...dayStats.map(d => d.total), 1);
+  const today   = dayStats[dayStats.length - 1];
+  const avg     = sessions.length ? sessions.reduce((a, s) => a + s.duration, 0) / sessions.length : 0;
+
+  el.innerHTML = `
+    <div class="stats-content">
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="summary-label">Danas ukupno</div>
+          <div class="summary-value">${fmtDuration(today.total)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Prosjek/sesija</div>
+          <div class="summary-value">${fmtDuration(avg)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Ukupno sesija</div>
+          <div class="summary-value">${sessions.length}</div>
+        </div>
+      </div>
+
+      <div class="chart-title">Zadnjih 7 dana</div>
+      <div class="chart-card">
+        <div class="chart">
+          ${dayStats.map(d => {
+            const h = d.total > 0 ? Math.max((d.total / maxTotal) * 140, 4) : 0;
+            return `
+              <div class="bar-col">
+                <div class="bar-label-top">${d.total > 0 ? fmtDuration(d.total) : ''}</div>
+                <div class="bar-track"><div class="bar" style="height:${h}px"></div></div>
+                <div class="bar-label">${fmtWeekday(d.dayStart)}</div>
+                ${d.count > 0 ? `<div class="bar-count">${d.count}×</div>` : ''}
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderTracker();
+</script>
+</body>
+</html>
