@@ -41,6 +41,10 @@
       background: linear-gradient(160deg, #7B5EA7 0%, #5A3E8C 100%);
       padding: 32px;
       gap: 20px;
+      /* allow scrolling on small phones so text is never clipped */
+      justify-content: flex-start;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     #screen-parent h1 {
       color: #fff;
@@ -205,21 +209,25 @@
       font-weight: 700;
       text-align: center;
     }
-    /* Next arrow */
-    .btn-next {
+    /* Navigation arrows (prev / next), grouped top-right */
+    .nav-group {
       position: absolute;
       top: 16px; right: 20px;
-      width: 80px; height: 80px;
-      background: #7B5EA7;
+      display: flex; gap: 12px;
+      z-index: 5;
+    }
+    .btn-nav {
+      width: 72px; height: 72px;
       border: none; border-radius: 50%;
-      color: #fff; font-size: 36px;
+      color: #fff; font-size: 32px;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       box-shadow: 0 4px 16px rgba(123,94,167,0.4);
       transition: transform 0.15s;
-      z-index: 5;
     }
-    .btn-next:active { transform: scale(0.92); }
+    .btn-next { background: #7B5EA7; }
+    .btn-prev { background: #B7A4D6; }
+    .btn-nav:active { transform: scale(0.92); }
 
     /* progress dots */
     .progress-dots {
@@ -320,6 +328,31 @@
     #btn-home-break     { background: rgba(255,255,255,0.2); color: #fff; }
 
     /* =====================================================
+       ROTATE-TO-LANDSCAPE HINT (phones in portrait)
+       ===================================================== */
+    #rotate-hint {
+      position: fixed; inset: 0; z-index: 200;
+      background: #5A3E8C;
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px; padding: 40px; text-align: center;
+    }
+    #rotate-hint .rotate-emoji {
+      font-size: 80px;
+      animation: rotate-wobble 2s ease-in-out infinite;
+    }
+    @keyframes rotate-wobble {
+      0%, 100% { transform: rotate(0deg); }
+      50%      { transform: rotate(90deg); }
+    }
+    #rotate-hint p { color: #fff; font-size: clamp(18px, 4vw, 26px); font-weight: 700; line-height: 1.4; }
+    /* Only show on short-and-narrow portrait screens (phones), not tablets */
+    @media (orientation: portrait) and (max-height: 520px) {
+      #rotate-hint { display: flex; }
+    }
+
+    /* =====================================================
        REWARD RIPPLE
        ===================================================== */
     .ripple {
@@ -391,7 +424,10 @@
   <div class="game-header">
     <button class="btn-exit" id="exit-animals" aria-label="Izlaz">🏠</button>
     <div class="progress-dots" id="dots-animals"></div>
-    <button class="btn-next" id="next-animals" aria-label="Sljedeće">▶</button>
+    <div class="nav-group">
+      <button class="btn-nav btn-prev" id="prev-animals" aria-label="Prethodno">◀</button>
+      <button class="btn-nav btn-next" id="next-animals" aria-label="Sljedeće">▶</button>
+    </div>
   </div>
   <div class="card-stage">
     <div class="animal-card" id="animal-card">
@@ -409,7 +445,10 @@
   <div class="game-header">
     <button class="btn-exit" id="exit-words" aria-label="Izlaz">🏠</button>
     <div class="progress-dots" id="dots-words"></div>
-    <button class="btn-next" id="next-words" aria-label="Sljedeće">▶</button>
+    <div class="nav-group">
+      <button class="btn-nav btn-prev" id="prev-words" aria-label="Prethodno">◀</button>
+      <button class="btn-nav btn-next" id="next-words" aria-label="Sljedeće">▶</button>
+    </div>
   </div>
   <div class="card-stage">
     <div class="animal-card" id="word-card">
@@ -430,6 +469,14 @@
     <div style="width:64px"></div><!-- spacer -->
   </div>
   <div class="causal-stage" id="causal-stage"></div>
+</div>
+
+<!-- ===================================================
+     ROTATE-TO-LANDSCAPE HINT (phones in portrait)
+     =================================================== -->
+<div id="rotate-hint">
+  <div class="rotate-emoji">📱</div>
+  <p>Okreni uređaj vodoravno 🔄</p>
 </div>
 
 <!-- ===================================================
@@ -561,6 +608,23 @@ function speak(text) {
   window.speechSynthesis.speak(u);
 }
 
+/* Gentle haptic feedback on tap (Android; iOS Safari ignores silently) */
+function haptic(ms = 18) {
+  if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} }
+}
+
+/* iOS/Safari require a user gesture to "unlock" audio + speech.
+   Call this once from the parent's hold-to-start. */
+function primeAudio() {
+  try { getAudioCtx(); } catch (e) {}
+  if (window.speechSynthesis) {
+    // Speaking a silent utterance inside the gesture unlocks TTS on iOS.
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+  }
+}
+
 /* =========================================================
    SCREEN MANAGER
    ========================================================= */
@@ -597,6 +661,7 @@ function holdAnimate() {
 holdBtn.addEventListener('pointerdown', () => {
   holdStart = Date.now();
   holdLabel.textContent = 'Drži…';
+  primeAudio();   // unlock audio + TTS within this gesture (needed on iOS)
   holdRAF = requestAnimationFrame(holdAnimate);
   holdTimer = setTimeout(() => {
     cancelAnimationFrame(holdRAF);
@@ -757,7 +822,8 @@ animalCard.addEventListener('pointerdown', debounced(e => {
   void animalCard.offsetWidth; // reflow to restart anim
   animalCard.classList.add('bouncing');
   setTimeout(() => animalCard.classList.remove('bouncing'), 500);
-  // ripple
+  // feedback
+  haptic();
   spawnRipple(e.clientX, e.clientY);
   // audio
   speak(a.phrase);
@@ -767,12 +833,22 @@ animalCard.addEventListener('pointerdown', debounced(e => {
 
 document.getElementById('next-animals').addEventListener('pointerdown', debounced(e => {
   e.stopPropagation();
+  haptic();
   animalIndex = (animalIndex + 1) % ANIMALS.length;
   renderAnimal(animalIndex);
   spawnRipple(e.clientX, e.clientY);
 }));
 
+document.getElementById('prev-animals').addEventListener('pointerdown', debounced(e => {
+  e.stopPropagation();
+  haptic();
+  animalIndex = (animalIndex - 1 + ANIMALS.length) % ANIMALS.length;
+  renderAnimal(animalIndex);
+  spawnRipple(e.clientX, e.clientY);
+}));
+
 document.getElementById('btn-mode-animals').addEventListener('pointerdown', () => {
+  haptic();
   initAnimals();
   showScreen('animals');
 });
@@ -807,6 +883,7 @@ wordCard.addEventListener('pointerdown', debounced(e => {
   void wordCard.offsetWidth;
   wordCard.classList.add('bouncing');
   setTimeout(() => wordCard.classList.remove('bouncing'), 500);
+  haptic();
   spawnRipple(e.clientX, e.clientY);
   speak(w.phrase);
   setTimeout(() => playChime(659), 100);
@@ -815,12 +892,22 @@ wordCard.addEventListener('pointerdown', debounced(e => {
 
 document.getElementById('next-words').addEventListener('pointerdown', debounced(e => {
   e.stopPropagation();
+  haptic();
   wordIndex = (wordIndex + 1) % FIRST_WORDS.length;
   renderWord(wordIndex);
   spawnRipple(e.clientX, e.clientY);
 }));
 
+document.getElementById('prev-words').addEventListener('pointerdown', debounced(e => {
+  e.stopPropagation();
+  haptic();
+  wordIndex = (wordIndex - 1 + FIRST_WORDS.length) % FIRST_WORDS.length;
+  renderWord(wordIndex);
+  spawnRipple(e.clientX, e.clientY);
+}));
+
 document.getElementById('btn-mode-words').addEventListener('pointerdown', () => {
+  haptic();
   initWords();
   showScreen('words');
 });
@@ -861,24 +948,32 @@ function initCausal() {
     setupIdleHint(el);
 
     let encourageCount = 0;
-    el.addEventListener('pointerdown', debounced(e => {
+    let lastSparkle = 0;
+    // Cause-and-effect: EVERY tap must produce instant visual + haptic feedback
+    // (never dropped). Only the audio is throttled so rapid taps don't stack harshly.
+    el.addEventListener('pointerdown', e => {
       e.stopPropagation();
-      // tap animation
+      // always: instant visual response
+      el.classList.remove('tapped');
+      void el.offsetWidth; // restart animation even on rapid re-taps
       el.classList.add('tapped');
       setTimeout(() => el.classList.remove('tapped'), 450);
-      // particle burst
       spawnParticles(e.clientX, e.clientY, obj.color);
-      // ripple
       spawnRipple(e.clientX, e.clientY);
-      // audio
-      playSparkle();
-      // occasional verbal encouragement (every 3rd tap)
-      encourageCount++;
-      if (encourageCount % 3 === 0) {
-        const enc = obj.encouragements[Math.floor(Math.random() * obj.encouragements.length)];
-        setTimeout(() => speak(enc), 300);
+      haptic();
+      // audio throttled to ~120ms minimum gap to avoid harsh stacking
+      const now = Date.now();
+      if (now - lastSparkle > 120) {
+        lastSparkle = now;
+        playSparkle();
+        // occasional warm verbal encouragement (not every tap)
+        encourageCount++;
+        if (encourageCount % 4 === 0) {
+          const enc = obj.encouragements[Math.floor(Math.random() * obj.encouragements.length)];
+          setTimeout(() => speak(enc), 300);
+        }
       }
-    }, 250));
+    });
 
     stage.appendChild(el);
   });
@@ -904,6 +999,7 @@ function spawnParticles(cx, cy, color) {
 }
 
 document.getElementById('btn-mode-causal').addEventListener('pointerdown', () => {
+  haptic();
   initCausal();
   showScreen('causal');
 });
@@ -911,9 +1007,13 @@ document.getElementById('btn-mode-causal').addEventListener('pointerdown', () =>
 /* =========================================================
    HOME BUTTON
    ========================================================= */
-// Prevent body scroll/zoom on multi-touch
+// Prevent body scroll/zoom on multi-touch, but allow scrolling the parent screen
 document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
-document.addEventListener('touchmove',  e => e.preventDefault(), { passive: false });
+document.addEventListener('touchmove', e => {
+  // Allow normal scrolling only inside the (text-heavy) parent screen
+  if (e.target.closest && e.target.closest('#screen-parent')) return;
+  e.preventDefault();
+}, { passive: false });
 </script>
 </body>
 </html>
