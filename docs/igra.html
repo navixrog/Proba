@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Beba Igra – Životinje i Zvukovi</title>
+  <title>Beba Igra – Učimo zajedno</title>
   <style>
     /* =====================================================
        RESET & GLOBAL
@@ -41,245 +41,143 @@
       background: linear-gradient(160deg, #7B5EA7 0%, #5A3E8C 100%);
       padding: 32px;
       gap: 20px;
-      /* allow scrolling on small phones so text is never clipped */
       justify-content: flex-start;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
-    #screen-parent h1 {
-      color: #fff;
-      font-size: clamp(22px, 5vw, 36px);
-      text-align: center;
-      line-height: 1.3;
-    }
+    #screen-parent h1 { color: #fff; font-size: clamp(22px, 5vw, 36px); text-align: center; line-height: 1.3; }
     #screen-parent .parent-box {
-      background: rgba(255,255,255,0.15);
-      border-radius: 20px;
-      padding: 20px 24px;
-      max-width: 680px;
-      color: #fff;
-      font-size: clamp(13px, 2.5vw, 17px);
-      line-height: 1.6;
-      text-align: left;
+      background: rgba(255,255,255,0.15); border-radius: 20px;
+      padding: 20px 24px; max-width: 680px; color: #fff;
+      font-size: clamp(13px, 2.5vw, 17px); line-height: 1.6; text-align: left;
     }
     #screen-parent .tip {
-      background: rgba(255,255,255,0.1);
-      border-left: 4px solid #FF85A2;
-      border-radius: 0 12px 12px 0;
-      padding: 12px 16px;
-      max-width: 680px;
-      color: #FFE0EA;
-      font-size: clamp(12px, 2vw, 15px);
-      line-height: 1.5;
-      font-style: italic;
+      background: rgba(255,255,255,0.1); border-left: 4px solid #FF85A2;
+      border-radius: 0 12px 12px 0; padding: 12px 16px; max-width: 680px;
+      color: #FFE0EA; font-size: clamp(12px, 2vw, 15px); line-height: 1.5; font-style: italic;
     }
-    /* Two-step "hold" start button — parent must hold 1.5s */
+    /* Hold-to-start: parent must hold ~1.5s so a baby can't trigger it */
     #btn-start-hold {
-      margin-top: 8px;
-      width: 220px; height: 70px;
-      background: #FF85A2;
-      border: none; border-radius: 40px;
-      color: #fff;
-      font-size: 20px; font-weight: 700;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      flex-shrink: 0;
+      margin-top: 8px; width: 220px; height: 70px;
+      background: #FF85A2; border: none; border-radius: 40px;
+      color: #fff; font-size: 20px; font-weight: 700; cursor: pointer;
+      position: relative; overflow: hidden; flex-shrink: 0;
     }
     #btn-start-hold .hold-fill {
-      position: absolute; inset: 0; left: 0;
-      background: rgba(255,255,255,0.35);
-      width: 0%;
-      border-radius: 40px;
-      transition: width linear;
-      pointer-events: none;
+      position: absolute; inset: 0; left: 0; background: rgba(255,255,255,0.35);
+      width: 0%; border-radius: 40px; pointer-events: none;
     }
     #btn-start-hold span { position: relative; z-index: 1; }
 
     /* =====================================================
        HOME SCREEN
        ===================================================== */
-    #screen-home {
-      background: #FFF8F0;
-      gap: 32px;
-      padding: 24px;
-    }
-    #screen-home h2 {
-      color: #5A3E8C;
-      font-size: clamp(20px, 4vw, 32px);
-      text-align: center;
-    }
-    .home-buttons {
-      display: flex;
-      gap: 28px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+    #screen-home { background: #FFF8F0; gap: 28px; padding: 24px; }
+    #screen-home h2 { color: #5A3E8C; font-size: clamp(20px, 4vw, 32px); text-align: center; }
+    .home-buttons { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; max-width: 820px; }
     .home-btn {
-      width: clamp(140px, 28vw, 220px);
-      height: clamp(140px, 28vw, 220px);
-      border: none; border-radius: 32px;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 14px;
-      font-size: clamp(14px, 2.5vw, 20px);
-      font-weight: 700;
-      color: #fff;
-      cursor: pointer;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-      transition: transform 0.15s, box-shadow 0.15s;
+      width: clamp(130px, 21vw, 185px); height: clamp(130px, 21vw, 185px);
+      border: none; border-radius: 30px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; font-size: clamp(13px, 2.2vw, 19px); font-weight: 700; color: #fff;
+      cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      transition: transform 0.15s, box-shadow 0.15s; text-align: center; padding: 8px;
     }
     .home-btn:active { transform: scale(0.95); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    .home-btn .btn-emoji { font-size: clamp(48px, 10vw, 72px); line-height: 1; }
-    .home-btn.animals  { background: linear-gradient(135deg, #FF85A2, #E05A80); }
-    .home-btn.words    { background: linear-gradient(135deg, #FFA84E, #E07A20); }
-    .home-btn.causal   { background: linear-gradient(135deg, #5BB8FF, #2877D4); }
+    .home-btn .btn-emoji { font-size: clamp(44px, 9vw, 64px); line-height: 1; }
+    .home-btn.animals   { background: linear-gradient(135deg, #FF85A2, #E05A80); }
+    .home-btn.words     { background: linear-gradient(135deg, #FFA84E, #E07A20); }
+    .home-btn.imitation { background: linear-gradient(135deg, #5BD98A, #2DA866); }
+    .home-btn.causal    { background: linear-gradient(135deg, #5BB8FF, #2877D4); }
 
     /* =====================================================
-       SHARED GAME CHROME
+       SHARED GAME CHROME (header, exit, dots, nav arrows)
        ===================================================== */
     .game-header {
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 72px;
+      position: absolute; top: 0; left: 0; right: 0; height: 72px;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px;
-      z-index: 10;
+      padding: 0 20px; z-index: 10;
     }
-    /* Two-tap exit: first tap arms, second exits */
+    /* Two-tap exit: first tap arms, second exits ("baby gate") */
     .btn-exit {
-      width: 64px; height: 64px;
-      border: none; border-radius: 50%;
-      background: rgba(91,62,140,0.15);
-      font-size: 28px; cursor: pointer;
+      width: 64px; height: 64px; border: none; border-radius: 50%;
+      background: rgba(91,62,140,0.15); font-size: 28px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s;
-      flex-shrink: 0;
+      transition: background 0.2s; flex-shrink: 0;
     }
     .btn-exit.armed { background: rgba(255,133,162,0.7); }
-
-    /* =====================================================
-       MODE 1 & 3 – ANIMALS / FIRST WORDS
-       ===================================================== */
-    #screen-animals, #screen-words {
-      background: #FFF8F0;
-      padding-top: 72px;
-    }
-    .card-stage {
-      flex: 1;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      width: 100%;
-      position: relative;
-    }
-    .animal-card {
-      position: relative;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 12px;
-      cursor: pointer;
-      /* idle shimmer handled by JS adding class */
-    }
-    .animal-emoji {
-      font-size: clamp(120px, 28vw, 200px);
-      line-height: 1;
-      display: block;
-      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), filter 0.3s;
-    }
-    .animal-card.bouncing .animal-emoji {
-      transform: scale(1.18) rotate(-4deg);
-      filter: drop-shadow(0 0 24px rgba(255,133,162,0.7));
-    }
-    .animal-card.idle-hint .animal-emoji {
-      animation: idle-glow 1.6s ease-in-out infinite alternate;
-    }
-    @keyframes idle-glow {
-      from { filter: drop-shadow(0 0 0px rgba(123,94,167,0)); }
-      to   { filter: drop-shadow(0 0 20px rgba(123,94,167,0.6)); }
-    }
-    .animal-label {
-      font-size: clamp(28px, 6vw, 52px);
-      font-weight: 800;
-      color: #5A3E8C;
-      text-align: center;
-      letter-spacing: 1px;
-    }
-    .animal-sound {
-      font-size: clamp(18px, 3.5vw, 32px);
-      color: #FF85A2;
-      font-weight: 700;
-      text-align: center;
-    }
-    /* Navigation arrows (prev / next), grouped top-right */
-    .nav-group {
-      position: absolute;
-      top: 16px; right: 20px;
-      display: flex; gap: 12px;
-      z-index: 5;
-    }
+    .nav-group { position: absolute; top: 16px; right: 20px; display: flex; gap: 12px; z-index: 5; }
     .btn-nav {
-      width: 72px; height: 72px;
-      border: none; border-radius: 50%;
-      color: #fff; font-size: 32px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(123,94,167,0.4);
-      transition: transform 0.15s;
+      width: 72px; height: 72px; border: none; border-radius: 50%;
+      color: #fff; font-size: 32px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 16px rgba(123,94,167,0.4); transition: transform 0.15s;
     }
     .btn-next { background: #7B5EA7; }
     .btn-prev { background: #B7A4D6; }
     .btn-nav:active { transform: scale(0.92); }
-
-    /* progress dots */
-    .progress-dots {
-      display: flex; gap: 10px;
-      padding: 12px 0;
-    }
-    .dot {
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: #D4C5F0;
-      transition: background 0.3s;
-    }
+    .progress-dots { display: flex; gap: 8px; padding: 12px 0; flex-wrap: wrap; justify-content: center; max-width: 60%; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #D4C5F0; transition: background 0.3s; }
     .dot.active { background: #7B5EA7; }
 
     /* =====================================================
-       MODE 2 – CAUSE & EFFECT
+       CARD SCREEN (shared by Animals / Words / Imitation)
        ===================================================== */
-    #screen-causal {
-      background: #0A0A2A;
-      padding-top: 72px;
+    #screen-card { background: #FFF8F0; padding-top: 72px; }
+    .card-stage {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; width: 100%; position: relative;
     }
-    #screen-causal .game-header .btn-exit {
-      background: rgba(255,255,255,0.15);
+    .card {
+      position: relative; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px; cursor: pointer; padding: 0 16px;
     }
-    #screen-causal .game-header .btn-exit.armed {
-      background: rgba(255,133,162,0.7);
+    .card-emoji {
+      font-size: clamp(120px, 26vw, 200px); line-height: 1; display: block;
     }
+    .card-label { font-size: clamp(28px, 6vw, 52px); font-weight: 800; color: #5A3E8C; text-align: center; letter-spacing: 1px; }
+    .card-sub { font-size: clamp(16px, 3vw, 30px); color: #FF85A2; font-weight: 700; text-align: center; max-width: 90vw; line-height: 1.3; }
+    /* idle hint: gentle glow after inactivity */
+    .card.idle-hint .card-emoji { animation: idle-glow 1.6s ease-in-out infinite alternate; }
+    @keyframes idle-glow {
+      from { filter: drop-shadow(0 0 0px rgba(123,94,167,0)); }
+      to   { filter: drop-shadow(0 0 20px rgba(123,94,167,0.6)); }
+    }
+    /* tap animations (one per gesture / default bounce) */
+    .card-emoji.anim-bounce   { animation: a-bounce 0.5s ease; }
+    .card-emoji.anim-wave     { animation: a-wave 1s ease; transform-origin: 70% 80%; }
+    .card-emoji.anim-clap     { animation: a-clap 0.6s ease; }
+    .card-emoji.anim-highfive { animation: a-highfive 0.5s ease; }
+    .card-emoji.anim-kiss     { animation: a-kiss 1s ease; }
+    .card-emoji.anim-big      { animation: a-big 1s ease; }
+    .card-emoji.anim-peek     { animation: a-peek 0.8s ease; }
+    .card-emoji.anim-hug      { animation: a-hug 0.8s ease; }
+    .card-emoji.anim-thumb    { animation: a-thumb 0.6s ease; }
+    @keyframes a-bounce { 0%{transform:scale(1)} 40%{transform:scale(1.18) rotate(-4deg)} 100%{transform:scale(1)} }
+    @keyframes a-wave { 0%,100%{transform:rotate(0)} 20%{transform:rotate(18deg)} 40%{transform:rotate(-12deg)} 60%{transform:rotate(18deg)} 80%{transform:rotate(-12deg)} }
+    @keyframes a-clap { 0%,100%{transform:scaleX(1)} 25%{transform:scaleX(0.7)} 50%{transform:scaleX(1.08)} 75%{transform:scaleX(0.8)} }
+    @keyframes a-highfive { 0%{transform:translateY(24px) scale(0.9)} 50%{transform:translateY(-12px) scale(1.22)} 100%{transform:translateY(0) scale(1)} }
+    @keyframes a-kiss { 0%{transform:scale(1)} 30%{transform:scale(1.2)} 100%{transform:translateY(-46px) scale(0.8); opacity:0.4} }
+    @keyframes a-big { 0%{transform:scale(0.6)} 60%{transform:scale(1.35)} 100%{transform:scale(1.12)} }
+    @keyframes a-peek { 0%{transform:scale(0); opacity:0} 60%{transform:scale(1.15); opacity:1} 100%{transform:scale(1)} }
+    @keyframes a-hug { 0%,100%{transform:scale(1)} 40%{transform:scale(1.18)} 70%{transform:scale(1.05)} }
+    @keyframes a-thumb { 0%{transform:translateY(0) rotate(0)} 40%{transform:translateY(-18px) rotate(-12deg)} 100%{transform:translateY(0) rotate(0)} }
 
-    .causal-stage {
-      flex: 1;
-      width: 100%;
-      position: relative;
-      display: flex; align-items: center; justify-content: center;
-    }
+    /* =====================================================
+       CAUSE & EFFECT SCREEN
+       ===================================================== */
+    #screen-causal { background: #0A0A2A; padding-top: 72px; }
+    #screen-causal .btn-exit { background: rgba(255,255,255,0.15); }
+    #screen-causal .btn-exit.armed { background: rgba(255,133,162,0.7); }
+    .causal-stage { flex: 1; width: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
     .causal-object {
-      position: absolute;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: transform 0.15s;
-      /* size/position set in JS */
+      position: absolute; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; cursor: pointer; transition: transform 0.15s;
     }
     .causal-object .obj-inner {
-      font-size: inherit;
-      line-height: 1;
-      display: block;
-      pointer-events: none;
+      font-size: inherit; line-height: 1; display: block; pointer-events: none;
       transition: transform 0.4s cubic-bezier(.34,1.56,.64,1), filter 0.3s;
     }
-    .causal-object.idle-hint .obj-inner {
-      animation: causal-idle 2s ease-in-out infinite alternate;
-    }
+    .causal-object.idle-hint .obj-inner { animation: causal-idle 2s ease-in-out infinite alternate; }
     @keyframes causal-idle {
       from { filter: brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0)); }
       to   { filter: brightness(1.3) drop-shadow(0 0 18px rgba(255,255,255,0.6)); }
@@ -288,200 +186,121 @@
       transform: scale(1.35);
       filter: brightness(1.5) drop-shadow(0 0 28px rgba(255,220,80,0.9));
     }
-
-    /* Particle burst */
-    .particle {
-      position: absolute;
-      border-radius: 50%;
-      pointer-events: none;
-      animation: particle-burst 0.6s ease-out forwards;
-    }
+    .particle { position: absolute; border-radius: 50%; pointer-events: none; animation: particle-burst 0.6s ease-out forwards; }
     @keyframes particle-burst {
-      0%   { transform: translate(0,0) scale(1); opacity: 1; }
+      0% { transform: translate(0,0) scale(1); opacity: 1; }
       100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
     }
 
     /* =====================================================
-       BREAK REMINDER OVERLAY
+       ROTATE HINT (phones in portrait)
+       ===================================================== */
+    #rotate-hint {
+      position: fixed; inset: 0; z-index: 200; background: #5A3E8C; display: none;
+      flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 40px; text-align: center;
+    }
+    #rotate-hint .rotate-emoji { font-size: 80px; animation: rotate-wobble 2s ease-in-out infinite; }
+    @keyframes rotate-wobble { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
+    #rotate-hint p { color: #fff; font-size: clamp(18px, 4vw, 26px); font-weight: 700; line-height: 1.4; }
+    @media (orientation: portrait) and (max-height: 520px) { #rotate-hint { display: flex; } }
+
+    /* =====================================================
+       BREAK OVERLAY
        ===================================================== */
     #break-overlay {
-      position: fixed; inset: 0; z-index: 100;
-      background: rgba(91,62,140,0.92);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 24px;
-      padding: 40px;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.5s;
+      position: fixed; inset: 0; z-index: 100; background: rgba(91,62,140,0.92);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 24px; padding: 40px; opacity: 0; pointer-events: none; transition: opacity 0.5s;
     }
     #break-overlay.visible { opacity: 1; pointer-events: all; }
     #break-overlay h2 { color: #fff; font-size: clamp(22px, 5vw, 36px); text-align: center; }
-    #break-overlay p  { color: #FFE0EA; font-size: clamp(14px, 2.5vw, 20px); text-align: center; max-width: 560px; line-height: 1.5; }
+    #break-overlay p { color: #FFE0EA; font-size: clamp(14px, 2.5vw, 20px); text-align: center; max-width: 560px; line-height: 1.5; }
     #break-overlay .break-emoji { font-size: 72px; }
     #btn-continue-break, #btn-home-break {
-      padding: 16px 36px;
-      border: none; border-radius: 40px;
-      font-size: clamp(16px, 3vw, 22px); font-weight: 700;
-      cursor: pointer;
+      padding: 16px 36px; border: none; border-radius: 40px;
+      font-size: clamp(16px, 3vw, 22px); font-weight: 700; cursor: pointer;
     }
     #btn-continue-break { background: #FF85A2; color: #fff; }
-    #btn-home-break     { background: rgba(255,255,255,0.2); color: #fff; }
+    #btn-home-break { background: rgba(255,255,255,0.2); color: #fff; }
 
-    /* =====================================================
-       ROTATE-TO-LANDSCAPE HINT (phones in portrait)
-       ===================================================== */
-    #rotate-hint {
-      position: fixed; inset: 0; z-index: 200;
-      background: #5A3E8C;
-      display: none;
-      flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 20px; padding: 40px; text-align: center;
-    }
-    #rotate-hint .rotate-emoji {
-      font-size: 80px;
-      animation: rotate-wobble 2s ease-in-out infinite;
-    }
-    @keyframes rotate-wobble {
-      0%, 100% { transform: rotate(0deg); }
-      50%      { transform: rotate(90deg); }
-    }
-    #rotate-hint p { color: #fff; font-size: clamp(18px, 4vw, 26px); font-weight: 700; line-height: 1.4; }
-    /* Only show on short-and-narrow portrait screens (phones), not tablets */
-    @media (orientation: portrait) and (max-height: 520px) {
-      #rotate-hint { display: flex; }
-    }
-
-    /* =====================================================
-       REWARD RIPPLE
-       ===================================================== */
+    /* reward ripple */
     .ripple {
-      position: fixed;
-      border-radius: 50%;
-      pointer-events: none;
-      background: rgba(255,133,162,0.3);
-      transform: scale(0);
-      animation: ripple-out 0.55s ease-out forwards;
+      position: fixed; border-radius: 50%; pointer-events: none;
+      background: rgba(255,133,162,0.3); transform: scale(0); animation: ripple-out 0.55s ease-out forwards;
     }
-    @keyframes ripple-out {
-      to { transform: scale(6); opacity: 0; }
-    }
+    @keyframes ripple-out { to { transform: scale(6); opacity: 0; } }
   </style>
 </head>
 <body>
 
-<!-- ===================================================
-     SCREEN: PARENT INFO
-     =================================================== -->
+<!-- ============ PARENT SCREEN ============ -->
 <div class="screen" id="screen-parent">
   <h1>🌙 Beba Igra</h1>
-
   <div class="parent-box">
     <strong>Za roditelje:</strong> Ova igra je zamišljena kao kratka zajednička aktivnost
     roditelja i djeteta (do 5 minuta). Prema preporukama Svjetske zdravstvene organizacije
     i HZJZ-a, djeca u dobi do dvije godine ne bi uopće trebala provoditi vrijeme pred
     ekranima. Koristite igru <em>zajedno</em> s djetetom: imenujte slike, ponavljajte
-    riječi i oponašajte zvukove. Igra nije zamjena za zajedničko igranje, čitanje i razgovor.
+    riječi, oponašajte zvukove i pokrete. Igra nije zamjena za zajedničko igranje,
+    čitanje i razgovor.
   </div>
-
   <div class="tip">
-    💡 Savjet: imenujte sliku, pričekajte djetetov pogled ili glas, pa ponovite riječ.
-    Ponavljanje pomaže učenju.
+    💡 Savjet: imenujte sliku, pričekajte djetetov pogled ili glas, pa ponovite riječ ili
+    pokret. Ponavljanje pomaže učenju.
   </div>
-
-  <!-- Hold 1.5 s to start — baby can't do this accidentally -->
   <button id="btn-start-hold" aria-label="Drži za početak">
     <div class="hold-fill" id="hold-fill"></div>
     <span id="hold-label">Drži za početak</span>
   </button>
 </div>
 
-<!-- ===================================================
-     SCREEN: HOME (mode selection)
-     =================================================== -->
+<!-- ============ HOME SCREEN ============ -->
 <div class="screen hidden" id="screen-home">
   <h2>Što želiš igrati?</h2>
   <div class="home-buttons">
-    <button class="home-btn animals" id="btn-mode-animals">
-      <span class="btn-emoji">🐶</span>
-      Životinje i zvukovi
-    </button>
-    <button class="home-btn words" id="btn-mode-words">
-      <span class="btn-emoji">👶</span>
-      Prve riječi
-    </button>
-    <button class="home-btn causal" id="btn-mode-causal">
-      <span class="btn-emoji">⭐</span>
-      Dodirni i gledaj
-    </button>
+    <button class="home-btn animals" id="btn-mode-animals"><span class="btn-emoji">🐶</span>Životinje i zvukovi</button>
+    <button class="home-btn words" id="btn-mode-words"><span class="btn-emoji">👶</span>Prve riječi</button>
+    <button class="home-btn imitation" id="btn-mode-imitation"><span class="btn-emoji">👋</span>Pokaži mi!</button>
+    <button class="home-btn causal" id="btn-mode-causal"><span class="btn-emoji">⭐</span>Dodirni i gledaj</button>
   </div>
 </div>
 
-<!-- ===================================================
-     SCREEN: ANIMALS & SOUNDS
-     =================================================== -->
-<div class="screen hidden" id="screen-animals">
+<!-- ============ CARD SCREEN (Animals / Words / Imitation) ============ -->
+<div class="screen hidden" id="screen-card">
   <div class="game-header">
-    <button class="btn-exit" id="exit-animals" aria-label="Izlaz">🏠</button>
-    <div class="progress-dots" id="dots-animals"></div>
+    <button class="btn-exit" id="exit-card" aria-label="Izlaz">🏠</button>
+    <div class="progress-dots" id="dots-card"></div>
     <div class="nav-group">
-      <button class="btn-nav btn-prev" id="prev-animals" aria-label="Prethodno">◀</button>
-      <button class="btn-nav btn-next" id="next-animals" aria-label="Sljedeće">▶</button>
+      <button class="btn-nav btn-prev" id="prev-card" aria-label="Prethodno">◀</button>
+      <button class="btn-nav btn-next" id="next-card" aria-label="Sljedeće">▶</button>
     </div>
   </div>
   <div class="card-stage">
-    <div class="animal-card" id="animal-card">
-      <span class="animal-emoji" id="animal-emoji"></span>
-      <span class="animal-label" id="animal-label"></span>
-      <span class="animal-sound" id="animal-sound"></span>
+    <div class="card" id="card">
+      <span class="card-emoji" id="card-emoji"></span>
+      <span class="card-label" id="card-label"></span>
+      <span class="card-sub" id="card-sub"></span>
     </div>
   </div>
 </div>
 
-<!-- ===================================================
-     SCREEN: FIRST WORDS
-     =================================================== -->
-<div class="screen hidden" id="screen-words">
-  <div class="game-header">
-    <button class="btn-exit" id="exit-words" aria-label="Izlaz">🏠</button>
-    <div class="progress-dots" id="dots-words"></div>
-    <div class="nav-group">
-      <button class="btn-nav btn-prev" id="prev-words" aria-label="Prethodno">◀</button>
-      <button class="btn-nav btn-next" id="next-words" aria-label="Sljedeće">▶</button>
-    </div>
-  </div>
-  <div class="card-stage">
-    <div class="animal-card" id="word-card">
-      <span class="animal-emoji" id="word-emoji"></span>
-      <span class="animal-label" id="word-label"></span>
-      <span class="animal-sound" id="word-phrase"></span>
-    </div>
-  </div>
-</div>
-
-<!-- ===================================================
-     SCREEN: CAUSE & EFFECT
-     =================================================== -->
+<!-- ============ CAUSE & EFFECT SCREEN ============ -->
 <div class="screen hidden" id="screen-causal">
   <div class="game-header">
     <button class="btn-exit" id="exit-causal" aria-label="Izlaz">🏠</button>
     <span style="color:rgba(255,255,255,0.5); font-size:14px; font-style:italic;">Dodirni!</span>
-    <div style="width:64px"></div><!-- spacer -->
+    <div style="width:64px"></div>
   </div>
   <div class="causal-stage" id="causal-stage"></div>
 </div>
 
-<!-- ===================================================
-     ROTATE-TO-LANDSCAPE HINT (phones in portrait)
-     =================================================== -->
+<!-- ============ ROTATE HINT ============ -->
 <div id="rotate-hint">
   <div class="rotate-emoji">📱</div>
   <p>Okreni uređaj vodoravno 🔄</p>
 </div>
 
-<!-- ===================================================
-     BREAK REMINDER OVERLAY
-     =================================================== -->
+<!-- ============ BREAK OVERLAY ============ -->
 <div id="break-overlay">
   <div class="break-emoji">☕</div>
   <h2>Pauza, roditelju!</h2>
@@ -493,11 +312,10 @@
 
 <script>
 /* =========================================================
-   CONFIG — edit these arrays to change content
+   CONFIG — edit these arrays to change the content.
    ========================================================= */
 
-// Animals: emoji, Croatian name, on-screen sound label, and "sfx" which
-// selects a synthesized animal sound (see playAnimalSound below).
+// Animals: name + on-screen sound label + "sfx" (synthesized call).
 const ANIMALS = [
   { emoji: '🐶', name: 'Pas',     sound: 'vau-vau',  sfx: 'dog'    },
   { emoji: '🐱', name: 'Mačka',   sound: 'mijau',    sfx: 'cat'    },
@@ -512,23 +330,35 @@ const ANIMALS = [
   { emoji: '🫏', name: 'Magarac', sound: 'i-a',      sfx: 'donkey' },
 ];
 
-// First words: emoji, word, short spoken phrase
+// First words: name (spoken) + a short parent hint shown under it.
 const FIRST_WORDS = [
-  { emoji: '👩', name: 'Mama',   phrase: 'Mama! To je mama!' },
-  { emoji: '👨', name: 'Tata',   phrase: 'Tata! To je tata!' },
-  { emoji: '👵', name: 'Baka',   phrase: 'Baka! To je baka!' },
-  { emoji: '👴', name: 'Deda',   phrase: 'Deda! To je deda!' },
-  { emoji: '👶', name: 'Beba',   phrase: 'Beba! To je beba!' },
-  { emoji: '⚽', name: 'Lopta',  phrase: 'Lopta! Hvataj loptu!' },
-  { emoji: '🚗', name: 'Auto',   phrase: 'Auto! Vroom, auto!' },
-  { emoji: '💧', name: 'Voda',   phrase: 'Voda! Pij vodu!' },
-  { emoji: '🧸', name: 'Medo',   phrase: 'Medo! Medo je sladak!' },
-  { emoji: '😋', name: 'Am-am',  phrase: 'Am-am! Njam-njam, jelo!' },
-  { emoji: '👋', name: 'Pa-pa',  phrase: 'Pa-pa! Mahni pa-pa!' },
+  { emoji: '👩', name: 'Mama',  hint: 'To je mama!' },
+  { emoji: '👨', name: 'Tata',  hint: 'To je tata!' },
+  { emoji: '👵', name: 'Baka',  hint: 'To je baka!' },
+  { emoji: '👴', name: 'Deda',  hint: 'To je deda!' },
+  { emoji: '👶', name: 'Beba',  hint: 'To je beba!' },
+  { emoji: '⚽', name: 'Lopta', hint: 'Hvataj loptu!' },
+  { emoji: '🚗', name: 'Auto',  hint: 'Vroom, auto!' },
+  { emoji: '💧', name: 'Voda',  hint: 'Pij vodu!' },
+  { emoji: '🧸', name: 'Medo',  hint: 'Medo je sladak!' },
+  { emoji: '😋', name: 'Am-am', hint: 'Njam-njam, jelo!' },
+  { emoji: '👋', name: 'Pa-pa', hint: 'Mahni pa-pa!' },
 ];
 
-// Cause-and-effect objects. "sound" selects a distinct, meaningful synth
-// voice per icon (see playObjectSound below).
+// Imitation / gestures: parent says the prompt and does it WITH the baby.
+// anim = the demo animation; sfx = a fun sound; reward = occasional praise.
+const IMITATION = [
+  { emoji: '👋', name: 'Pa-pa',      prompt: 'Mahni ručicom! Pa-pa!',          anim: 'wave',     sfx: 'twinkle', reward: 'Bravo! Pa-pa!' },
+  { emoji: '✋', name: 'Daj pet',    prompt: 'Daj pet! Pljes!',                anim: 'highfive', sfx: 'slap',    reward: 'Bravo! Daj pet!' },
+  { emoji: '👏', name: 'Plješćemo',  prompt: 'Plješći ručicama! Pljes-pljes!', anim: 'clap',     sfx: 'clap',    reward: 'Bravo! Pljes-pljes!' },
+  { emoji: '😘', name: 'Pusa',       prompt: 'Baci pusu! Mljac!',              anim: 'kiss',     sfx: 'kiss',    reward: 'Bravo! Pusa za tebe!' },
+  { emoji: '🙌', name: 'Tako velik', prompt: 'Koliko si velik? Toliko velik!', anim: 'big',      sfx: 'bell',    reward: 'Tako veliki!' },
+  { emoji: '🙈', name: 'Ku-kuc',     prompt: 'Gdje je beba? Ku-kuc!',          anim: 'peek',     sfx: 'pop',     reward: 'Tu je beba! Ku-kuc!' },
+  { emoji: '🤗', name: 'Zagrljaj',   prompt: 'Zagrli! Veliki zagrljaj!',       anim: 'hug',      sfx: 'bloom',   reward: 'Bravo! Kako lijepo!' },
+  { emoji: '👍', name: 'Bravo',      prompt: 'Bravo! Palac gore!',             anim: 'thumb',    sfx: 'twinkle', reward: 'Bravo! Svaka čast!' },
+];
+
+// Cause-and-effect objects (each with a distinct meaningful sound).
 const CAUSAL_OBJECTS = [
   { emoji: '🎈', label: 'balon',    color: '#FF4D8D', sound: 'pop'     },
   { emoji: '⭐', label: 'zvijezda', color: '#FFD700', sound: 'twinkle' },
@@ -538,7 +368,7 @@ const CAUSAL_OBJECTS = [
 ];
 
 /* =========================================================
-   AUDIO ENGINE
+   AUDIO ENGINE (Web Audio — no files, fully offline)
    ========================================================= */
 let audioCtx = null;
 function getAudioCtx() {
@@ -547,157 +377,8 @@ function getAudioCtx() {
   return audioCtx;
 }
 
-// Soft, pleasant reward chime (3 ascending tones)
-function playChime(baseFreq = 523) {
-  const ctx = getAudioCtx();
-  const freqs = [baseFreq, baseFreq * 1.25, baseFreq * 1.5];
-  freqs.forEach((freq, i) => {
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    const t = ctx.currentTime + i * 0.18;
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.18, t + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
-    osc.start(t); osc.stop(t + 0.5);
-  });
-}
-
-// Twinkle / sparkle burst (mode 2 reward)
-function playSparkle() {
-  const ctx = getAudioCtx();
-  for (let i = 0; i < 5; i++) {
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = 'triangle';
-    osc.frequency.value = 600 + Math.random() * 900;
-    const t = ctx.currentTime + i * 0.07;
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-    osc.start(t); osc.stop(t + 0.35);
-  }
-}
-
-/* ---- Distinct "meaningful" sounds for the cause-and-effect icons ---- */
-
-// Balloon: a soft "pop" — quick pitch-drop blip + short noise burst
-function playPop() {
-  const ctx = getAudioCtx();
-  const t = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.connect(g); g.connect(ctx.destination);
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(700, t);
-  osc.frequency.exponentialRampToValueAtTime(120, t + 0.12);
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.3, t + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-  osc.start(t); osc.stop(t + 0.2);
-  // brief noise burst for the "pop" texture
-  const dur = 0.08;
-  const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-  const noise = ctx.createBufferSource(); noise.buffer = buffer;
-  const ng = ctx.createGain(); ng.gain.value = 0.25;
-  noise.connect(ng); ng.connect(ctx.destination);
-  noise.start(t);
-}
-
-// Bell: fundamental + inharmonic overtones with a long, ringing decay
-function playBell(base = 660) {
-  const ctx = getAudioCtx();
-  const t = ctx.currentTime;
-  const partials = [
-    { f: base,        g: 0.22, d: 1.2 },
-    { f: base * 2.0,  g: 0.12, d: 1.0 },
-    { f: base * 2.76, g: 0.08, d: 0.8 },
-    { f: base * 5.4,  g: 0.05, d: 0.6 },
-  ];
-  partials.forEach(p => {
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = 'sine'; osc.frequency.value = p.f;
-    osc.connect(g); g.connect(ctx.destination);
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(p.g, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0008, t + p.d);
-    osc.start(t); osc.stop(t + p.d + 0.05);
-  });
-}
-
-// Star: quick ascending high "twinkle"
-function playTwinkle() {
-  const ctx = getAudioCtx();
-  const notes = [1046, 1318, 1568, 2093];
-  notes.forEach((f, i) => {
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = 'triangle'; osc.frequency.value = f;
-    osc.connect(g); g.connect(ctx.destination);
-    const t = ctx.currentTime + i * 0.06;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.12, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-    osc.start(t); osc.stop(t + 0.3);
-  });
-}
-
-// Rainbow: gentle ascending harp-like glissando
-function playRainbow() {
-  const ctx = getAudioCtx();
-  const scale = [523, 587, 659, 784, 880, 1047];
-  scale.forEach((f, i) => {
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = 'sine'; osc.frequency.value = f;
-    osc.connect(g); g.connect(ctx.destination);
-    const t = ctx.currentTime + i * 0.05;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.13, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-    osc.start(t); osc.stop(t + 0.45);
-  });
-}
-
-// Flower: a soft major chord that swells open (a "bloom")
-function playBloom() {
-  const ctx = getAudioCtx();
-  const t = ctx.currentTime;
-  [523, 659, 784].forEach(f => {
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = 'sine'; osc.frequency.value = f;
-    osc.connect(g); g.connect(ctx.destination);
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.12, t + 0.12); // swell in
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-    osc.start(t); osc.stop(t + 0.65);
-  });
-}
-
-// Dispatcher: pick the right sound for an object
-function playObjectSound(kind) {
-  switch (kind) {
-    case 'pop':     playPop();     break;
-    case 'bell':    playBell();    break;
-    case 'twinkle': playTwinkle(); break;
-    case 'rainbow': playRainbow(); break;
-    case 'bloom':   playBloom();   break;
-    default:        playSparkle();
-  }
-}
-
-/* ---- Synthesized ANIMAL sounds (no audio files; all Web Audio) ----
-   These are friendly approximations of each animal's call, built from
-   small tone/noise helpers so they stay short and gentle. */
-
-// A single shaped tone, optionally gliding in pitch with optional vibrato.
+// --- small reusable building blocks ---
+// A shaped tone, optionally gliding in pitch with optional vibrato.
 function tone(opt) {
   const ctx = getAudioCtx();
   const t0 = ctx.currentTime + (opt.start || 0);
@@ -722,8 +403,7 @@ function tone(opt) {
   }
   osc.start(t0); osc.stop(t0 + dur + 0.05);
 }
-
-// A short band-passed noise burst (for chirps / quacks / clucks).
+// A short band-passed noise burst (chirps / quacks / claps).
 function noiseBurst(opt) {
   const ctx = getAudioCtx();
   const t0 = ctx.currentTime + (opt.start || 0);
@@ -743,6 +423,83 @@ function noiseBurst(opt) {
   src.start(t0); src.stop(t0 + dur);
 }
 
+// --- reward / object sounds ---
+function playChime(baseFreq = 523) {
+  const ctx = getAudioCtx();
+  [baseFreq, baseFreq * 1.25, baseFreq * 1.5].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.value = freq;
+    const t = ctx.currentTime + i * 0.18;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.18, t + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    osc.start(t); osc.stop(t + 0.5);
+  });
+}
+function playSparkle() {
+  const ctx = getAudioCtx();
+  for (let i = 0; i < 5; i++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.value = 600 + Math.random() * 900;
+    const t = ctx.currentTime + i * 0.07;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    osc.start(t); osc.stop(t + 0.35);
+  }
+}
+function playPop() {
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+  tone({ freq: 700, glideTo: 120, type: 'sine', dur: 0.18, gain: 0.3 });
+  const dur = 0.08, n = Math.floor(ctx.sampleRate * dur);
+  const buffer = ctx.createBuffer(1, n, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const noise = ctx.createBufferSource(); noise.buffer = buffer;
+  const ng = ctx.createGain(); ng.gain.value = 0.25;
+  noise.connect(ng); ng.connect(ctx.destination);
+  noise.start(t);
+}
+function playBell(base = 660) {
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+  [{f:base,g:0.22,d:1.2},{f:base*2,g:0.12,d:1.0},{f:base*2.76,g:0.08,d:0.8},{f:base*5.4,g:0.05,d:0.6}].forEach(p => {
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = p.f; osc.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(p.g, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + p.d);
+    osc.start(t); osc.stop(t + p.d + 0.05);
+  });
+}
+function playTwinkle() {
+  [1046, 1318, 1568, 2093].forEach((f, i) => tone({ freq: f, type: 'triangle', start: i * 0.06, dur: 0.25, gain: 0.12 }));
+}
+function playRainbow() {
+  [523, 587, 659, 784, 880, 1047].forEach((f, i) => tone({ freq: f, type: 'sine', start: i * 0.05, dur: 0.4, gain: 0.13 }));
+}
+function playBloom() {
+  const ctx = getAudioCtx(); const t = ctx.currentTime;
+  [523, 659, 784].forEach(f => {
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f; osc.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.12, t + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    osc.start(t); osc.stop(t + 0.65);
+  });
+}
+function playObjectSound(kind) {
+  ({ pop: playPop, bell: () => playBell(), twinkle: playTwinkle, rainbow: playRainbow, bloom: playBloom }[kind] || playSparkle)();
+}
+
+// --- animal calls ---
 const ANIMAL_SOUNDS = {
   dog()    { tone({ freq: 300, glideTo: 150, type: 'sawtooth', dur: 0.16, gain: 0.25 });
              tone({ freq: 300, glideTo: 150, type: 'sawtooth', start: 0.24, dur: 0.16, gain: 0.25 }); },
@@ -759,22 +516,26 @@ const ANIMAL_SOUNDS = {
   donkey() { tone({ freq: 720, glideTo: 600, type: 'sawtooth', dur: 0.3, gain: 0.16 });
              tone({ freq: 200, glideTo: 140, type: 'sawtooth', start: 0.34, dur: 0.42, gain: 0.2 }); },
 };
+function playAnimalSound(kind) { (ANIMAL_SOUNDS[kind] || playChime)(); }
 
-function playAnimalSound(kind) {
-  const fn = ANIMAL_SOUNDS[kind];
-  if (fn) fn(); else playChime();
+// --- gesture sounds (imitation mode) ---
+function playClap() { noiseBurst({ dur: 0.06, filter: 1500, gain: 0.25 }); noiseBurst({ start: 0.15, dur: 0.06, filter: 1500, gain: 0.25 }); }
+function playKiss() { tone({ freq: 520, glideTo: 200, type: 'sine', dur: 0.28, gain: 0.22 }); }
+function playSlap() { noiseBurst({ dur: 0.05, filter: 2000, gain: 0.3 }); }
+function playGestureSound(kind) {
+  ({ clap: playClap, kiss: playKiss, slap: playSlap, pop: playPop, bell: () => playBell(),
+     bloom: playBloom, twinkle: playTwinkle }[kind] || (() => playChime(700)))();
 }
 
-/* Croatian TTS via SpeechSynthesis */
-let ttsReady = false;
-let hrVoice   = null;
-
+/* =========================================================
+   SPEECH (Croatian; falls back to device voice if no hr voice)
+   ========================================================= */
+let hrVoice = null;
 function initTTS() {
   if (!window.speechSynthesis) return;
   const load = () => {
     const voices = window.speechSynthesis.getVoices();
-    hrVoice = voices.find(v => v.lang.startsWith('hr')) || null;
-    ttsReady = true;
+    hrVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('hr')) || null;
   };
   if (window.speechSynthesis.getVoices().length) load();
   else window.speechSynthesis.addEventListener('voiceschanged', load);
@@ -785,80 +546,106 @@ function speak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.rate  = 0.78;   // parentese: slower
-  u.pitch = 1.22;   // parentese: slightly higher
-  u.volume = 1.0;
-  // Re-check voices each call (iOS can populate the list late).
+  u.rate = 0.78; u.pitch = 1.22; u.volume = 1.0;  // parentese: slower & higher
   const voices = window.speechSynthesis.getVoices();
-  const hr = hrVoice || (voices.find(x => x.lang && x.lang.toLowerCase().startsWith('hr')));
+  const hr = hrVoice || voices.find(x => x.lang && x.lang.toLowerCase().startsWith('hr'));
   if (hr) {
     u.voice = hr; u.lang = 'hr-HR'; hrVoice = hr;
   } else if (voices.length) {
-    // No Croatian voice installed on this device — fall back to the default
-    // voice so the word is still SPOKEN (pronunciation is approximate).
+    // No Croatian voice installed — use the device default so it still speaks.
     const def = voices.find(x => x.default) || voices[0];
-    u.voice = def;
-    u.lang  = def.lang || 'hr-HR';
+    u.voice = def; u.lang = def.lang || 'hr-HR';
   } else {
-    u.lang = 'hr-HR'; // last resort; browser picks something
+    u.lang = 'hr-HR';
   }
   window.speechSynthesis.speak(u);
 }
 
-/* Gentle haptic feedback on tap (Android; iOS Safari ignores silently) */
-function haptic(ms = 18) {
-  if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} }
-}
+/* =========================================================
+   GENERAL HELPERS
+   ========================================================= */
+function haptic(ms = 18) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } }
 
-/* iOS/Safari require a user gesture to "unlock" audio + speech.
-   Call this once from the parent's hold-to-start. */
-function primeAudio() {
+function primeAudio() {   // unlock audio + TTS within a user gesture (iOS)
   try { getAudioCtx(); } catch (e) {}
   if (window.speechSynthesis) {
-    // Speaking a silent utterance inside the gesture unlocks TTS on iOS.
     const u = new SpeechSynthesisUtterance(' ');
-    u.volume = 0;
-    window.speechSynthesis.speak(u);
+    u.volume = 0; window.speechSynthesis.speak(u);
   }
+}
+
+function debounced(fn, wait = 350) {
+  let last = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - last < wait) return;
+    last = now;
+    fn.apply(this, args);
+  };
+}
+
+function spawnRipple(x, y) {
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = (x - 30) + 'px'; r.style.top = (y - 30) + 'px';
+  r.style.width = '60px'; r.style.height = '60px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+}
+
+function setupIdleHint(element) {
+  let idleTimer = null;
+  const reset = () => {
+    element.classList.remove('idle-hint');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => element.classList.add('idle-hint'), 7000);
+  };
+  element.addEventListener('pointerdown', reset);
+  reset();
+  return reset;
+}
+
+function buildDots(containerId, count) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    c.appendChild(d);
+  }
+}
+function updateDots(containerId, index) {
+  document.getElementById(containerId).querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === index));
 }
 
 /* =========================================================
    SCREEN MANAGER
    ========================================================= */
 const screens = {};
-['parent','home','animals','words','causal'].forEach(id => {
-  screens[id] = document.getElementById('screen-' + id);
-});
-
+['parent', 'home', 'card', 'causal'].forEach(id => { screens[id] = document.getElementById('screen-' + id); });
 function showScreen(id) {
   Object.values(screens).forEach(s => s.classList.add('hidden'));
   screens[id].classList.remove('hidden');
 }
 
 /* =========================================================
-   HOLD-TO-START (parent screen guard)
+   HOLD-TO-START (parent guard)
    ========================================================= */
-const holdBtn   = document.getElementById('btn-start-hold');
-const holdFill  = document.getElementById('hold-fill');
+const holdBtn = document.getElementById('btn-start-hold');
+const holdFill = document.getElementById('hold-fill');
 const holdLabel = document.getElementById('hold-label');
-const HOLD_MS   = 1500;
-let holdTimer   = null;
-let holdStart   = null;
-let holdRAF     = null;
-
+const HOLD_MS = 1500;
+let holdTimer = null, holdStart = null, holdRAF = null;
 function holdAnimate() {
   if (!holdStart) return;
-  const elapsed = Date.now() - holdStart;
-  const pct = Math.min(100, (elapsed / HOLD_MS) * 100);
+  const pct = Math.min(100, ((Date.now() - holdStart) / HOLD_MS) * 100);
   holdFill.style.width = pct + '%';
-  holdFill.style.transition = 'none';
   if (pct < 100) holdRAF = requestAnimationFrame(holdAnimate);
 }
-
 holdBtn.addEventListener('pointerdown', () => {
   holdStart = Date.now();
   holdLabel.textContent = 'Drži…';
-  primeAudio();   // unlock audio + TTS within this gesture (needed on iOS)
+  primeAudio();
   holdRAF = requestAnimationFrame(holdAnimate);
   holdTimer = setTimeout(() => {
     cancelAnimationFrame(holdRAF);
@@ -867,16 +654,10 @@ holdBtn.addEventListener('pointerdown', () => {
     setTimeout(() => { showScreen('home'); startBreakTimer(); }, 350);
   }, HOLD_MS);
 });
-
-['pointerup','pointercancel','pointerleave'].forEach(ev => {
-  holdBtn.addEventListener(ev, () => {
-    clearTimeout(holdTimer);
-    cancelAnimationFrame(holdRAF);
-    holdStart = null;
-    holdFill.style.width = '0%';
-    holdLabel.textContent = 'Drži za početak';
-  });
-});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => holdBtn.addEventListener(ev, () => {
+  clearTimeout(holdTimer); cancelAnimationFrame(holdRAF);
+  holdStart = null; holdFill.style.width = '0%'; holdLabel.textContent = 'Drži za početak';
+}));
 
 /* =========================================================
    BREAK TIMER (5 minutes)
@@ -884,11 +665,8 @@ holdBtn.addEventListener('pointerdown', () => {
 let breakTimer = null;
 function startBreakTimer() {
   clearTimeout(breakTimer);
-  breakTimer = setTimeout(() => {
-    document.getElementById('break-overlay').classList.add('visible');
-  }, 5 * 60 * 1000);
+  breakTimer = setTimeout(() => document.getElementById('break-overlay').classList.add('visible'), 5 * 60 * 1000);
 }
-
 document.getElementById('btn-continue-break').addEventListener('click', () => {
   document.getElementById('break-overlay').classList.remove('visible');
   startBreakTimer();
@@ -900,21 +678,7 @@ document.getElementById('btn-home-break').addEventListener('click', () => {
 });
 
 /* =========================================================
-   RIPPLE EFFECT
-   ========================================================= */
-function spawnRipple(x, y) {
-  const r = document.createElement('div');
-  r.className = 'ripple';
-  r.style.left   = (x - 30) + 'px';
-  r.style.top    = (y - 30) + 'px';
-  r.style.width  = '60px';
-  r.style.height = '60px';
-  document.body.appendChild(r);
-  setTimeout(() => r.remove(), 600);
-}
-
-/* =========================================================
-   TWO-TAP EXIT
+   TWO-TAP EXIT ("baby gate")
    ========================================================= */
 function setupExit(btnId, targetScreen) {
   const btn = document.getElementById(btnId);
@@ -922,271 +686,112 @@ function setupExit(btnId, targetScreen) {
   btn.addEventListener('pointerdown', e => {
     e.stopPropagation();
     if (!armed) {
-      armed = true;
-      btn.classList.add('armed');
-      btn.textContent = '✓?';
-      armTimer = setTimeout(() => {
-        armed = false;
-        btn.classList.remove('armed');
-        btn.textContent = '🏠';
-      }, 2000);
+      armed = true; btn.classList.add('armed'); btn.textContent = '✓?';
+      armTimer = setTimeout(() => { armed = false; btn.classList.remove('armed'); btn.textContent = '🏠'; }, 2000);
     } else {
-      clearTimeout(armTimer);
-      armed = false;
-      btn.classList.remove('armed');
-      btn.textContent = '🏠';
+      clearTimeout(armTimer); armed = false; btn.classList.remove('armed'); btn.textContent = '🏠';
       showScreen(targetScreen);
     }
   });
 }
-setupExit('exit-animals', 'home');
-setupExit('exit-words',   'home');
-setupExit('exit-causal',  'home');
+setupExit('exit-card', 'home');
+setupExit('exit-causal', 'home');
 
 /* =========================================================
-   UTILITY: debounce on pointerdown (prevents audio stacking)
+   CARD MODE — shared engine for Animals / Words / Imitation
    ========================================================= */
-function debounced(fn, wait = 350) {
-  let last = 0;
-  return function(...args) {
-    const now = Date.now();
-    if (now - last < wait) return;
-    last = now;
-    fn.apply(this, args);
-  };
+const cardEl = document.getElementById('card');
+const cardEmoji = document.getElementById('card-emoji');
+const cardLabel = document.getElementById('card-label');
+const cardSub = document.getElementById('card-sub');
+
+function triggerCardAnim(name) {
+  cardEmoji.className = 'card-emoji';
+  void cardEmoji.offsetWidth;          // reflow so the animation restarts
+  cardEmoji.classList.add('anim-' + (name || 'bounce'));
 }
+
+const CardMode = {
+  cfg: null, items: null, index: 0, taps: 0, idleReset: null,
+  open(cfg) {
+    this.cfg = cfg; this.items = cfg.items; this.index = 0; this.taps = 0;
+    buildDots('dots-card', this.items.length);
+    this.render();
+    if (!this.idleReset) this.idleReset = setupIdleHint(cardEl);
+    this.idleReset();
+    showScreen('card');
+  },
+  render() {
+    const it = this.items[this.index];
+    cardEmoji.textContent = it.emoji;
+    cardLabel.textContent = it.name;
+    cardSub.textContent = this.cfg.sub ? this.cfg.sub(it) : '';
+    cardEmoji.className = 'card-emoji';
+    updateDots('dots-card', this.index);
+  },
+  tap(e) {
+    const it = this.items[this.index];
+    this.taps++;
+    triggerCardAnim(this.cfg.anim ? this.cfg.anim(it) : 'bounce');
+    haptic();
+    spawnRipple(e.clientX, e.clientY);
+    this.cfg.tap(it, this.taps);
+    if (this.idleReset) this.idleReset();
+  },
+  go(delta) {
+    this.index = (this.index + delta + this.items.length) % this.items.length;
+    this.render();
+    if (this.idleReset) this.idleReset();
+  },
+};
+
+// Per-mode configuration (data + what happens on tap)
+const MODES = {
+  animals: {
+    items: ANIMALS,
+    sub: i => i.sound,
+    anim: () => 'bounce',
+    tap: i => { speak(i.name); setTimeout(() => playAnimalSound(i.sfx), 550); },
+  },
+  words: {
+    items: FIRST_WORDS,
+    sub: i => i.hint,
+    anim: () => 'bounce',
+    tap: i => { speak(i.name); setTimeout(() => playChime(659), 100); },
+  },
+  imitation: {
+    items: IMITATION,
+    sub: i => i.prompt,
+    anim: i => i.anim,
+    tap: (i, taps) => {
+      speak(i.prompt);
+      setTimeout(() => playGestureSound(i.sfx), 200);
+      if (taps % 3 === 0) setTimeout(() => speak(i.reward), 1700); // occasional praise
+    },
+  },
+};
+
+cardEl.addEventListener('pointerdown', debounced(e => CardMode.tap(e)));
+document.getElementById('next-card').addEventListener('pointerdown', debounced(e => { e.stopPropagation(); haptic(); CardMode.go(1); spawnRipple(e.clientX, e.clientY); }));
+document.getElementById('prev-card').addEventListener('pointerdown', debounced(e => { e.stopPropagation(); haptic(); CardMode.go(-1); spawnRipple(e.clientX, e.clientY); }));
+
+document.getElementById('btn-mode-animals').addEventListener('pointerdown', () => { haptic(); CardMode.open(MODES.animals); });
+document.getElementById('btn-mode-words').addEventListener('pointerdown', () => { haptic(); CardMode.open(MODES.words); });
+document.getElementById('btn-mode-imitation').addEventListener('pointerdown', () => { haptic(); CardMode.open(MODES.imitation); });
 
 /* =========================================================
-   IDLE HINT (glow after 7 s inactivity)
+   CAUSE & EFFECT MODE
    ========================================================= */
-function setupIdleHint(element) {
-  let idleTimer = null;
-  const reset = () => {
-    element.classList.remove('idle-hint');
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => element.classList.add('idle-hint'), 7000);
-  };
-  element.addEventListener('pointerdown', reset);
-  reset();
-  return reset; // expose so mode init can reset
-}
-
-/* =========================================================
-   PROGRESS DOTS
-   ========================================================= */
-function buildDots(containerId, count) {
-  const c = document.getElementById(containerId);
-  c.innerHTML = '';
-  for (let i = 0; i < count; i++) {
-    const d = document.createElement('div');
-    d.className = 'dot';
-    c.appendChild(d);
-  }
-}
-function updateDots(containerId, index) {
-  const dots = document.getElementById(containerId).querySelectorAll('.dot');
-  dots.forEach((d, i) => d.classList.toggle('active', i === index));
-}
-
-/* =========================================================
-   MODE 1 — ANIMALS
-   ========================================================= */
-let animalIndex = 0;
-let animalIdleReset = null;
-
-function renderAnimal(idx) {
-  const a = ANIMALS[idx];
-  document.getElementById('animal-emoji').textContent = a.emoji;
-  document.getElementById('animal-label').textContent = a.name;
-  document.getElementById('animal-sound').textContent = a.sound;
-  document.getElementById('animal-card').classList.remove('bouncing');
-  updateDots('dots-animals', idx);
-  if (animalIdleReset) animalIdleReset();
-}
-
-function initAnimals() {
-  animalIndex = 0;
-  buildDots('dots-animals', ANIMALS.length);
-  renderAnimal(0);
-  animalIdleReset = setupIdleHint(document.getElementById('animal-card'));
-}
-
-const animalCard = document.getElementById('animal-card');
-animalCard.addEventListener('pointerdown', debounced(e => {
-  const a = ANIMALS[animalIndex];
-  // visual bounce
-  animalCard.classList.remove('bouncing');
-  void animalCard.offsetWidth; // reflow to restart anim
-  animalCard.classList.add('bouncing');
-  setTimeout(() => animalCard.classList.remove('bouncing'), 500);
-  // feedback
-  haptic();
-  spawnRipple(e.clientX, e.clientY);
-  // audio: say the name, then play the animal's actual sound
-  speak(a.name);
-  setTimeout(() => playAnimalSound(a.sfx), 550);
-  if (animalIdleReset) animalIdleReset();
-}));
-
-document.getElementById('next-animals').addEventListener('pointerdown', debounced(e => {
-  e.stopPropagation();
-  haptic();
-  animalIndex = (animalIndex + 1) % ANIMALS.length;
-  renderAnimal(animalIndex);
-  spawnRipple(e.clientX, e.clientY);
-}));
-
-document.getElementById('prev-animals').addEventListener('pointerdown', debounced(e => {
-  e.stopPropagation();
-  haptic();
-  animalIndex = (animalIndex - 1 + ANIMALS.length) % ANIMALS.length;
-  renderAnimal(animalIndex);
-  spawnRipple(e.clientX, e.clientY);
-}));
-
-document.getElementById('btn-mode-animals').addEventListener('pointerdown', () => {
-  haptic();
-  initAnimals();
-  showScreen('animals');
-});
-
-/* =========================================================
-   MODE 3 — FIRST WORDS
-   ========================================================= */
-let wordIndex = 0;
-let wordIdleReset = null;
-
-function renderWord(idx) {
-  const w = FIRST_WORDS[idx];
-  document.getElementById('word-emoji').textContent   = w.emoji;
-  document.getElementById('word-label').textContent   = w.name;
-  document.getElementById('word-phrase').textContent  = w.phrase;
-  document.getElementById('word-card').classList.remove('bouncing');
-  updateDots('dots-words', idx);
-  if (wordIdleReset) wordIdleReset();
-}
-
-function initWords() {
-  wordIndex = 0;
-  buildDots('dots-words', FIRST_WORDS.length);
-  renderWord(0);
-  wordIdleReset = setupIdleHint(document.getElementById('word-card'));
-}
-
-const wordCard = document.getElementById('word-card');
-wordCard.addEventListener('pointerdown', debounced(e => {
-  const w = FIRST_WORDS[wordIndex];
-  wordCard.classList.remove('bouncing');
-  void wordCard.offsetWidth;
-  wordCard.classList.add('bouncing');
-  setTimeout(() => wordCard.classList.remove('bouncing'), 500);
-  haptic();
-  spawnRipple(e.clientX, e.clientY);
-  speak(w.name);   // read the word itself clearly (e.g. "Mama")
-  setTimeout(() => playChime(659), 100);
-  if (wordIdleReset) wordIdleReset();
-}));
-
-document.getElementById('next-words').addEventListener('pointerdown', debounced(e => {
-  e.stopPropagation();
-  haptic();
-  wordIndex = (wordIndex + 1) % FIRST_WORDS.length;
-  renderWord(wordIndex);
-  spawnRipple(e.clientX, e.clientY);
-}));
-
-document.getElementById('prev-words').addEventListener('pointerdown', debounced(e => {
-  e.stopPropagation();
-  haptic();
-  wordIndex = (wordIndex - 1 + FIRST_WORDS.length) % FIRST_WORDS.length;
-  renderWord(wordIndex);
-  spawnRipple(e.clientX, e.clientY);
-}));
-
-document.getElementById('btn-mode-words').addEventListener('pointerdown', () => {
-  haptic();
-  initWords();
-  showScreen('words');
-});
-
-/* =========================================================
-   MODE 2 — CAUSE & EFFECT
-   ========================================================= */
-function initCausal() {
-  const stage = document.getElementById('causal-stage');
-  stage.innerHTML = '';
-
-  // Layout: place objects in a grid-friendly arrangement, large & spaced
-  const positions = [
-    { top: '10%',  left: '8%'  },
-    { top: '10%',  left: '60%' },
-    { top: '45%',  left: '34%' },
-    { top: '55%',  left: '5%'  },
-    { top: '55%',  left: '65%' },
-  ];
-
-  CAUSAL_OBJECTS.forEach((obj, i) => {
-    const pos = positions[i] || { top: '50%', left: '50%' };
-    const el = document.createElement('div');
-    el.className = 'causal-object';
-    el.style.top      = pos.top;
-    el.style.left     = pos.left;
-    el.style.width    = 'clamp(120px, 22vw, 170px)';
-    el.style.height   = 'clamp(120px, 22vw, 170px)';
-    el.style.fontSize = 'clamp(68px, 14vw, 100px)';
-    el.style.background = obj.color + '22';
-
-    const inner = document.createElement('span');
-    inner.className = 'obj-inner';
-    inner.textContent = obj.emoji;
-    el.appendChild(inner);
-
-    // idle hint
-    setupIdleHint(el);
-
-    let encourageCount = 0;
-    let lastSparkle = 0;
-    // Cause-and-effect: EVERY tap must produce instant visual + haptic feedback
-    // (never dropped). Only the audio is throttled so rapid taps don't stack harshly.
-    el.addEventListener('pointerdown', e => {
-      e.stopPropagation();
-      // always: instant visual response
-      el.classList.remove('tapped');
-      void el.offsetWidth; // restart animation even on rapid re-taps
-      el.classList.add('tapped');
-      setTimeout(() => el.classList.remove('tapped'), 450);
-      spawnParticles(e.clientX, e.clientY, obj.color);
-      spawnRipple(e.clientX, e.clientY);
-      haptic();
-      // audio throttled to ~120ms minimum gap to avoid harsh stacking
-      const now = Date.now();
-      if (now - lastSparkle > 120) {
-        lastSparkle = now;
-        playObjectSound(obj.sound);   // distinct, meaningful sound per icon
-        // occasionally say the object's Croatian name (vocabulary value)
-        encourageCount++;
-        if (encourageCount % 4 === 0) {
-          setTimeout(() => speak(obj.label + '!'), 300);
-        }
-      }
-    });
-
-    stage.appendChild(el);
-  });
-}
-
 function spawnParticles(cx, cy, color) {
   for (let i = 0; i < 10; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
     const size = 8 + Math.random() * 12;
-    p.style.width  = size + 'px';
-    p.style.height = size + 'px';
+    p.style.width = size + 'px'; p.style.height = size + 'px';
     p.style.background = color;
-    p.style.left = cx + 'px';
-    p.style.top  = cy + 'px';
+    p.style.left = cx + 'px'; p.style.top = cy + 'px';
     const angle = (Math.PI * 2 * i) / 10 + Math.random() * 0.5;
-    const dist  = 60 + Math.random() * 80;
+    const dist = 60 + Math.random() * 80;
     p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
     p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
     document.body.appendChild(p);
@@ -1194,19 +799,60 @@ function spawnParticles(cx, cy, color) {
   }
 }
 
-document.getElementById('btn-mode-causal').addEventListener('pointerdown', () => {
-  haptic();
-  initCausal();
-  showScreen('causal');
-});
+function initCausal() {
+  const stage = document.getElementById('causal-stage');
+  stage.innerHTML = '';
+  const positions = [
+    { top: '10%', left: '8%' }, { top: '10%', left: '60%' },
+    { top: '45%', left: '34%' }, { top: '55%', left: '5%' }, { top: '55%', left: '65%' },
+  ];
+  CAUSAL_OBJECTS.forEach((obj, i) => {
+    const pos = positions[i] || { top: '50%', left: '50%' };
+    const el = document.createElement('div');
+    el.className = 'causal-object';
+    el.style.top = pos.top; el.style.left = pos.left;
+    el.style.width = 'clamp(120px, 22vw, 170px)';
+    el.style.height = 'clamp(120px, 22vw, 170px)';
+    el.style.fontSize = 'clamp(68px, 14vw, 100px)';
+    el.style.background = obj.color + '22';
+    const inner = document.createElement('span');
+    inner.className = 'obj-inner';
+    inner.textContent = obj.emoji;
+    el.appendChild(inner);
+    setupIdleHint(el);
+
+    let taps = 0, lastSound = 0;
+    // Cause-and-effect: EVERY tap gives instant visual + haptic feedback;
+    // only the audio is throttled so rapid taps don't stack harshly.
+    el.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      el.classList.remove('tapped');
+      void el.offsetWidth;
+      el.classList.add('tapped');
+      setTimeout(() => el.classList.remove('tapped'), 450);
+      spawnParticles(e.clientX, e.clientY, obj.color);
+      spawnRipple(e.clientX, e.clientY);
+      haptic();
+      const now = Date.now();
+      if (now - lastSound > 120) {
+        lastSound = now;
+        playObjectSound(obj.sound);
+        taps++;
+        if (taps % 4 === 0) setTimeout(() => speak(obj.label + '!'), 300);
+      }
+    });
+    stage.appendChild(el);
+  });
+}
+
+document.getElementById('btn-mode-causal').addEventListener('pointerdown', () => { haptic(); initCausal(); showScreen('causal'); });
 
 /* =========================================================
-   HOME BUTTON
+   GLOBAL TOUCH GUARDS
    ========================================================= */
-// Prevent body scroll/zoom on multi-touch, but allow scrolling the parent screen
+// Block multi-touch zoom, but allow scrolling inside the parent text screen.
 document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 document.addEventListener('touchmove', e => {
-  // Allow normal scrolling only inside the (text-heavy) parent screen
   if (e.target.closest && e.target.closest('#screen-parent')) return;
   e.preventDefault();
 }, { passive: false });
