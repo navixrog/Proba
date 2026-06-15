@@ -56,6 +56,14 @@
       border-radius: 0 12px 12px 0; padding: 12px 16px; max-width: 680px;
       color: #FFE0EA; font-size: clamp(12px, 2vw, 15px); line-height: 1.5; font-style: italic;
     }
+    .sr-loop {
+      display: flex; flex-direction: column; gap: 6px; margin-top: 10px;
+      padding-left: 4px;
+    }
+    .sr-loop span { display: flex; align-items: baseline; gap: 8px; font-size: clamp(13px, 2.3vw, 16px); }
+    .sr-num { background: #FF85A2; color: #fff; border-radius: 50%; width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
+      font-weight: 800; flex-shrink: 0; }
     /* Hold-to-start: parent must hold ~1.5s so a baby can't trigger it */
     #btn-start-hold {
       margin-top: 8px; width: 220px; height: 70px;
@@ -136,6 +144,7 @@
     }
     .card-label { font-size: clamp(28px, 6vw, 52px); font-weight: 800; color: #5A3E8C; text-align: center; letter-spacing: 1px; }
     .card-sub { font-size: clamp(16px, 3vw, 30px); color: #FF85A2; font-weight: 700; text-align: center; max-width: 90vw; line-height: 1.3; }
+    .card-parent { font-size: clamp(11px, 2vw, 15px); color: rgba(91,62,140,0.6); font-style: italic; text-align: center; max-width: 88vw; line-height: 1.45; padding: 0 12px; margin-top: 2px; }
     /* idle hint: gentle glow after inactivity */
     .card.idle-hint .card-emoji { animation: idle-glow 1.6s ease-in-out infinite alternate; }
     @keyframes idle-glow {
@@ -215,6 +224,11 @@
     #break-overlay.visible { opacity: 1; pointer-events: all; }
     #break-overlay h2 { color: #fff; font-size: clamp(22px, 5vw, 36px); text-align: center; }
     #break-overlay p { color: #FFE0EA; font-size: clamp(14px, 2.5vw, 20px); text-align: center; max-width: 560px; line-height: 1.5; }
+    .break-activity {
+      background: rgba(255,133,162,0.25); border-radius: 16px; padding: 14px 20px;
+      color: #fff; font-size: clamp(13px, 2.2vw, 17px); text-align: center;
+      max-width: 520px; line-height: 1.5;
+    }
     #break-overlay .break-emoji { font-size: 72px; }
     #btn-continue-break, #btn-home-break {
       padding: 16px 36px; border: none; border-radius: 40px;
@@ -235,19 +249,31 @@
 
 <!-- ============ PARENT SCREEN ============ -->
 <div class="screen" id="screen-parent">
-  <h1>🌙 Beba Igra</h1>
+  <h1>🌙 Beba Igra – Učimo zajedno</h1>
+
   <div class="parent-box">
-    <strong>Za roditelje:</strong> Ova igra je zamišljena kao kratka zajednička aktivnost
-    roditelja i djeteta (do 5 minuta). Prema preporukama Svjetske zdravstvene organizacije
-    i HZJZ-a, djeca u dobi do dvije godine ne bi uopće trebala provoditi vrijeme pred
-    ekranima. Koristite igru <em>zajedno</em> s djetetom: imenujte slike, ponavljajte
-    riječi, oponašajte zvukove i pokrete. Igra nije zamjena za zajedničko igranje,
-    čitanje i razgovor.
+    <strong>Za roditelje:</strong> Prema WHO-u i HZJZ-u, djeca do 2 godine ne bi trebala
+    biti pred ekranima. Ova igra je kratka zajednička aktivnost (do 5 min) —
+    <em>vi ste učitelj, ekran je samo pomagalo.</em> Koristite je <strong>zajedno</strong>
+    s djetetom, uvijek u kontaktu.
   </div>
+
+  <div class="parent-box">
+    <strong>Kako igrati zajedno — "Imenuj → Pitaj → Čekaj → Proširi":</strong>
+    <div class="sr-loop">
+      <span><span class="sr-num">1</span><span><b>Imenujte</b> — naglas recite naziv slike sporije i višim glasom</span></span>
+      <span><span class="sr-num">2</span><span><b>Pitajte</b> — "Gdje je pas? Vidiš li ga?"</span></span>
+      <span><span class="sr-num">3</span><span><b>Čekajte</b> — dajte bebi trenutak za pogled, glas ili pokret</span></span>
+      <span><span class="sr-num">4</span><span><b>Proširite</b> — "Da! Pas! Pas kaže vau-vau! Bravo!"</span></span>
+    </div>
+  </div>
+
   <div class="tip">
-    💡 Savjet: imenujte sliku, pričekajte djetetov pogled ili glas, pa ponovite riječ ili
-    pokret. Ponavljanje pomaže učenju.
+    💡 <strong>Roditeljski govor:</strong> govorite <em>sporije</em>, <em>višim glasom</em>
+    i s <em>naglašenom intonacijom</em>. Istraživanja pokazuju da bebe koje čuju ovakav
+    govor razvijaju veći rječnik.
   </div>
+
   <button id="btn-start-hold" aria-label="Drži za početak">
     <div class="hold-fill" id="hold-fill"></div>
     <span id="hold-label">Drži za početak</span>
@@ -280,6 +306,7 @@
       <span class="card-emoji" id="card-emoji"></span>
       <span class="card-label" id="card-label"></span>
       <span class="card-sub" id="card-sub"></span>
+      <span class="card-parent" id="card-parent"></span>
     </div>
   </div>
 </div>
@@ -304,8 +331,11 @@
 <div id="break-overlay">
   <div class="break-emoji">☕</div>
   <h2>Pauza, roditelju!</h2>
-  <p>Prošlo je oko 5 minuta igre. Preporučamo kratku pauzu —
-     razgovarajte s djetetom, zagrlite ga ili izađite na zrak. 🌿</p>
+  <p>Prošlo je oko 5 minuta igre. Preporučamo kratku pauzu.</p>
+  <div class="break-activity">
+    🎯 <strong>Aktivnost bez ekrana:</strong> Zagrlite bebu, uzmite pravu igračku i
+    imenujte je zajedno — "Lopta! Hvataj loptu!" Ili izađite na zrak. 🌿
+  </div>
   <button id="btn-continue-break">Još malo →</button>
   <button id="btn-home-break">Natrag na početak</button>
 </div>
@@ -315,47 +345,73 @@
    CONFIG — edit these arrays to change the content.
    ========================================================= */
 
-// Animals: name + on-screen sound label + "sfx" (synthesized call).
+// Animals: name + on-screen sound label + synthesized call + dialogic parent hint.
 const ANIMALS = [
-  { emoji: '🐶', name: 'Pas',     sound: 'vau-vau',  sfx: 'dog'    },
-  { emoji: '🐱', name: 'Mačka',   sound: 'mijau',    sfx: 'cat'    },
-  { emoji: '🐄', name: 'Krava',   sound: 'muu',      sfx: 'cow'    },
-  { emoji: '🦆', name: 'Patka',   sound: 'ga-ga',    sfx: 'duck'   },
-  { emoji: '🐓', name: 'Pijetao', sound: 'kukuriku', sfx: 'rooster'},
-  { emoji: '🐑', name: 'Ovca',    sound: 'bee',      sfx: 'sheep'  },
-  { emoji: '🐸', name: 'Žaba',    sound: 'kva-kva',  sfx: 'frog'   },
-  { emoji: '🐷', name: 'Svinja',  sound: 'rok-rok',  sfx: 'pig'    },
-  { emoji: '🐴', name: 'Konj',    sound: 'i-ha-ha',  sfx: 'horse'  },
-  { emoji: '🐦', name: 'Ptica',   sound: 'živ-živ',  sfx: 'bird'   },
-  { emoji: '🫏', name: 'Magarac', sound: 'i-a',      sfx: 'donkey' },
+  { emoji: '🐶', name: 'Pas',     sound: 'vau-vau',  sfx: 'dog',     parentHint: '💬 Pitajte: "Gdje je pas?" — čekajte bebin pogled' },
+  { emoji: '🐱', name: 'Mačka',   sound: 'mijau',    sfx: 'cat',     parentHint: '💬 Recite: "Mačka kaže mijau!" — oponašajte zajedno' },
+  { emoji: '🐄', name: 'Krava',   sound: 'muu',      sfx: 'cow',     parentHint: '💬 Pitajte: "Što kaže krava? Muu!" — pa čekajte' },
+  { emoji: '🦆', name: 'Patka',   sound: 'kva-kva',  sfx: 'duck',    parentHint: '💬 Recite: "Patka kaže kva-kva!" — plješćite zajedno' },
+  { emoji: '🐓', name: 'Pijetao', sound: 'kukuriku', sfx: 'rooster', parentHint: '💬 Pitajte: "Što kaže pijetao? Kuku-riku!" — s naglašenom intonacijom' },
+  { emoji: '🐑', name: 'Ovca',    sound: 'bee-bee',  sfx: 'sheep',   parentHint: '💬 Recite: "Ovca kaže bee-bee!" — oponašajte zajedno' },
+  { emoji: '🐸', name: 'Žaba',    sound: 'kre-kre',  sfx: 'frog',    parentHint: '💬 Pitajte: "Gdje je žaba? Kre-kre!" — čekajte' },
+  { emoji: '🐷', name: 'Svinja',  sound: 'rok-rok',  sfx: 'pig',     parentHint: '💬 Recite: "Svinja kaže rok-rok!" — smiješnim glasom' },
+  { emoji: '🐴', name: 'Konj',    sound: 'i-ha-ha',  sfx: 'horse',   parentHint: '💬 Pitajte: "Što kaže konj? I-ha-ha!" — čekajte odgovor' },
+  { emoji: '🐦', name: 'Ptica',   sound: 'živ-živ',  sfx: 'bird',    parentHint: '💬 Recite: "Ptica kaže živ-živ!" — mahajte ručicom' },
+  { emoji: '🫏', name: 'Magarac', sound: 'i-a',      sfx: 'donkey',  parentHint: '💬 Pitajte: "Što kaže magarac? I-a!" — naglašeno' },
 ];
 
-// First words: name (spoken) + a short parent hint shown under it.
+// First words: KORALJE-aligned (8–16 months). sub = spoken label; parentHint = dialogic prompt.
 const FIRST_WORDS = [
-  { emoji: '👩', name: 'Mama',  hint: 'To je mama!' },
-  { emoji: '👨', name: 'Tata',  hint: 'To je tata!' },
-  { emoji: '👵', name: 'Baka',  hint: 'To je baka!' },
-  { emoji: '👴', name: 'Deda',  hint: 'To je deda!' },
-  { emoji: '👶', name: 'Beba',  hint: 'To je beba!' },
-  { emoji: '⚽', name: 'Lopta', hint: 'Hvataj loptu!' },
-  { emoji: '🚗', name: 'Auto',  hint: 'Vroom, auto!' },
-  { emoji: '💧', name: 'Voda',  hint: 'Pij vodu!' },
-  { emoji: '🧸', name: 'Medo',  hint: 'Medo je sladak!' },
-  { emoji: '😋', name: 'Am-am', hint: 'Njam-njam, jelo!' },
-  { emoji: '👋', name: 'Pa-pa', hint: 'Mahni pa-pa!' },
+  { emoji: '👩', name: 'Mama',  hint: 'To je mama!',       parentHint: '💬 Pitajte: "Gdje je mama?" — pa čekajte' },
+  { emoji: '👨', name: 'Tata',  hint: 'To je tata!',       parentHint: '💬 Pitajte: "Gdje je tata?" — čekajte bebin pogled' },
+  { emoji: '👵', name: 'Baka',  hint: 'To je baka!',       parentHint: '💬 Recite: "Baka! Pozdrav, baka!" — mahnite' },
+  { emoji: '👴', name: 'Deda',  hint: 'To je deda!',       parentHint: '💬 Recite: "Deda! Pa-pa, deda!" — mahnite zajedno' },
+  { emoji: '👶', name: 'Beba',  hint: 'To je beba!',       parentHint: '💬 Pitajte: "Gdje je beba?" — pokažite ogledalo' },
+  { emoji: '⚽', name: 'Lopta', hint: 'Hvataj loptu!',     parentHint: '💬 Uzmite pravu loptu: "Lopta! Daj loptu!"' },
+  { emoji: '🚗', name: 'Auto',  hint: 'Brm-brm, auto!',   parentHint: '💬 Pitajte: "Gdje je auto? Brm-brm!" — s naglašenom intonacijom' },
+  { emoji: '💧', name: 'Voda',  hint: 'Pij vodu!',        parentHint: '💬 Recite: "Voda! Pi-pi!" — ponudite bočicu' },
+  { emoji: '🧸', name: 'Medo',  hint: 'Medo je sladak!',  parentHint: '💬 Uzmite meda: "Medo! Zagrli meda!" — čekajte' },
+  { emoji: '🐱', name: 'Maca',  hint: 'Maca kaže mijau!', parentHint: '💬 Pitajte: "Gdje je maca? Mijau!" — čekajte odgovor' },
+  { emoji: '🍼', name: 'Duda',  hint: 'Duda, duda!',      parentHint: '💬 Recite: "Duda! Je li bebi duda?" — čekajte' },
+  { emoji: '😋', name: 'Am-am', hint: 'Njam-njam, jelo!', parentHint: '💬 Recite: "Am-am! Njam-njam!" — s razdragane izrazom' },
+  { emoji: '👋', name: 'Pa-pa', hint: 'Mahni pa-pa!',     parentHint: '💬 Mahnite bebi: "Pa-pa!" — čekajte da maše nazad' },
 ];
 
-// Imitation / gestures: parent says the prompt and does it WITH the baby.
-// anim = the demo animation; sfx = a fun sound; reward = occasional praise.
+// Imitation / gestures: screen shows demo animation; parent coaches real-world gesture.
+// sub = spoken prompt; parentHint = what parent should physically do with baby.
 const IMITATION = [
-  { emoji: '👋', name: 'Pa-pa',      prompt: 'Mahni ručicom! Pa-pa!',          anim: 'wave',     sfx: 'twinkle', reward: 'Bravo! Pa-pa!' },
-  { emoji: '✋', name: 'Daj pet',    prompt: 'Daj pet! Pljes!',                anim: 'highfive', sfx: 'slap',    reward: 'Bravo! Daj pet!' },
-  { emoji: '👏', name: 'Plješćemo',  prompt: 'Plješći ručicama! Pljes-pljes!', anim: 'clap',     sfx: 'clap',    reward: 'Bravo! Pljes-pljes!' },
-  { emoji: '😘', name: 'Pusa',       prompt: 'Baci pusu! Mljac!',              anim: 'kiss',     sfx: 'kiss',    reward: 'Bravo! Pusa za tebe!' },
-  { emoji: '🙌', name: 'Tako velik', prompt: 'Koliko si velik? Toliko velik!', anim: 'big',      sfx: 'bell',    reward: 'Tako veliki!' },
-  { emoji: '🙈', name: 'Ku-kuc',     prompt: 'Gdje je beba? Ku-kuc!',          anim: 'peek',     sfx: 'pop',     reward: 'Tu je beba! Ku-kuc!' },
-  { emoji: '🤗', name: 'Zagrljaj',   prompt: 'Zagrli! Veliki zagrljaj!',       anim: 'hug',      sfx: 'bloom',   reward: 'Bravo! Kako lijepo!' },
-  { emoji: '👍', name: 'Bravo',      prompt: 'Bravo! Palac gore!',             anim: 'thumb',    sfx: 'twinkle', reward: 'Bravo! Svaka čast!' },
+  { emoji: '👋', name: 'Pa-pa',
+    sub: 'Mahni ručicom! Pa-pa!',
+    parentHint: '💬 Vi mahnite bebi — čekajte da beba mahne nazad',
+    anim: 'wave', sfx: 'twinkle', reward: 'Bravo! Pa-pa!' },
+  { emoji: '✋', name: 'Daj pet',
+    sub: 'Daj pet! Pljesni!',
+    parentHint: '💬 Pružite ruku: "Daj pet!" — čekajte bebin odgovor',
+    anim: 'highfive', sfx: 'slap', reward: 'Bravo! Daj pet!' },
+  { emoji: '👏', name: 'Plješćemo',
+    sub: 'Plješći ručicama! Pljes-pljes!',
+    parentHint: '💬 Plješćite zajedno s bebom — pratite njen ritam',
+    anim: 'clap', sfx: 'clap', reward: 'Bravo! Pljes-pljes!' },
+  { emoji: '😘', name: 'Pusa',
+    sub: 'Baci pusu! Mljac!',
+    parentHint: '💬 Bacite pusu bebi: "Mljac!" — ona će vas oponašati',
+    anim: 'kiss', sfx: 'kiss', reward: 'Bravo! Pusa za tebe!' },
+  { emoji: '🙌', name: 'Tako velik',
+    sub: 'Koliko si velik? Toliko velik!',
+    parentHint: '💬 Podignite bebine ručice gore: "Toliko velik!" — s osmijehom',
+    anim: 'big', sfx: 'bell', reward: 'Tako veliki!' },
+  { emoji: '🙈', name: 'Ku-kuc',
+    sub: 'Gdje je beba? Ku-kuc!',
+    parentHint: '💬 Sakrijte lice rukama pa otkrijte: "Ku-kuc! Tu sam!"',
+    anim: 'peek', sfx: 'pop', reward: 'Tu je beba! Ku-kuc!' },
+  { emoji: '🤗', name: 'Zagrljaj',
+    sub: 'Zagrli! Veliki zagrljaj!',
+    parentHint: '💬 Raširite ruke i zagrlite bebu: "Zagrljaj!" — toplo i nježno',
+    anim: 'hug', sfx: 'bloom', reward: 'Bravo! Kako lijepo!' },
+  { emoji: '👍', name: 'Bravo',
+    sub: 'Bravo! Palac gore!',
+    parentHint: '💬 Pokažite palac gore: "Bravo!" — čekajte bebu da vas oponaša',
+    anim: 'thumb', sfx: 'twinkle', reward: 'Bravo! Svaka čast!' },
 ];
 
 // Cause-and-effect objects (each with a distinct meaningful sound).
@@ -704,6 +760,7 @@ const cardEl = document.getElementById('card');
 const cardEmoji = document.getElementById('card-emoji');
 const cardLabel = document.getElementById('card-label');
 const cardSub = document.getElementById('card-sub');
+const cardParent = document.getElementById('card-parent');
 
 function triggerCardAnim(name) {
   cardEmoji.className = 'card-emoji';
@@ -726,6 +783,7 @@ const CardMode = {
     cardEmoji.textContent = it.emoji;
     cardLabel.textContent = it.name;
     cardSub.textContent = this.cfg.sub ? this.cfg.sub(it) : '';
+    cardParent.textContent = this.cfg.parentHint ? this.cfg.parentHint(it) : '';
     cardEmoji.className = 'card-emoji';
     updateDots('dots-card', this.index);
   },
@@ -750,23 +808,26 @@ const MODES = {
   animals: {
     items: ANIMALS,
     sub: i => i.sound,
+    parentHint: i => i.parentHint,
     anim: () => 'bounce',
     tap: i => { speak(i.name); setTimeout(() => playAnimalSound(i.sfx), 550); },
   },
   words: {
     items: FIRST_WORDS,
     sub: i => i.hint,
+    parentHint: i => i.parentHint,
     anim: () => 'bounce',
     tap: i => { speak(i.name); setTimeout(() => playChime(659), 100); },
   },
   imitation: {
     items: IMITATION,
-    sub: i => i.prompt,
+    sub: i => i.sub,
+    parentHint: i => i.parentHint,
     anim: i => i.anim,
     tap: (i, taps) => {
-      speak(i.prompt);
+      speak(i.sub);
       setTimeout(() => playGestureSound(i.sfx), 200);
-      if (taps % 3 === 0) setTimeout(() => speak(i.reward), 1700); // occasional praise
+      if (taps % 3 === 0) setTimeout(() => speak(i.reward), 1700);
     },
   },
 };
