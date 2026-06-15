@@ -496,19 +496,20 @@
    CONFIG — edit these arrays to change content
    ========================================================= */
 
-// Animals: emoji, Croatian name, spoken phrase, sound label
+// Animals: emoji, Croatian name, on-screen sound label, and "sfx" which
+// selects a synthesized animal sound (see playAnimalSound below).
 const ANIMALS = [
-  { emoji: '🐶', name: 'Pas',     phrase: 'Pas. Pas kaže vau-vau!',     sound: 'vau-vau'   },
-  { emoji: '🐱', name: 'Mačka',   phrase: 'Mačka. Mačka kaže mijau!',   sound: 'mijau'     },
-  { emoji: '🐄', name: 'Krava',   phrase: 'Krava. Krava kaže muu!',      sound: 'muu'       },
-  { emoji: '🦆', name: 'Patka',   phrase: 'Patka. Patka kaže ga-ga!',    sound: 'ga-ga'     },
-  { emoji: '🐓', name: 'Pijetao', phrase: 'Pijetao. Pijetao kaže kukuriku!', sound: 'kukuriku' },
-  { emoji: '🐑', name: 'Ovca',    phrase: 'Ovca. Ovca kaže bee!',        sound: 'bee'       },
-  { emoji: '🐸', name: 'Žaba',    phrase: 'Žaba. Žaba kaže kva-kva!',    sound: 'kva-kva'   },
-  { emoji: '🐷', name: 'Svinja',  phrase: 'Svinja. Svinja kaže rok-rok!',sound: 'rok-rok'   },
-  { emoji: '🐴', name: 'Konj',    phrase: 'Konj. Konj kaže i-ha-ha!',    sound: 'i-ha-ha'   },
-  { emoji: '🐦', name: 'Ptica',   phrase: 'Ptica. Ptica kaže živ-živ!',  sound: 'živ-živ'   },
-  { emoji: '🫏', name: 'Magarac', phrase: 'Magarac. Magarac kaže i-a!',  sound: 'i-a'       },
+  { emoji: '🐶', name: 'Pas',     sound: 'vau-vau',  sfx: 'dog'    },
+  { emoji: '🐱', name: 'Mačka',   sound: 'mijau',    sfx: 'cat'    },
+  { emoji: '🐄', name: 'Krava',   sound: 'muu',      sfx: 'cow'    },
+  { emoji: '🦆', name: 'Patka',   sound: 'ga-ga',    sfx: 'duck'   },
+  { emoji: '🐓', name: 'Pijetao', sound: 'kukuriku', sfx: 'rooster'},
+  { emoji: '🐑', name: 'Ovca',    sound: 'bee',      sfx: 'sheep'  },
+  { emoji: '🐸', name: 'Žaba',    sound: 'kva-kva',  sfx: 'frog'   },
+  { emoji: '🐷', name: 'Svinja',  sound: 'rok-rok',  sfx: 'pig'    },
+  { emoji: '🐴', name: 'Konj',    sound: 'i-ha-ha',  sfx: 'horse'  },
+  { emoji: '🐦', name: 'Ptica',   sound: 'živ-živ',  sfx: 'bird'   },
+  { emoji: '🫏', name: 'Magarac', sound: 'i-a',      sfx: 'donkey' },
 ];
 
 // First words: emoji, word, short spoken phrase
@@ -692,6 +693,78 @@ function playObjectSound(kind) {
   }
 }
 
+/* ---- Synthesized ANIMAL sounds (no audio files; all Web Audio) ----
+   These are friendly approximations of each animal's call, built from
+   small tone/noise helpers so they stay short and gentle. */
+
+// A single shaped tone, optionally gliding in pitch with optional vibrato.
+function tone(opt) {
+  const ctx = getAudioCtx();
+  const t0 = ctx.currentTime + (opt.start || 0);
+  const dur = opt.dur || 0.3;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = opt.type || 'sine';
+  osc.frequency.setValueAtTime(opt.freq, t0);
+  if (opt.glideTo) osc.frequency.exponentialRampToValueAtTime(opt.glideTo, t0 + dur);
+  osc.connect(g); g.connect(ctx.destination);
+  const peak = opt.gain || 0.2;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak, t0 + Math.min(0.04, dur * 0.25));
+  g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+  if (opt.vibrato) {
+    const lfo = ctx.createOscillator();
+    const lg = ctx.createGain();
+    lfo.frequency.value = opt.vibrato.rate;
+    lg.gain.value = opt.vibrato.depth;
+    lfo.connect(lg); lg.connect(osc.frequency);
+    lfo.start(t0); lfo.stop(t0 + dur);
+  }
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+
+// A short band-passed noise burst (for chirps / quacks / clucks).
+function noiseBurst(opt) {
+  const ctx = getAudioCtx();
+  const t0 = ctx.currentTime + (opt.start || 0);
+  const dur = opt.dur || 0.1;
+  const n = Math.floor(ctx.sampleRate * dur);
+  const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const f = ctx.createBiquadFilter();
+  f.type = 'bandpass'; f.frequency.value = opt.filter || 1200; f.Q.value = opt.q || 5;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(opt.gain || 0.2, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+  src.connect(f); f.connect(g); g.connect(ctx.destination);
+  src.start(t0); src.stop(t0 + dur);
+}
+
+const ANIMAL_SOUNDS = {
+  dog()    { tone({ freq: 300, glideTo: 150, type: 'sawtooth', dur: 0.16, gain: 0.25 });
+             tone({ freq: 300, glideTo: 150, type: 'sawtooth', start: 0.24, dur: 0.16, gain: 0.25 }); },
+  cat()    { tone({ freq: 520, glideTo: 880, type: 'sawtooth', dur: 0.18, gain: 0.16 });
+             tone({ freq: 880, glideTo: 480, type: 'sawtooth', start: 0.18, dur: 0.34, gain: 0.16 }); },
+  cow()    { tone({ freq: 180, glideTo: 130, type: 'sawtooth', dur: 0.85, gain: 0.25, vibrato: { rate: 6, depth: 8 } }); },
+  duck()   { for (let i = 0; i < 2; i++) tone({ freq: 430, glideTo: 300, type: 'square', start: i * 0.2, dur: 0.13, gain: 0.13 }); },
+  rooster(){ let s = 0; [[600,0.15],[920,0.2],[720,0.2],[500,0.34]].forEach(([f,d]) => { tone({ freq: f, type: 'sawtooth', start: s, dur: d, gain: 0.15 }); s += d; }); },
+  sheep()  { tone({ freq: 380, glideTo: 330, type: 'sawtooth', dur: 0.6, gain: 0.16, vibrato: { rate: 16, depth: 28 } }); },
+  frog()   { for (let i = 0; i < 3; i++) tone({ freq: 150, type: 'square', start: i * 0.13, dur: 0.09, gain: 0.2 }); },
+  pig()    { for (let i = 0; i < 2; i++) { tone({ freq: 320, glideTo: 200, type: 'sawtooth', start: i * 0.22, dur: 0.12, gain: 0.16 }); noiseBurst({ start: i * 0.22, dur: 0.12, filter: 500, gain: 0.1 }); } },
+  horse()  { tone({ freq: 820, glideTo: 280, type: 'sawtooth', dur: 0.6, gain: 0.15, vibrato: { rate: 20, depth: 45 } }); },
+  bird()   { for (let i = 0; i < 3; i++) tone({ freq: 2000 + i * 250, glideTo: 2600, type: 'sine', start: i * 0.13, dur: 0.08, gain: 0.12 }); },
+  donkey() { tone({ freq: 720, glideTo: 600, type: 'sawtooth', dur: 0.3, gain: 0.16 });
+             tone({ freq: 200, glideTo: 140, type: 'sawtooth', start: 0.34, dur: 0.42, gain: 0.2 }); },
+};
+
+function playAnimalSound(kind) {
+  const fn = ANIMAL_SOUNDS[kind];
+  if (fn) fn(); else playChime();
+}
+
 /* Croatian TTS via SpeechSynthesis */
 let ttsReady = false;
 let hrVoice   = null;
@@ -712,15 +785,23 @@ function speak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang  = 'hr-HR';
   u.rate  = 0.78;   // parentese: slower
   u.pitch = 1.22;   // parentese: slightly higher
   u.volume = 1.0;
-  // Re-check voices on every call: on iOS the list can populate late, so a
-  // Croatian voice may only become available after the first interaction.
+  // Re-check voices each call (iOS can populate the list late).
   const voices = window.speechSynthesis.getVoices();
-  const v = hrVoice || voices.find(x => x.lang && x.lang.toLowerCase().startsWith('hr'));
-  if (v) { u.voice = v; hrVoice = v; }
+  const hr = hrVoice || (voices.find(x => x.lang && x.lang.toLowerCase().startsWith('hr')));
+  if (hr) {
+    u.voice = hr; u.lang = 'hr-HR'; hrVoice = hr;
+  } else if (voices.length) {
+    // No Croatian voice installed on this device — fall back to the default
+    // voice so the word is still SPOKEN (pronunciation is approximate).
+    const def = voices.find(x => x.default) || voices[0];
+    u.voice = def;
+    u.lang  = def.lang || 'hr-HR';
+  } else {
+    u.lang = 'hr-HR'; // last resort; browser picks something
+  }
   window.speechSynthesis.speak(u);
 }
 
@@ -941,9 +1022,9 @@ animalCard.addEventListener('pointerdown', debounced(e => {
   // feedback
   haptic();
   spawnRipple(e.clientX, e.clientY);
-  // audio
-  speak(a.phrase);
-  setTimeout(() => playChime(), 100);
+  // audio: say the name, then play the animal's actual sound
+  speak(a.name);
+  setTimeout(() => playAnimalSound(a.sfx), 550);
   if (animalIdleReset) animalIdleReset();
 }));
 
