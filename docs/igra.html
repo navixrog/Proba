@@ -526,13 +526,14 @@ const FIRST_WORDS = [
   { emoji: '👋', name: 'Pa-pa',  phrase: 'Pa-pa! Mahni pa-pa!' },
 ];
 
-// Cause-and-effect objects
+// Cause-and-effect objects. "sound" selects a distinct, meaningful synth
+// voice per icon (see playObjectSound below).
 const CAUSAL_OBJECTS = [
-  { emoji: '🎈', label: 'balon',     color: '#FF4D8D', encouragements: ['Bravo!', 'Još jednom?'] },
-  { emoji: '⭐', label: 'zvijezda',  color: '#FFD700', encouragements: ['Vidi!', 'Sjajno!'] },
-  { emoji: '🔔', label: 'zvono',     color: '#FFA84E', encouragements: ['Zvoni!', 'Bravo!'] },
-  { emoji: '🌈', label: 'duga',      color: '#5BB8FF', encouragements: ['Vidi dugu!', 'Lijepo!'] },
-  { emoji: '🌺', label: 'cvijet',    color: '#FF85A2', encouragements: ['Cvijet!', 'Još jednom?'] },
+  { emoji: '🎈', label: 'balon',    color: '#FF4D8D', sound: 'pop'     },
+  { emoji: '⭐', label: 'zvijezda', color: '#FFD700', sound: 'twinkle' },
+  { emoji: '🔔', label: 'zvono',    color: '#FFA84E', sound: 'bell'    },
+  { emoji: '🌈', label: 'duga',     color: '#5BB8FF', sound: 'rainbow' },
+  { emoji: '🌺', label: 'cvijet',   color: '#FF85A2', sound: 'bloom'   },
 ];
 
 /* =========================================================
@@ -580,6 +581,117 @@ function playSparkle() {
   }
 }
 
+/* ---- Distinct "meaningful" sounds for the cause-and-effect icons ---- */
+
+// Balloon: a soft "pop" — quick pitch-drop blip + short noise burst
+function playPop() {
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.connect(g); g.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(700, t);
+  osc.frequency.exponentialRampToValueAtTime(120, t + 0.12);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.3, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+  osc.start(t); osc.stop(t + 0.2);
+  // brief noise burst for the "pop" texture
+  const dur = 0.08;
+  const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const noise = ctx.createBufferSource(); noise.buffer = buffer;
+  const ng = ctx.createGain(); ng.gain.value = 0.25;
+  noise.connect(ng); ng.connect(ctx.destination);
+  noise.start(t);
+}
+
+// Bell: fundamental + inharmonic overtones with a long, ringing decay
+function playBell(base = 660) {
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+  const partials = [
+    { f: base,        g: 0.22, d: 1.2 },
+    { f: base * 2.0,  g: 0.12, d: 1.0 },
+    { f: base * 2.76, g: 0.08, d: 0.8 },
+    { f: base * 5.4,  g: 0.05, d: 0.6 },
+  ];
+  partials.forEach(p => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = p.f;
+    osc.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(p.g, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + p.d);
+    osc.start(t); osc.stop(t + p.d + 0.05);
+  });
+}
+
+// Star: quick ascending high "twinkle"
+function playTwinkle() {
+  const ctx = getAudioCtx();
+  const notes = [1046, 1318, 1568, 2093];
+  notes.forEach((f, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'triangle'; osc.frequency.value = f;
+    osc.connect(g); g.connect(ctx.destination);
+    const t = ctx.currentTime + i * 0.06;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.12, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    osc.start(t); osc.stop(t + 0.3);
+  });
+}
+
+// Rainbow: gentle ascending harp-like glissando
+function playRainbow() {
+  const ctx = getAudioCtx();
+  const scale = [523, 587, 659, 784, 880, 1047];
+  scale.forEach((f, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g); g.connect(ctx.destination);
+    const t = ctx.currentTime + i * 0.05;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.13, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    osc.start(t); osc.stop(t + 0.45);
+  });
+}
+
+// Flower: a soft major chord that swells open (a "bloom")
+function playBloom() {
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+  [523, 659, 784].forEach(f => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.12, t + 0.12); // swell in
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    osc.start(t); osc.stop(t + 0.65);
+  });
+}
+
+// Dispatcher: pick the right sound for an object
+function playObjectSound(kind) {
+  switch (kind) {
+    case 'pop':     playPop();     break;
+    case 'bell':    playBell();    break;
+    case 'twinkle': playTwinkle(); break;
+    case 'rainbow': playRainbow(); break;
+    case 'bloom':   playBloom();   break;
+    default:        playSparkle();
+  }
+}
+
 /* Croatian TTS via SpeechSynthesis */
 let ttsReady = false;
 let hrVoice   = null;
@@ -604,7 +716,11 @@ function speak(text) {
   u.rate  = 0.78;   // parentese: slower
   u.pitch = 1.22;   // parentese: slightly higher
   u.volume = 1.0;
-  if (hrVoice) u.voice = hrVoice;
+  // Re-check voices on every call: on iOS the list can populate late, so a
+  // Croatian voice may only become available after the first interaction.
+  const voices = window.speechSynthesis.getVoices();
+  const v = hrVoice || voices.find(x => x.lang && x.lang.toLowerCase().startsWith('hr'));
+  if (v) { u.voice = v; hrVoice = v; }
   window.speechSynthesis.speak(u);
 }
 
@@ -885,7 +1001,7 @@ wordCard.addEventListener('pointerdown', debounced(e => {
   setTimeout(() => wordCard.classList.remove('bouncing'), 500);
   haptic();
   spawnRipple(e.clientX, e.clientY);
-  speak(w.phrase);
+  speak(w.name);   // read the word itself clearly (e.g. "Mama")
   setTimeout(() => playChime(659), 100);
   if (wordIdleReset) wordIdleReset();
 }));
@@ -965,12 +1081,11 @@ function initCausal() {
       const now = Date.now();
       if (now - lastSparkle > 120) {
         lastSparkle = now;
-        playSparkle();
-        // occasional warm verbal encouragement (not every tap)
+        playObjectSound(obj.sound);   // distinct, meaningful sound per icon
+        // occasionally say the object's Croatian name (vocabulary value)
         encourageCount++;
         if (encourageCount % 4 === 0) {
-          const enc = obj.encouragements[Math.floor(Math.random() * obj.encouragements.length)];
-          setTimeout(() => speak(enc), 300);
+          setTimeout(() => speak(obj.label + '!'), 300);
         }
       }
     });
