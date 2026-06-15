@@ -17,7 +17,7 @@
       user-select: none;
     }
     html, body {
-      width: 100%; height: 100%; overflow: hidden;
+      width: 100%; height: 100%; height: 100dvh; overflow: hidden;
       background: #FFF8F0;
       font-family: 'Helvetica Neue', Arial, sans-serif;
       touch-action: none;
@@ -39,7 +39,8 @@
        ===================================================== */
     #screen-parent {
       background: linear-gradient(160deg, #7B5EA7 0%, #5A3E8C 100%);
-      padding: 32px;
+      padding: calc(32px + env(safe-area-inset-top)) calc(32px + env(safe-area-inset-right))
+               calc(32px + env(safe-area-inset-bottom)) calc(32px + env(safe-area-inset-left));
       gap: 20px;
       justify-content: flex-start;
       overflow-y: auto;
@@ -102,9 +103,12 @@
        SHARED GAME CHROME (header, exit, dots, nav arrows)
        ===================================================== */
     .game-header {
-      position: absolute; top: 0; left: 0; right: 0; height: 72px;
+      position: absolute; top: 0; left: 0; right: 0;
+      height: calc(72px + env(safe-area-inset-top));
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px; z-index: 10;
+      padding: env(safe-area-inset-top) calc(20px + env(safe-area-inset-right))
+               0 calc(20px + env(safe-area-inset-left));
+      z-index: 10;
     }
     /* Two-tap exit: first tap arms, second exits ("baby gate") */
     .btn-exit {
@@ -114,7 +118,7 @@
       transition: background 0.2s; flex-shrink: 0;
     }
     .btn-exit.armed { background: rgba(255,133,162,0.7); }
-    .nav-group { position: absolute; top: 16px; right: 20px; display: flex; gap: 12px; z-index: 5; }
+    .nav-group { position: absolute; top: calc(16px + env(safe-area-inset-top)); right: calc(20px + env(safe-area-inset-right)); display: flex; gap: 12px; z-index: 5; }
     .btn-nav {
       width: 72px; height: 72px; border: none; border-radius: 50%;
       color: #fff; font-size: 32px; display: flex; align-items: center; justify-content: center;
@@ -130,7 +134,7 @@
     /* =====================================================
        CARD SCREEN (shared by Animals / Words / Imitation)
        ===================================================== */
-    #screen-card { background: #FFF8F0; padding-top: 72px; }
+    #screen-card { background: #FFF8F0; padding-top: calc(72px + env(safe-area-inset-top)); }
     .card-stage {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; width: 100%; position: relative;
@@ -174,7 +178,7 @@
     /* =====================================================
        CAUSE & EFFECT SCREEN
        ===================================================== */
-    #screen-causal { background: #0A0A2A; padding-top: 72px; }
+    #screen-causal { background: #0A0A2A; padding-top: calc(72px + env(safe-area-inset-top)); }
     #screen-causal .btn-exit { background: rgba(255,255,255,0.15); }
     #screen-causal .btn-exit.armed { background: rgba(255,133,162,0.7); }
     .causal-stage { flex: 1; width: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
@@ -243,6 +247,17 @@
       background: rgba(255,133,162,0.3); transform: scale(0); animation: ripple-out 0.55s ease-out forwards;
     }
     @keyframes ripple-out { to { transform: scale(6); opacity: 0; } }
+
+    /* =====================================================
+       REDUCED MOTION — respect the OS accessibility setting.
+       Tap feedback still flashes; looping/idle glows stop.
+       ===================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .card.idle-hint .card-emoji,
+      .causal-object.idle-hint .obj-inner,
+      #rotate-hint .rotate-emoji { animation: none !important; }
+      .screen { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -373,7 +388,7 @@ const FIRST_WORDS = [
   { emoji: '🧸', name: 'Medo',  hint: 'Medo je sladak!',  parentHint: '💬 Uzmite meda: "Medo! Zagrli meda!" — čekajte' },
   { emoji: '🐱', name: 'Maca',  hint: 'Maca kaže mijau!', parentHint: '💬 Pitajte: "Gdje je maca? Mijau!" — čekajte odgovor' },
   { emoji: '🍼', name: 'Duda',  hint: 'Duda, duda!',      parentHint: '💬 Recite: "Duda! Je li bebi duda?" — čekajte' },
-  { emoji: '😋', name: 'Am-am', hint: 'Njam-njam, jelo!', parentHint: '💬 Recite: "Am-am! Njam-njam!" — s razdragane izrazom' },
+  { emoji: '😋', name: 'Am-am', hint: 'Njam-njam, jelo!', parentHint: '💬 Recite: "Am-am! Njam-njam!" — s razdraganim izrazom' },
   { emoji: '👋', name: 'Pa-pa', hint: 'Mahni pa-pa!',     parentHint: '💬 Mahnite bebi: "Pa-pa!" — čekajte da maše nazad' },
 ];
 
@@ -600,7 +615,9 @@ initTTS();
 
 function speak(text) {
   if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
+  // Only cancel when something is actually queued — calling cancel() on an idle
+  // engine can leave iOS Safari stuck and silent.
+  try { if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); } catch (e) {}
   const u = new SpeechSynthesisUtterance(text);
   u.rate = 0.78; u.pitch = 1.22; u.volume = 1.0;  // parentese: slower & higher
   const voices = window.speechSynthesis.getVoices();
@@ -614,7 +631,18 @@ function speak(text) {
   } else {
     u.lang = 'hr-HR';
   }
+  try { speechSynthesis.resume(); } catch (e) {}  // unstick a paused engine (iOS)
   window.speechSynthesis.speak(u);
+}
+
+// Delayed speech that can be cancelled if the parent navigates away, so a
+// scheduled reward/label never fires over the next card.
+let speechTimers = [];
+function laterSpeak(text, delay) { speechTimers.push(setTimeout(() => speak(text), delay)); }
+function cancelPendingSpeech() {
+  speechTimers.forEach(clearTimeout);
+  speechTimers = [];
+  if (window.speechSynthesis) { try { speechSynthesis.cancel(); } catch (e) {} }
 }
 
 /* =========================================================
@@ -680,6 +708,7 @@ function updateDots(containerId, index) {
 const screens = {};
 ['parent', 'home', 'card', 'causal'].forEach(id => { screens[id] = document.getElementById('screen-' + id); });
 function showScreen(id) {
+  cancelPendingSpeech();   // stop any scheduled audio from the screen we're leaving
   Object.values(screens).forEach(s => s.classList.add('hidden'));
   screens[id].classList.remove('hidden');
 }
@@ -707,6 +736,8 @@ holdBtn.addEventListener('pointerdown', () => {
     cancelAnimationFrame(holdRAF);
     holdFill.style.width = '100%';
     holdLabel.textContent = '✓ Počinjemo!';
+    playStarted = true;
+    requestWakeLock();
     setTimeout(() => { showScreen('home'); startBreakTimer(); }, 350);
   }, HOLD_MS);
 });
@@ -716,13 +747,25 @@ holdBtn.addEventListener('pointerdown', () => {
 }));
 
 /* =========================================================
-   BREAK TIMER (5 minutes)
+   BREAK TIMER (5 minutes of *active* play)
+   Pauses while the app is backgrounded so it counts real
+   screen time, not time the tablet was put down.
    ========================================================= */
-let breakTimer = null;
+const BREAK_MS = 5 * 60 * 1000;
+let breakTimer = null, breakDeadline = 0;
+function showBreak() { document.getElementById('break-overlay').classList.add('visible'); }
 function startBreakTimer() {
   clearTimeout(breakTimer);
-  breakTimer = setTimeout(() => document.getElementById('break-overlay').classList.add('visible'), 5 * 60 * 1000);
+  breakDeadline = Date.now() + BREAK_MS;
+  breakTimer = setTimeout(showBreak, BREAK_MS);
 }
+function pauseBreakTimer() { if (breakTimer) { clearTimeout(breakTimer); breakTimer = null; } }
+function resumeBreakTimer() {
+  if (breakDeadline && !breakTimer) {
+    breakTimer = setTimeout(showBreak, Math.max(0, breakDeadline - Date.now()));
+  }
+}
+function stopBreakTimer() { clearTimeout(breakTimer); breakTimer = null; breakDeadline = 0; }
 document.getElementById('btn-continue-break').addEventListener('click', () => {
   document.getElementById('break-overlay').classList.remove('visible');
   startBreakTimer();
@@ -730,7 +773,27 @@ document.getElementById('btn-continue-break').addEventListener('click', () => {
 document.getElementById('btn-home-break').addEventListener('click', () => {
   document.getElementById('break-overlay').classList.remove('visible');
   showScreen('home');
-  clearTimeout(breakTimer);
+  stopBreakTimer();
+});
+
+/* =========================================================
+   SCREEN WAKE LOCK — keep the tablet awake during co-play.
+   Re-acquired when the app returns to the foreground.
+   ========================================================= */
+let wakeLock = null, playStarted = false;
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator) || document.hidden) return;
+  try { wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    pauseBreakTimer();
+    cancelPendingSpeech();
+  } else {
+    resumeBreakTimer();
+    if (playStarted) requestWakeLock();
+  }
 });
 
 /* =========================================================
@@ -797,6 +860,7 @@ const CardMode = {
     if (this.idleReset) this.idleReset();
   },
   go(delta) {
+    cancelPendingSpeech();   // drop a queued reward before changing card
     this.index = (this.index + delta + this.items.length) % this.items.length;
     this.render();
     if (this.idleReset) this.idleReset();
@@ -827,7 +891,7 @@ const MODES = {
     tap: (i, taps) => {
       speak(i.sub);
       setTimeout(() => playGestureSound(i.sfx), 200);
-      if (taps % 3 === 0) setTimeout(() => speak(i.reward), 1700);
+      if (taps % 3 === 0) laterSpeak(i.reward, 1700);
     },
   },
 };
@@ -899,7 +963,7 @@ function initCausal() {
         lastSound = now;
         playObjectSound(obj.sound);
         taps++;
-        if (taps % 4 === 0) setTimeout(() => speak(obj.label + '!'), 300);
+        if (taps % 4 === 0) laterSpeak(obj.label + '!', 300);
       }
     });
     stage.appendChild(el);
