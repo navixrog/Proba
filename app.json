@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Baby Sleep Tracker",
+    "slug": "baby-sleep-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F8F4FF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.babysleep.tracker"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#7B5EA7"
+      },
+      "package": "com.babysleep.tracker"
+    }
+  }
+}
