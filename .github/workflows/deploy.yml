@@ -24,6 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v4
+        with:
+          # Auto-create/enable the Pages site if it isn't enabled yet
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs
