@@ -1,4 +1,20 @@
 <!DOCTYPE html>
+<!--
+  Beba Igra – Učimo zajedno  |  v4.0
+  ====================================
+  Nove značajke (sve iza "⚙ Za roditelje"):
+  1. Coach bar – kontekstualni mikro-poticaj roditelju (Faza A: pitanje; Faza B: proširenje)
+     Config: PROMPTS objekt na vrhu skripte
+  2. Serve-and-return pauza – blagi puls "👂 Čekaj…" ~3 s nakon zvuka
+     Postavka: "Pauza za razmjenu" (0 / 2 / 3 / 4 s), default 3
+  3. Snimi svoj glas – MediaRecorder → base64 localStorage; reproducira se umjesto TTS
+     Sakrije se ako MediaRecorder nije dostupan (iOS)
+  4. Tjedni jezični cilj – rotira svaki tjedan (ISO tjedan), config: WEEKLY_GOALS
+     Istaknuto "🎯" u coach baru; pri otvaranju moda igra krene od tog predmeta
+  5. Tihi roditeljski feedback – broj sesija, snimki, poruka ohrabrenja (bez gamifikacije)
+  Sve postavke: localStorage ključ "@beba_settings"; statistike: "@beba_stats"
+  Snimke: "@beba_rec_<key>" po stavci
+-->
 <html lang="hr">
 <head>
   <meta charset="UTF-8">
@@ -7,69 +23,47 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Beba Igra – Učimo zajedno</title>
   <style>
-    /* =====================================================
-       RESET & GLOBAL
-       ===================================================== */
     *, *::before, *::after {
       margin: 0; padding: 0; box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
-      user-select: none;
+      -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none;
     }
     html, body {
       width: 100%; height: 100%; height: 100dvh; overflow: hidden;
-      background: #FFF8F0;
-      font-family: 'Helvetica Neue', Arial, sans-serif;
-      touch-action: none;
+      background: #FFF8F0; font-family: 'Helvetica Neue', Arial, sans-serif; touch-action: none;
     }
-
-    /* =====================================================
-       SCREENS – only one visible at a time
-       ===================================================== */
     .screen {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      transition: opacity 0.4s ease;
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; transition: opacity 0.4s ease;
     }
     .screen.hidden { opacity: 0; pointer-events: none; }
 
-    /* =====================================================
-       PARENT SCREEN
-       ===================================================== */
+    /* ── PARENT SCREEN ── */
     #screen-parent {
       background: linear-gradient(160deg, #7B5EA7 0%, #5A3E8C 100%);
       padding: calc(32px + env(safe-area-inset-top)) calc(32px + env(safe-area-inset-right))
                calc(32px + env(safe-area-inset-bottom)) calc(32px + env(safe-area-inset-left));
-      gap: 20px;
-      justify-content: flex-start;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      gap: 20px; justify-content: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch;
     }
     #screen-parent h1 { color: #fff; font-size: clamp(22px, 5vw, 36px); text-align: center; line-height: 1.3; }
     #screen-parent .parent-box {
-      background: rgba(255,255,255,0.15); border-radius: 20px;
-      padding: 20px 24px; max-width: 680px; color: #fff;
-      font-size: clamp(13px, 2.5vw, 17px); line-height: 1.6; text-align: left;
+      background: rgba(255,255,255,0.15); border-radius: 20px; padding: 20px 24px;
+      max-width: 680px; color: #fff; font-size: clamp(13px, 2.5vw, 17px); line-height: 1.6;
     }
     #screen-parent .tip {
       background: rgba(255,255,255,0.1); border-left: 4px solid #FF85A2;
       border-radius: 0 12px 12px 0; padding: 12px 16px; max-width: 680px;
       color: #FFE0EA; font-size: clamp(12px, 2vw, 15px); line-height: 1.5; font-style: italic;
     }
-    .sr-loop {
-      display: flex; flex-direction: column; gap: 6px; margin-top: 10px;
-      padding-left: 4px;
-    }
-    .sr-loop span { display: flex; align-items: baseline; gap: 8px; font-size: clamp(13px, 2.3vw, 16px); }
-    .sr-num { background: #FF85A2; color: #fff; border-radius: 50%; width: 22px; height: 22px;
+    .sr-loop { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .sr-loop span { display: flex; align-items: baseline; gap: 8px; font-size: clamp(13px,2.3vw,16px); }
+    .sr-num {
+      background: #FF85A2; color: #fff; border-radius: 50%; width: 22px; height: 22px;
       display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
-      font-weight: 800; flex-shrink: 0; }
-    /* Hold-to-start: parent must hold ~1.5s so a baby can't trigger it */
+      font-weight: 800; flex-shrink: 0;
+    }
     #btn-start-hold {
-      margin-top: 8px; width: 220px; height: 70px;
-      background: #FF85A2; border: none; border-radius: 40px;
-      color: #fff; font-size: 20px; font-weight: 700; cursor: pointer;
+      margin-top: 8px; width: 220px; height: 70px; background: #FF85A2; border: none;
+      border-radius: 40px; color: #fff; font-size: 20px; font-weight: 700; cursor: pointer;
       position: relative; overflow: hidden; flex-shrink: 0;
     }
     #btn-start-hold .hold-fill {
@@ -78,19 +72,17 @@
     }
     #btn-start-hold span { position: relative; z-index: 1; }
 
-    /* =====================================================
-       HOME SCREEN
-       ===================================================== */
-    #screen-home { background: #FFF8F0; gap: 28px; padding: 24px; }
+    /* ── HOME SCREEN ── */
+    #screen-home { background: #FFF8F0; gap: 20px; padding: 24px; position: relative; }
     #screen-home h2 { color: #5A3E8C; font-size: clamp(20px, 4vw, 32px); text-align: center; }
     .home-buttons { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; max-width: 820px; }
     .home-btn {
       width: clamp(130px, 21vw, 185px); height: clamp(130px, 21vw, 185px);
-      border: none; border-radius: 30px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 12px; font-size: clamp(13px, 2.2vw, 19px); font-weight: 700; color: #fff;
-      cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-      transition: transform 0.15s, box-shadow 0.15s; text-align: center; padding: 8px;
+      border: none; border-radius: 30px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      font-size: clamp(13px, 2.2vw, 19px); font-weight: 700; color: #fff; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18); transition: transform 0.15s, box-shadow 0.15s;
+      text-align: center; padding: 8px;
     }
     .home-btn:active { transform: scale(0.95); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     .home-btn .btn-emoji { font-size: clamp(44px, 9vw, 64px); line-height: 1; }
@@ -98,43 +90,59 @@
     .home-btn.words     { background: linear-gradient(135deg, #FFA84E, #E07A20); }
     .home-btn.imitation { background: linear-gradient(135deg, #5BD98A, #2DA866); }
     .home-btn.causal    { background: linear-gradient(135deg, #5BB8FF, #2877D4); }
+    /* weekly goal card */
+    .weekly-goal-card {
+      background: rgba(255,255,255,0.75); border: 2px solid #D4C5F0; border-radius: 16px;
+      padding: 10px 20px; max-width: 380px; width: 100%;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      color: #5A3E8C; font-size: clamp(13px,2vw,16px);
+    }
+    .wg-label { opacity: 0.65; font-size: clamp(11px,1.8vw,14px); }
+    .wg-word { font-weight: 800; font-size: clamp(16px,2.8vw,22px); }
+    /* settings gear button — two-tap gated */
+    .btn-settings {
+      position: absolute; bottom: calc(14px + env(safe-area-inset-bottom));
+      right: calc(14px + env(safe-area-inset-right));
+      background: rgba(91,62,140,0.12); border: 1px solid rgba(91,62,140,0.2);
+      border-radius: 20px; padding: 8px 16px; color: #5A3E8C;
+      font-size: clamp(12px,1.8vw,14px); cursor: pointer;
+    }
 
-    /* =====================================================
-       SHARED GAME CHROME (header, exit, dots, nav arrows)
-       ===================================================== */
+    /* ── SHARED GAME CHROME ── */
     .game-header {
       position: absolute; top: 0; left: 0; right: 0;
       height: calc(72px + env(safe-area-inset-top));
       display: flex; align-items: center; justify-content: space-between;
-      padding: env(safe-area-inset-top) calc(20px + env(safe-area-inset-right))
-               0 calc(20px + env(safe-area-inset-left));
+      padding: env(safe-area-inset-top) calc(20px + env(safe-area-inset-right)) 0 calc(20px + env(safe-area-inset-left));
       z-index: 10;
     }
-    /* Two-tap exit: first tap arms, second exits ("baby gate") */
     .btn-exit {
       width: 64px; height: 64px; border: none; border-radius: 50%;
       background: rgba(91,62,140,0.15); font-size: 28px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0;
     }
     .btn-exit.armed { background: rgba(255,133,162,0.7); }
-    .nav-group { position: absolute; top: calc(16px + env(safe-area-inset-top)); right: calc(20px + env(safe-area-inset-right)); display: flex; gap: 12px; z-index: 5; }
+    .nav-group {
+      position: absolute; top: calc(16px + env(safe-area-inset-top));
+      right: calc(20px + env(safe-area-inset-right)); display: flex; gap: 12px; z-index: 5;
+    }
     .btn-nav {
-      width: 72px; height: 72px; border: none; border-radius: 50%;
-      color: #fff; font-size: 32px; display: flex; align-items: center; justify-content: center;
+      width: 72px; height: 72px; border: none; border-radius: 50%; color: #fff; font-size: 32px;
+      display: flex; align-items: center; justify-content: center;
       cursor: pointer; box-shadow: 0 4px 16px rgba(123,94,167,0.4); transition: transform 0.15s;
     }
-    .btn-next { background: #7B5EA7; }
-    .btn-prev { background: #B7A4D6; }
+    .btn-next { background: #7B5EA7; } .btn-prev { background: #B7A4D6; }
     .btn-nav:active { transform: scale(0.92); }
     .progress-dots { display: flex; gap: 8px; padding: 12px 0; flex-wrap: wrap; justify-content: center; max-width: 60%; }
     .dot { width: 12px; height: 12px; border-radius: 50%; background: #D4C5F0; transition: background 0.3s; }
     .dot.active { background: #7B5EA7; }
 
-    /* =====================================================
-       CARD SCREEN (shared by Animals / Words / Imitation)
-       ===================================================== */
-    #screen-card { background: #FFF8F0; padding-top: calc(72px + env(safe-area-inset-top)); }
+    /* ── CARD SCREEN ── */
+    #screen-card {
+      background: #FFF8F0;
+      padding-top: calc(72px + env(safe-area-inset-top));
+      padding-bottom: 48px; /* space for coach bar */
+    }
     .card-stage {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center; width: 100%; position: relative;
@@ -143,19 +151,16 @@
       position: relative; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 14px; cursor: pointer; padding: 0 16px;
     }
-    .card-emoji {
-      font-size: clamp(120px, 26vw, 200px); line-height: 1; display: block;
-    }
-    .card-label { font-size: clamp(28px, 6vw, 52px); font-weight: 800; color: #5A3E8C; text-align: center; letter-spacing: 1px; }
-    .card-sub { font-size: clamp(16px, 3vw, 30px); color: #FF85A2; font-weight: 700; text-align: center; max-width: 90vw; line-height: 1.3; }
-    .card-parent { font-size: clamp(11px, 2vw, 15px); color: rgba(91,62,140,0.6); font-style: italic; text-align: center; max-width: 88vw; line-height: 1.45; padding: 0 12px; margin-top: 2px; }
-    /* idle hint: gentle glow after inactivity */
+    .card-emoji { font-size: clamp(120px, 26vw, 200px); line-height: 1; display: block; }
+    .card-label { font-size: clamp(28px,6vw,52px); font-weight: 800; color: #5A3E8C; text-align: center; letter-spacing: 1px; }
+    .card-sub { font-size: clamp(16px,3vw,30px); color: #FF85A2; font-weight: 700; text-align: center; max-width: 90vw; line-height: 1.3; }
+    /* idle hint */
     .card.idle-hint .card-emoji { animation: idle-glow 1.6s ease-in-out infinite alternate; }
     @keyframes idle-glow {
       from { filter: drop-shadow(0 0 0px rgba(123,94,167,0)); }
       to   { filter: drop-shadow(0 0 20px rgba(123,94,167,0.6)); }
     }
-    /* tap animations (one per gesture / default bounce) */
+    /* tap animations */
     .card-emoji.anim-bounce   { animation: a-bounce 0.5s ease; }
     .card-emoji.anim-wave     { animation: a-wave 1s ease; transform-origin: 70% 80%; }
     .card-emoji.anim-clap     { animation: a-clap 0.6s ease; }
@@ -175,10 +180,33 @@
     @keyframes a-hug { 0%,100%{transform:scale(1)} 40%{transform:scale(1.18)} 70%{transform:scale(1.05)} }
     @keyframes a-thumb { 0%{transform:translateY(0) rotate(0)} 40%{transform:translateY(-18px) rotate(-12deg)} 100%{transform:translateY(0) rotate(0)} }
 
-    /* =====================================================
-       CAUSE & EFFECT SCREEN
-       ===================================================== */
-    #screen-causal { background: #0A0A2A; padding-top: calc(72px + env(safe-area-inset-top)); }
+    /* serve-and-return hint overlay (appears on card/causal) */
+    .serve-hint {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      z-index: 15; background: rgba(40,30,60,0.72); border-radius: 16px; padding: 12px 24px;
+      display: flex; align-items: center; gap: 10px;
+      color: rgba(255,255,255,0.88); font-size: clamp(13px,2.2vw,18px);
+      pointer-events: none; opacity: 0; transition: opacity 0.4s;
+    }
+    .serve-hint.visible { opacity: 1; animation: serve-pulse 1.6s ease-in-out infinite; }
+    @keyframes serve-pulse { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.04)} }
+    .serve-ear { font-size: 26px; }
+
+    /* ── COACH BAR (fixed bottom strip — parent only, not baby focus) ── */
+    #coach-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+      background: rgba(50, 38, 18, 0.88);
+      padding: 8px calc(20px + env(safe-area-inset-right))
+               calc(8px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
+      color: #F5EDD0; font-size: clamp(11px,1.8vw,14px); font-style: italic; line-height: 1.45;
+      display: flex; align-items: center; gap: 8px; min-height: 44px;
+    }
+    #coach-bar[hidden] { display: none !important; }
+    .coach-goal { color: #FFD580; font-style: normal; font-weight: 700; flex-shrink: 0; font-size: 12px; }
+    .coach-b { color: #A8E6CF; } /* phase B text gets green tint */
+
+    /* ── CAUSAL SCREEN ── */
+    #screen-causal { background: #0A0A2A; padding-top: calc(72px + env(safe-area-inset-top)); padding-bottom: 48px; }
     #screen-causal .btn-exit { background: rgba(255,255,255,0.15); }
     #screen-causal .btn-exit.armed { background: rgba(255,133,162,0.7); }
     .causal-stage { flex: 1; width: 100%; position: relative; display: flex; align-items: center; justify-content: center; }
@@ -196,117 +224,149 @@
       to   { filter: brightness(1.3) drop-shadow(0 0 18px rgba(255,255,255,0.6)); }
     }
     .causal-object.tapped .obj-inner {
-      transform: scale(1.35);
-      filter: brightness(1.5) drop-shadow(0 0 28px rgba(255,220,80,0.9));
+      transform: scale(1.35); filter: brightness(1.5) drop-shadow(0 0 28px rgba(255,220,80,0.9));
     }
     .particle { position: absolute; border-radius: 50%; pointer-events: none; animation: particle-burst 0.6s ease-out forwards; }
-    @keyframes particle-burst {
-      0% { transform: translate(0,0) scale(1); opacity: 1; }
-      100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
-    }
+    @keyframes particle-burst { 0%{transform:translate(0,0) scale(1); opacity:1} 100%{transform:translate(var(--tx),var(--ty)) scale(0.2); opacity:0} }
 
-    /* =====================================================
-       ROTATE HINT (phones in portrait)
-       ===================================================== */
+    /* ── ROTATE HINT ── */
     #rotate-hint {
       position: fixed; inset: 0; z-index: 200; background: #5A3E8C; display: none;
       flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 40px; text-align: center;
     }
     #rotate-hint .rotate-emoji { font-size: 80px; animation: rotate-wobble 2s ease-in-out infinite; }
     @keyframes rotate-wobble { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
-    #rotate-hint p { color: #fff; font-size: clamp(18px, 4vw, 26px); font-weight: 700; line-height: 1.4; }
+    #rotate-hint p { color: #fff; font-size: clamp(18px,4vw,26px); font-weight: 700; line-height: 1.4; }
     @media (orientation: portrait) and (max-height: 520px) { #rotate-hint { display: flex; } }
 
-    /* =====================================================
-       BREAK OVERLAY
-       ===================================================== */
+    /* ── BREAK OVERLAY ── */
     #break-overlay {
       position: fixed; inset: 0; z-index: 100; background: rgba(91,62,140,0.92);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 24px; padding: 40px; opacity: 0; pointer-events: none; transition: opacity 0.5s;
     }
     #break-overlay.visible { opacity: 1; pointer-events: all; }
-    #break-overlay h2 { color: #fff; font-size: clamp(22px, 5vw, 36px); text-align: center; }
-    #break-overlay p { color: #FFE0EA; font-size: clamp(14px, 2.5vw, 20px); text-align: center; max-width: 560px; line-height: 1.5; }
+    #break-overlay h2 { color: #fff; font-size: clamp(22px,5vw,36px); text-align: center; }
+    #break-overlay p { color: #FFE0EA; font-size: clamp(14px,2.5vw,20px); text-align: center; max-width: 560px; line-height: 1.5; }
     .break-activity {
       background: rgba(255,133,162,0.25); border-radius: 16px; padding: 14px 20px;
-      color: #fff; font-size: clamp(13px, 2.2vw, 17px); text-align: center;
-      max-width: 520px; line-height: 1.5;
+      color: #fff; font-size: clamp(13px,2.2vw,17px); text-align: center; max-width: 520px; line-height: 1.5;
     }
     #break-overlay .break-emoji { font-size: 72px; }
     #btn-continue-break, #btn-home-break {
       padding: 16px 36px; border: none; border-radius: 40px;
-      font-size: clamp(16px, 3vw, 22px); font-weight: 700; cursor: pointer;
+      font-size: clamp(16px,3vw,22px); font-weight: 700; cursor: pointer;
     }
     #btn-continue-break { background: #FF85A2; color: #fff; }
     #btn-home-break { background: rgba(255,255,255,0.2); color: #fff; }
 
-    /* reward ripple */
+    /* ── SETTINGS SCREEN ── */
+    #screen-settings {
+      background: #F5EDD0; justify-content: flex-start; align-items: stretch;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding-top: calc(72px + env(safe-area-inset-top));
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+    #screen-settings .game-header { background: #EDE0C0; }
+    #screen-settings .btn-exit { background: rgba(100,80,40,0.12); }
+    #screen-settings .btn-exit.armed { background: rgba(255,133,162,0.7); }
+    .settings-title { color: #5C4A20; font-weight: 700; font-size: 18px; }
+    #settings-body { display: flex; flex-direction: column; gap: 12px; padding: 16px; max-width: 680px; width: 100%; margin: 0 auto; }
+    .settings-section { background: #fff; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .settings-section h3 { color: #5C4A20; font-size: 16px; margin: 0; font-style: normal; }
+    .settings-why { color: #7A6A4A; font-size: 12px; line-height: 1.5; font-style: italic; margin: 0; }
+    .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .settings-row > span { color: #3A2A10; font-size: 14px; }
+    .settings-check { width: 44px; height: 26px; cursor: pointer; accent-color: #7B5EA7; }
+    .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-group button {
+      padding: 6px 13px; border: 2px solid #D4C5A0; border-radius: 8px;
+      background: #fff; color: #5C4A20; font-size: 13px; cursor: pointer; touch-action: manipulation;
+    }
+    .btn-group button.active { background: #7B5EA7; color: #fff; border-color: #7B5EA7; }
+    /* recordings list */
+    #rec-list { display: flex; flex-direction: column; gap: 0; }
+    .rec-group-label { font-size: 11px; font-weight: 700; color: #9A8A6A; letter-spacing: 0.5px;
+      text-transform: uppercase; padding: 10px 0 4px; }
+    .rec-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #F0E8D0; }
+    .rec-emoji { font-size: 22px; flex-shrink: 0; }
+    .rec-name { flex: 1; font-size: 13px; color: #3A2A10; }
+    .rec-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .rec-btn { padding: 5px 10px; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; touch-action: manipulation; }
+    .rec-record { background: #FF85A2; color: #fff; }
+    .rec-record.recording { background: #C0203A; }
+    .rec-play { background: #7B5EA7; color: #fff; }
+    .rec-del { background: #E0D5C5; color: #5C4A20; }
+    .settings-note { color: #9A8A6A; font-size: 12px; font-style: italic; }
+    /* stats */
+    .stats-row { display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 0; border-bottom: 1px solid #F0E8D0; font-size: 14px; color: #3A2A10; }
+    .stats-row strong { font-size: 18px; color: #5A3E8C; }
+    .stats-msg { color: #5C4A20; font-size: 13px; font-style: italic; line-height: 1.5; margin-top: 4px; }
+
+    /* ripple */
     .ripple {
       position: fixed; border-radius: 50%; pointer-events: none;
       background: rgba(255,133,162,0.3); transform: scale(0); animation: ripple-out 0.55s ease-out forwards;
     }
     @keyframes ripple-out { to { transform: scale(6); opacity: 0; } }
 
-    /* =====================================================
-       REDUCED MOTION — respect the OS accessibility setting.
-       Tap feedback still flashes; looping/idle glows stop.
-       ===================================================== */
     @media (prefers-reduced-motion: reduce) {
       .card.idle-hint .card-emoji,
       .causal-object.idle-hint .obj-inner,
-      #rotate-hint .rotate-emoji { animation: none !important; }
+      #rotate-hint .rotate-emoji,
+      .serve-hint.visible { animation: none !important; }
       .screen { transition: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- ============ PARENT SCREEN ============ -->
+<!-- ══ PARENT SCREEN ══ -->
 <div class="screen" id="screen-parent">
   <h1>🌙 Beba Igra – Učimo zajedno</h1>
-
   <div class="parent-box">
     <strong>Za roditelje:</strong> Prema WHO-u i HZJZ-u, djeca do 2 godine ne bi trebala
     biti pred ekranima. Ova igra je kratka zajednička aktivnost (do 5 min) —
     <em>vi ste učitelj, ekran je samo pomagalo.</em> Koristite je <strong>zajedno</strong>
     s djetetom, uvijek u kontaktu.
   </div>
-
   <div class="parent-box">
-    <strong>Kako igrati zajedno — "Imenuj → Pitaj → Čekaj → Proširi":</strong>
+    <strong>Kako igrati — "Imenuj → Pitaj → Čekaj → Proširi":</strong>
     <div class="sr-loop">
-      <span><span class="sr-num">1</span><span><b>Imenujte</b> — naglas recite naziv slike sporije i višim glasom</span></span>
+      <span><span class="sr-num">1</span><span><b>Imenujte</b> — naglas recite naziv sporije i višim glasom</span></span>
       <span><span class="sr-num">2</span><span><b>Pitajte</b> — "Gdje je pas? Vidiš li ga?"</span></span>
-      <span><span class="sr-num">3</span><span><b>Čekajte</b> — dajte bebi trenutak za pogled, glas ili pokret</span></span>
-      <span><span class="sr-num">4</span><span><b>Proširite</b> — "Da! Pas! Pas kaže vau-vau! Bravo!"</span></span>
+      <span><span class="sr-num">3</span><span><b>Čekajte</b> — dajte bebi trenutak za pogled ili glas</span></span>
+      <span><span class="sr-num">4</span><span><b>Proširite</b> — "Da! Pas! Pas kaže vau-vau!"</span></span>
     </div>
   </div>
-
   <div class="tip">
     💡 <strong>Roditeljski govor:</strong> govorite <em>sporije</em>, <em>višim glasom</em>
-    i s <em>naglašenom intonacijom</em>. Istraživanja pokazuju da bebe koje čuju ovakav
-    govor razvijaju veći rječnik.
+    i s <em>naglašenom intonacijom</em>. Istraživanja pokazuju da bebe koje čuju ovakav govor razvijaju veći rječnik.
   </div>
-
   <button id="btn-start-hold" aria-label="Drži za početak">
     <div class="hold-fill" id="hold-fill"></div>
     <span id="hold-label">Drži za početak</span>
   </button>
 </div>
 
-<!-- ============ HOME SCREEN ============ -->
+<!-- ══ HOME SCREEN ══ -->
 <div class="screen hidden" id="screen-home">
   <h2>Što želiš igrati?</h2>
-  <div class="home-buttons">
-    <button class="home-btn animals" id="btn-mode-animals"><span class="btn-emoji">🐶</span>Životinje i zvukovi</button>
-    <button class="home-btn words" id="btn-mode-words"><span class="btn-emoji">👶</span>Prve riječi</button>
-    <button class="home-btn imitation" id="btn-mode-imitation"><span class="btn-emoji">👋</span>Pokaži mi!</button>
-    <button class="home-btn causal" id="btn-mode-causal"><span class="btn-emoji">⭐</span>Dodirni i gledaj</button>
+  <div class="weekly-goal-card" id="weekly-goal-card">
+    <span class="wg-label">Ovaj tjedan vježbamo:</span>
+    <span class="wg-word" id="wg-word">…</span>
   </div>
+  <div class="home-buttons">
+    <button class="home-btn animals"   id="btn-mode-animals">  <span class="btn-emoji">🐶</span>Životinje i zvukovi</button>
+    <button class="home-btn words"     id="btn-mode-words">    <span class="btn-emoji">👶</span>Prve riječi</button>
+    <button class="home-btn imitation" id="btn-mode-imitation"><span class="btn-emoji">👋</span>Pokaži mi!</button>
+    <button class="home-btn causal"    id="btn-mode-causal">   <span class="btn-emoji">⭐</span>Dodirni i gledaj</button>
+  </div>
+  <button class="btn-settings" id="btn-open-settings">⚙ Za roditelje</button>
 </div>
 
-<!-- ============ CARD SCREEN (Animals / Words / Imitation) ============ -->
+<!-- ══ CARD SCREEN ══ -->
 <div class="screen hidden" id="screen-card">
   <div class="game-header">
     <button class="btn-exit" id="exit-card" aria-label="Izlaz">🏠</button>
@@ -320,126 +380,255 @@
     <div class="card" id="card">
       <span class="card-emoji" id="card-emoji"></span>
       <span class="card-label" id="card-label"></span>
-      <span class="card-sub" id="card-sub"></span>
-      <span class="card-parent" id="card-parent"></span>
+      <span class="card-sub"   id="card-sub"></span>
     </div>
   </div>
 </div>
 
-<!-- ============ CAUSE & EFFECT SCREEN ============ -->
+<!-- ══ CAUSAL SCREEN ══ -->
 <div class="screen hidden" id="screen-causal">
   <div class="game-header">
     <button class="btn-exit" id="exit-causal" aria-label="Izlaz">🏠</button>
-    <span style="color:rgba(255,255,255,0.5); font-size:14px; font-style:italic;">Dodirni!</span>
+    <span style="color:rgba(255,255,255,0.5);font-size:14px;font-style:italic;">Dodirni!</span>
     <div style="width:64px"></div>
   </div>
   <div class="causal-stage" id="causal-stage"></div>
 </div>
 
-<!-- ============ ROTATE HINT ============ -->
+<!-- ══ SETTINGS SCREEN ══ -->
+<div class="screen hidden" id="screen-settings">
+  <div class="game-header">
+    <button class="btn-exit" id="exit-settings" aria-label="Nazad">🏠</button>
+    <span class="settings-title">⚙ Za roditelje</span>
+    <div style="width:64px"></div>
+  </div>
+  <div id="settings-body">
+
+    <div class="settings-section">
+      <h3>Savjeti i pauza za razmjenu</h3>
+      <p class="settings-why">Roditeljev komentar i čekanje na bebin odgovor ("serve and return") jače potiče razvoj govora od samog sadržaja na ekranu (Ferjan Ramírez & Kuhl, PNAS 2020).</p>
+      <label class="settings-row">
+        <span>Prikaži savjete roditelju</span>
+        <input type="checkbox" id="toggle-prompts" class="settings-check">
+      </label>
+      <div class="settings-row">
+        <span>Pauza za razmjenu</span>
+        <div class="btn-group" id="pause-btns">
+          <button data-val="0">Bez</button>
+          <button data-val="2">2 s</button>
+          <button data-val="3">3 s</button>
+          <button data-val="4">4 s</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section" id="section-recordings">
+      <h3>Snimi svoj glas</h3>
+      <p class="settings-why">Vaš vlastiti glas — sporiji, viši i naglašen — beba prepoznaje bolje od ijednog drugog. Snimke se čuvaju samo na ovom uređaju i reproduciraju umjesto računalnog glasa.</p>
+      <div id="rec-list"></div>
+    </div>
+
+    <div class="settings-section">
+      <h3>Vaš napredak</h3>
+      <p class="settings-why">Samo za vas — bez bodova. Svjesnost o vlastitim navikama pomaže.</p>
+      <div id="stats-panel"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ ROTATE HINT ══ -->
 <div id="rotate-hint">
   <div class="rotate-emoji">📱</div>
   <p>Okreni uređaj vodoravno 🔄</p>
 </div>
 
-<!-- ============ BREAK OVERLAY ============ -->
+<!-- ══ BREAK OVERLAY ══ -->
 <div id="break-overlay">
   <div class="break-emoji">☕</div>
   <h2>Pauza, roditelju!</h2>
   <p>Prošlo je oko 5 minuta igre. Preporučamo kratku pauzu.</p>
   <div class="break-activity">
-    🎯 <strong>Aktivnost bez ekrana:</strong> Zagrlite bebu, uzmite pravu igračku i
-    imenujte je zajedno — "Lopta! Hvataj loptu!" Ili izađite na zrak. 🌿
+    🎯 <strong>Aktivnost bez ekrana:</strong> Zagrlite bebu, uzmite pravu igračku
+    i imenujte je zajedno — "Lopta! Hvataj loptu!" Ili izađite na zrak. 🌿
   </div>
   <button id="btn-continue-break">Još malo →</button>
   <button id="btn-home-break">Natrag na početak</button>
 </div>
 
+<!-- ══ SERVE-AND-RETURN HINT (fixed overlay, pointer-events:none) ══ -->
+<div class="serve-hint" id="serve-hint">
+  <span class="serve-ear">👂</span>
+  <span>Čekaj bebin glas ili pogled…</span>
+</div>
+
+<!-- ══ COACH BAR (fixed bottom strip for parent) ══ -->
+<div id="coach-bar" hidden>
+  <span id="coach-text"></span>
+</div>
+
 <script>
 /* =========================================================
-   CONFIG — edit these arrays to change the content.
+   PROMPTS — {ask, expand} per item key.
+   Ask = shown when card renders (Faza A).
+   Expand = shown ~0.6 s after tap (Faza B), then serve-pause.
    ========================================================= */
+const PROMPTS = {
+  // Animals
+  dog:          { ask: 'Pitajte: "Gdje je pas?"',          expand: 'Recite: "Pas! Pas kaže vau-vau!"' },
+  cat:          { ask: 'Pitajte: "Gdje je mačka?"',        expand: 'Recite: "Mačka kaže mijau!"' },
+  cow:          { ask: 'Pitajte: "Što kaže krava?"',       expand: 'Recite: "Muu! Čuješ kravu?"' },
+  duck:         { ask: 'Pitajte: "Gdje je patka?"',        expand: 'Recite: "Patka kaže kva-kva!"' },
+  rooster:      { ask: 'Pitajte: "Što je to?"',            expand: 'Recite: "Pijetao! Kukuriku!"' },
+  sheep:        { ask: 'Pitajte: "Gdje je ovca?"',         expand: 'Recite: "Ovca kaže bee-bee!"' },
+  frog:         { ask: 'Pitajte: "Gdje je žaba?"',         expand: 'Recite: "Žaba kaže kre-kre!"' },
+  pig:          { ask: 'Pitajte: "Što kaže svinja?"',      expand: 'Recite: "Svinja kaže rok-rok!"' },
+  horse:        { ask: 'Pitajte: "Gdje je konj?"',         expand: 'Recite: "Konj kaže i-ha-ha!"' },
+  bird:         { ask: 'Pitajte: "Gdje je ptica?"',        expand: 'Recite: "Ptica kaže živ-živ!"' },
+  donkey:       { ask: 'Pitajte: "Što kaže magarac?"',     expand: 'Recite: "Magarac kaže i-a!"' },
+  // First words
+  mama:         { ask: 'Pitajte: "Gdje je mama?"',         expand: 'Recite: "Tu je mama! Mama!"' },
+  tata:         { ask: 'Pitajte: "Gdje je tata?"',         expand: 'Recite: "Tu je tata! Tata!"' },
+  baka:         { ask: 'Pitajte: "Gdje je baka?"',         expand: 'Mahnite: "Baka! Pa-pa, baka!"' },
+  deda:         { ask: 'Pitajte: "Gdje je deda?"',         expand: 'Mahnite: "Deda! Pa-pa, deda!"' },
+  beba:         { ask: 'Pitajte: "Gdje je beba?"',         expand: 'Pokažite ogledalo: "Tu je beba!"' },
+  lopta:        { ask: 'Uzmite pravu loptu',               expand: 'Recite: "Lopta! Daj loptu!" — pružite ruku' },
+  auto:         { ask: 'Pitajte: "Gdje je auto?"',         expand: 'Recite: "Brm-brm! Auto ide!"' },
+  voda:         { ask: 'Recite: "Voda! Pi-pi!"',           expand: 'Ponudite bočicu: "Pij vodu!"' },
+  medo:         { ask: 'Uzmite plišanog meda',             expand: 'Recite: "Medo! Zagrli meda!"' },
+  maca:         { ask: 'Pitajte: "Gdje je maca?"',         expand: 'Recite: "Maca kaže mijau!"' },
+  duda:         { ask: 'Recite: "Duda!"',                  expand: 'Ponudite dudu: "Je li bebi duda?"' },
+  'am-am':      { ask: 'Recite: "Am-am! Njam-njam!"',      expand: 'Prenesite se: "Ukusno! Am-am!"' },
+  'pa-pa':      { ask: 'Mahnite bebi',                     expand: 'Čekajte da beba maše nazad' },
+  // Imitation
+  'daj-pet':    { ask: 'Pružite ruku: "Daj pet!"',         expand: 'Čekajte bebu — recite "Bravo!"' },
+  pljes:        { ask: 'Plješćite zajedno s bebom',        expand: 'Pratite bebin ritam — pohvalite je' },
+  pusa:         { ask: 'Bacite pusu: "Mljac!"',            expand: 'Čekajte da beba oponaša' },
+  'tako-velik': { ask: 'Podignite bebine ručice gore',     expand: 'Recite: "Toliko velik! Bravo!"' },
+  'ku-kuc':     { ask: 'Sakrijte lice rukama',             expand: 'Otkrijte: "Ku-kuc! Tu sam!" — smiješite se' },
+  zagrljaj:     { ask: 'Raširite ruke: "Zagrljaj!"',       expand: 'Zagrlite bebu — pohvalite je toplo' },
+  bravo:        { ask: 'Pokažite palac gore: "Bravo!"',    expand: 'Čekajte bebu da oponaša' },
+  // Causal (no specific key on items — uses generic)
+  _causal:      { ask: 'Imenujte što beba dotakne',        expand: 'Čekajte bebin pogled — ponovite naziv' },
+  _default:     { ask: 'Imenujte što vidite',              expand: 'Čekajte bebin pogled ili glas' },
+};
 
-// Animals: name + on-screen sound label + synthesized call + dialogic parent hint.
-const ANIMALS = [
-  { emoji: '🐶', name: 'Pas',     sound: 'vau-vau',  sfx: 'dog',     parentHint: '💬 Pitajte: "Gdje je pas?" — čekajte bebin pogled' },
-  { emoji: '🐱', name: 'Mačka',   sound: 'mijau',    sfx: 'cat',     parentHint: '💬 Recite: "Mačka kaže mijau!" — oponašajte zajedno' },
-  { emoji: '🐄', name: 'Krava',   sound: 'muu',      sfx: 'cow',     parentHint: '💬 Pitajte: "Što kaže krava? Muu!" — pa čekajte' },
-  { emoji: '🦆', name: 'Patka',   sound: 'kva-kva',  sfx: 'duck',    parentHint: '💬 Recite: "Patka kaže kva-kva!" — plješćite zajedno' },
-  { emoji: '🐓', name: 'Pijetao', sound: 'kukuriku', sfx: 'rooster', parentHint: '💬 Pitajte: "Što kaže pijetao? Kuku-riku!" — s naglašenom intonacijom' },
-  { emoji: '🐑', name: 'Ovca',    sound: 'bee-bee',  sfx: 'sheep',   parentHint: '💬 Recite: "Ovca kaže bee-bee!" — oponašajte zajedno' },
-  { emoji: '🐸', name: 'Žaba',    sound: 'kre-kre',  sfx: 'frog',    parentHint: '💬 Pitajte: "Gdje je žaba? Kre-kre!" — čekajte' },
-  { emoji: '🐷', name: 'Svinja',  sound: 'rok-rok',  sfx: 'pig',     parentHint: '💬 Recite: "Svinja kaže rok-rok!" — smiješnim glasom' },
-  { emoji: '🐴', name: 'Konj',    sound: 'i-ha-ha',  sfx: 'horse',   parentHint: '💬 Pitajte: "Što kaže konj? I-ha-ha!" — čekajte odgovor' },
-  { emoji: '🐦', name: 'Ptica',   sound: 'živ-živ',  sfx: 'bird',    parentHint: '💬 Recite: "Ptica kaže živ-živ!" — mahajte ručicom' },
-  { emoji: '🫏', name: 'Magarac', sound: 'i-a',      sfx: 'donkey',  parentHint: '💬 Pitajte: "Što kaže magarac? I-a!" — naglašeno' },
-];
-
-// First words: KORALJE-aligned (8–16 months). sub = spoken label; parentHint = dialogic prompt.
-const FIRST_WORDS = [
-  { emoji: '👩', name: 'Mama',  hint: 'To je mama!',       parentHint: '💬 Pitajte: "Gdje je mama?" — pa čekajte' },
-  { emoji: '👨', name: 'Tata',  hint: 'To je tata!',       parentHint: '💬 Pitajte: "Gdje je tata?" — čekajte bebin pogled' },
-  { emoji: '👵', name: 'Baka',  hint: 'To je baka!',       parentHint: '💬 Recite: "Baka! Pozdrav, baka!" — mahnite' },
-  { emoji: '👴', name: 'Deda',  hint: 'To je deda!',       parentHint: '💬 Recite: "Deda! Pa-pa, deda!" — mahnite zajedno' },
-  { emoji: '👶', name: 'Beba',  hint: 'To je beba!',       parentHint: '💬 Pitajte: "Gdje je beba?" — pokažite ogledalo' },
-  { emoji: '⚽', name: 'Lopta', hint: 'Hvataj loptu!',     parentHint: '💬 Uzmite pravu loptu: "Lopta! Daj loptu!"' },
-  { emoji: '🚗', name: 'Auto',  hint: 'Brm-brm, auto!',   parentHint: '💬 Pitajte: "Gdje je auto? Brm-brm!" — s naglašenom intonacijom' },
-  { emoji: '💧', name: 'Voda',  hint: 'Pij vodu!',        parentHint: '💬 Recite: "Voda! Pi-pi!" — ponudite bočicu' },
-  { emoji: '🧸', name: 'Medo',  hint: 'Medo je sladak!',  parentHint: '💬 Uzmite meda: "Medo! Zagrli meda!" — čekajte' },
-  { emoji: '🐱', name: 'Maca',  hint: 'Maca kaže mijau!', parentHint: '💬 Pitajte: "Gdje je maca? Mijau!" — čekajte odgovor' },
-  { emoji: '🍼', name: 'Duda',  hint: 'Duda, duda!',      parentHint: '💬 Recite: "Duda! Je li bebi duda?" — čekajte' },
-  { emoji: '😋', name: 'Am-am', hint: 'Njam-njam, jelo!', parentHint: '💬 Recite: "Am-am! Njam-njam!" — s razdraganim izrazom' },
-  { emoji: '👋', name: 'Pa-pa', hint: 'Mahni pa-pa!',     parentHint: '💬 Mahnite bebi: "Pa-pa!" — čekajte da maše nazad' },
-];
-
-// Imitation / gestures: screen shows demo animation; parent coaches real-world gesture.
-// sub = spoken prompt; parentHint = what parent should physically do with baby.
-const IMITATION = [
-  { emoji: '👋', name: 'Pa-pa',
-    sub: 'Mahni ručicom! Pa-pa!',
-    parentHint: '💬 Vi mahnite bebi — čekajte da beba mahne nazad',
-    anim: 'wave', sfx: 'twinkle', reward: 'Bravo! Pa-pa!' },
-  { emoji: '✋', name: 'Daj pet',
-    sub: 'Daj pet! Pljesni!',
-    parentHint: '💬 Pružite ruku: "Daj pet!" — čekajte bebin odgovor',
-    anim: 'highfive', sfx: 'slap', reward: 'Bravo! Daj pet!' },
-  { emoji: '👏', name: 'Plješćemo',
-    sub: 'Plješći ručicama! Pljes-pljes!',
-    parentHint: '💬 Plješćite zajedno s bebom — pratite njen ritam',
-    anim: 'clap', sfx: 'clap', reward: 'Bravo! Pljes-pljes!' },
-  { emoji: '😘', name: 'Pusa',
-    sub: 'Baci pusu! Mljac!',
-    parentHint: '💬 Bacite pusu bebi: "Mljac!" — ona će vas oponašati',
-    anim: 'kiss', sfx: 'kiss', reward: 'Bravo! Pusa za tebe!' },
-  { emoji: '🙌', name: 'Tako velik',
-    sub: 'Koliko si velik? Toliko velik!',
-    parentHint: '💬 Podignite bebine ručice gore: "Toliko velik!" — s osmijehom',
-    anim: 'big', sfx: 'bell', reward: 'Tako veliki!' },
-  { emoji: '🙈', name: 'Ku-kuc',
-    sub: 'Gdje je beba? Ku-kuc!',
-    parentHint: '💬 Sakrijte lice rukama pa otkrijte: "Ku-kuc! Tu sam!"',
-    anim: 'peek', sfx: 'pop', reward: 'Tu je beba! Ku-kuc!' },
-  { emoji: '🤗', name: 'Zagrljaj',
-    sub: 'Zagrli! Veliki zagrljaj!',
-    parentHint: '💬 Raširite ruke i zagrlite bebu: "Zagrljaj!" — toplo i nježno',
-    anim: 'hug', sfx: 'bloom', reward: 'Bravo! Kako lijepo!' },
-  { emoji: '👍', name: 'Bravo',
-    sub: 'Bravo! Palac gore!',
-    parentHint: '💬 Pokažite palac gore: "Bravo!" — čekajte bebu da vas oponaša',
-    anim: 'thumb', sfx: 'twinkle', reward: 'Bravo! Svaka čast!' },
-];
-
-// Cause-and-effect objects (each with a distinct meaningful sound).
-const CAUSAL_OBJECTS = [
-  { emoji: '🎈', label: 'balon',    color: '#FF4D8D', sound: 'pop'     },
-  { emoji: '⭐', label: 'zvijezda', color: '#FFD700', sound: 'twinkle' },
-  { emoji: '🔔', label: 'zvono',    color: '#FFA84E', sound: 'bell'    },
-  { emoji: '🌈', label: 'duga',     color: '#5BB8FF', sound: 'rainbow' },
-  { emoji: '🌺', label: 'cvijet',   color: '#FF85A2', sound: 'bloom'   },
+/* Weekly rotation — ISO-week based, cycles through this list. */
+const WEEKLY_GOALS = [
+  { key: 'dog',    display: 'vau-vau 🐶' },
+  { key: 'mama',   display: 'mama 👩'    },
+  { key: 'am-am',  display: 'am-am 😋'  },
+  { key: 'pa-pa',  display: 'pa-pa 👋'  },
+  { key: 'cat',    display: 'mijau 🐱'  },
+  { key: 'cow',    display: 'muu 🐄'    },
+  { key: 'lopta',  display: 'lopta ⚽'  },
+  { key: 'medo',   display: 'medo 🧸'   },
+  { key: 'beba',   display: 'beba 👶'   },
+  { key: 'tata',   display: 'tata 👨'   },
+  { key: 'ku-kuc', display: 'ku-kuc 🙈' },
+  { key: 'pusa',   display: 'pusa 😘'   },
 ];
 
 /* =========================================================
-   AUDIO ENGINE (Web Audio — no files, fully offline)
+   DATA ARRAYS
+   ========================================================= */
+const ANIMALS = [
+  { key:'dog',     emoji:'🐶', name:'Pas',     sound:'vau-vau',  sfx:'dog'     },
+  { key:'cat',     emoji:'🐱', name:'Mačka',   sound:'mijau',    sfx:'cat'     },
+  { key:'cow',     emoji:'🐄', name:'Krava',   sound:'muu',      sfx:'cow'     },
+  { key:'duck',    emoji:'🦆', name:'Patka',   sound:'kva-kva',  sfx:'duck'    },
+  { key:'rooster', emoji:'🐓', name:'Pijetao', sound:'kukuriku', sfx:'rooster' },
+  { key:'sheep',   emoji:'🐑', name:'Ovca',    sound:'bee-bee',  sfx:'sheep'   },
+  { key:'frog',    emoji:'🐸', name:'Žaba',    sound:'kre-kre',  sfx:'frog'    },
+  { key:'pig',     emoji:'🐷', name:'Svinja',  sound:'rok-rok',  sfx:'pig'     },
+  { key:'horse',   emoji:'🐴', name:'Konj',    sound:'i-ha-ha',  sfx:'horse'   },
+  { key:'bird',    emoji:'🐦', name:'Ptica',   sound:'živ-živ',  sfx:'bird'    },
+  { key:'donkey',  emoji:'🫏', name:'Magarac', sound:'i-a',      sfx:'donkey'  },
+];
+
+const FIRST_WORDS = [
+  { key:'mama',  emoji:'👩', name:'Mama',  hint:'To je mama!'       },
+  { key:'tata',  emoji:'👨', name:'Tata',  hint:'To je tata!'       },
+  { key:'baka',  emoji:'👵', name:'Baka',  hint:'To je baka!'       },
+  { key:'deda',  emoji:'👴', name:'Deda',  hint:'To je deda!'       },
+  { key:'beba',  emoji:'👶', name:'Beba',  hint:'To je beba!'       },
+  { key:'lopta', emoji:'⚽', name:'Lopta', hint:'Hvataj loptu!'     },
+  { key:'auto',  emoji:'🚗', name:'Auto',  hint:'Brm-brm, auto!'   },
+  { key:'voda',  emoji:'💧', name:'Voda',  hint:'Pij vodu!'        },
+  { key:'medo',  emoji:'🧸', name:'Medo',  hint:'Medo je sladak!'  },
+  { key:'maca',  emoji:'🐱', name:'Maca',  hint:'Maca kaže mijau!' },
+  { key:'duda',  emoji:'🍼', name:'Duda',  hint:'Duda, duda!'      },
+  { key:'am-am', emoji:'😋', name:'Am-am', hint:'Njam-njam, jelo!' },
+  { key:'pa-pa', emoji:'👋', name:'Pa-pa', hint:'Mahni pa-pa!'     },
+];
+
+const IMITATION = [
+  { key:'pa-pa',      emoji:'👋', name:'Pa-pa',      sub:'Mahni ručicom! Pa-pa!',          anim:'wave',     sfx:'twinkle', reward:'Bravo! Pa-pa!'      },
+  { key:'daj-pet',    emoji:'✋', name:'Daj pet',    sub:'Daj pet! Pljesni!',              anim:'highfive', sfx:'slap',    reward:'Bravo! Daj pet!'    },
+  { key:'pljes',      emoji:'👏', name:'Plješćemo',  sub:'Plješći ručicama! Pljes-pljes!', anim:'clap',     sfx:'clap',    reward:'Bravo! Pljes-pljes!'  },
+  { key:'pusa',       emoji:'😘', name:'Pusa',       sub:'Baci pusu! Mljac!',              anim:'kiss',     sfx:'kiss',    reward:'Bravo! Pusa za tebe!'},
+  { key:'tako-velik', emoji:'🙌', name:'Tako velik', sub:'Koliko si velik? Toliko velik!', anim:'big',      sfx:'bell',    reward:'Tako veliki!'        },
+  { key:'ku-kuc',     emoji:'🙈', name:'Ku-kuc',     sub:'Gdje je beba? Ku-kuc!',          anim:'peek',     sfx:'pop',     reward:'Tu je beba! Ku-kuc!' },
+  { key:'zagrljaj',   emoji:'🤗', name:'Zagrljaj',   sub:'Zagrli! Veliki zagrljaj!',       anim:'hug',      sfx:'bloom',   reward:'Bravo! Kako lijepo!' },
+  { key:'bravo',      emoji:'👍', name:'Bravo',      sub:'Bravo! Palac gore!',             anim:'thumb',    sfx:'twinkle', reward:'Bravo! Svaka čast!'  },
+];
+
+const CAUSAL_OBJECTS = [
+  { emoji:'🎈', label:'balon',    color:'#FF4D8D', sound:'pop'     },
+  { emoji:'⭐', label:'zvijezda', color:'#FFD700', sound:'twinkle' },
+  { emoji:'🔔', label:'zvono',    color:'#FFA84E', sound:'bell'    },
+  { emoji:'🌈', label:'duga',     color:'#5BB8FF', sound:'rainbow' },
+  { emoji:'🌺', label:'cvijet',   color:'#FF85A2', sound:'bloom'   },
+];
+
+// Flat list used for recordings manager
+const ALL_ITEMS = [
+  { group:'Životinje', items: ANIMALS },
+  { group:'Prve riječi', items: FIRST_WORDS },
+  { group:'Pokaži mi!', items: IMITATION },
+];
+
+/* =========================================================
+   SETTINGS & STATS (localStorage)
+   ========================================================= */
+const SETTINGS_KEY = '@beba_settings';
+const STATS_KEY    = '@beba_stats';
+const REC_PREFIX   = '@beba_rec_';
+
+function loadSettings() {
+  return Object.assign({ showPrompts: true, pauseDuration: 3 },
+    JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'));
+}
+function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+function loadStats() {
+  return Object.assign({ sessions: 0, recordingsCount: 0 },
+    JSON.parse(localStorage.getItem(STATS_KEY) || '{}'));
+}
+function saveStats() { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }
+
+let settings = loadSettings(), stats = loadStats();
+
+/* =========================================================
+   WEEKLY GOAL
+   ========================================================= */
+function getISOWeek(d) {
+  const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  return Math.ceil((((dt - y0) / 86400000) + 1) / 7);
+}
+function getCurrentWeekGoal() {
+  const now = new Date();
+  return WEEKLY_GOALS[(now.getFullYear() * 53 + getISOWeek(now)) % WEEKLY_GOALS.length];
+}
+function initWeeklyGoal() {
+  const el = document.getElementById('wg-word');
+  if (el) el.textContent = getCurrentWeekGoal().display;
+}
+
+/* =========================================================
+   AUDIO ENGINE
    ========================================================= */
 let audioCtx = null;
 function getAudioCtx() {
@@ -447,15 +636,11 @@ function getAudioCtx() {
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
-
-// --- small reusable building blocks ---
-// A shaped tone, optionally gliding in pitch with optional vibrato.
 function tone(opt) {
   const ctx = getAudioCtx();
   const t0 = ctx.currentTime + (opt.start || 0);
   const dur = opt.dur || 0.3;
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
+  const osc = ctx.createOscillator(), g = ctx.createGain();
   osc.type = opt.type || 'sine';
   osc.frequency.setValueAtTime(opt.freq, t0);
   if (opt.glideTo) osc.frequency.exponentialRampToValueAtTime(opt.glideTo, t0 + dur);
@@ -465,16 +650,13 @@ function tone(opt) {
   g.gain.exponentialRampToValueAtTime(peak, t0 + Math.min(0.04, dur * 0.25));
   g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
   if (opt.vibrato) {
-    const lfo = ctx.createOscillator();
-    const lg = ctx.createGain();
-    lfo.frequency.value = opt.vibrato.rate;
-    lg.gain.value = opt.vibrato.depth;
+    const lfo = ctx.createOscillator(), lg = ctx.createGain();
+    lfo.frequency.value = opt.vibrato.rate; lg.gain.value = opt.vibrato.depth;
     lfo.connect(lg); lg.connect(osc.frequency);
     lfo.start(t0); lfo.stop(t0 + dur);
   }
   osc.start(t0); osc.stop(t0 + dur + 0.05);
 }
-// A short band-passed noise burst (chirps / quacks / claps).
 function noiseBurst(opt) {
   const ctx = getAudioCtx();
   const t0 = ctx.currentTime + (opt.start || 0);
@@ -493,13 +675,10 @@ function noiseBurst(opt) {
   src.connect(f); f.connect(g); g.connect(ctx.destination);
   src.start(t0); src.stop(t0 + dur);
 }
-
-// --- reward / object sounds ---
 function playChime(baseFreq = 523) {
   const ctx = getAudioCtx();
   [baseFreq, baseFreq * 1.25, baseFreq * 1.5].forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.type = 'sine'; osc.frequency.value = freq;
     const t = ctx.currentTime + i * 0.18;
@@ -512,11 +691,9 @@ function playChime(baseFreq = 523) {
 function playSparkle() {
   const ctx = getAudioCtx();
   for (let i = 0; i < 5; i++) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = 'triangle';
-    osc.frequency.value = 600 + Math.random() * 900;
+    osc.type = 'triangle'; osc.frequency.value = 600 + Math.random() * 900;
     const t = ctx.currentTime + i * 0.07;
     gain.gain.setValueAtTime(0, t);
     gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
@@ -525,147 +702,200 @@ function playSparkle() {
   }
 }
 function playPop() {
-  const ctx = getAudioCtx();
-  const t = ctx.currentTime;
-  tone({ freq: 700, glideTo: 120, type: 'sine', dur: 0.18, gain: 0.3 });
+  tone({ freq:700, glideTo:120, type:'sine', dur:0.18, gain:0.3 });
+  const ctx = getAudioCtx(), t = ctx.currentTime;
   const dur = 0.08, n = Math.floor(ctx.sampleRate * dur);
   const buffer = ctx.createBuffer(1, n, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
   const noise = ctx.createBufferSource(); noise.buffer = buffer;
   const ng = ctx.createGain(); ng.gain.value = 0.25;
-  noise.connect(ng); ng.connect(ctx.destination);
-  noise.start(t);
+  noise.connect(ng); ng.connect(ctx.destination); noise.start(t);
 }
 function playBell(base = 660) {
-  const ctx = getAudioCtx();
-  const t = ctx.currentTime;
+  const ctx = getAudioCtx(), t = ctx.currentTime;
   [{f:base,g:0.22,d:1.2},{f:base*2,g:0.12,d:1.0},{f:base*2.76,g:0.08,d:0.8},{f:base*5.4,g:0.05,d:0.6}].forEach(p => {
-    const osc = ctx.createOscillator(); const g = ctx.createGain();
-    osc.type = 'sine'; osc.frequency.value = p.f; osc.connect(g); g.connect(ctx.destination);
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(p.g, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0008, t + p.d);
-    osc.start(t); osc.stop(t + p.d + 0.05);
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type='sine'; osc.frequency.value=p.f; osc.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(p.g,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0008,t+p.d); osc.start(t); osc.stop(t+p.d+0.05);
   });
 }
-function playTwinkle() {
-  [1046, 1318, 1568, 2093].forEach((f, i) => tone({ freq: f, type: 'triangle', start: i * 0.06, dur: 0.25, gain: 0.12 }));
-}
-function playRainbow() {
-  [523, 587, 659, 784, 880, 1047].forEach((f, i) => tone({ freq: f, type: 'sine', start: i * 0.05, dur: 0.4, gain: 0.13 }));
-}
+function playTwinkle() { [1046,1318,1568,2093].forEach((f,i) => tone({freq:f,type:'triangle',start:i*0.06,dur:0.25,gain:0.12})); }
+function playRainbow() { [523,587,659,784,880,1047].forEach((f,i) => tone({freq:f,type:'sine',start:i*0.05,dur:0.4,gain:0.13})); }
 function playBloom() {
-  const ctx = getAudioCtx(); const t = ctx.currentTime;
-  [523, 659, 784].forEach(f => {
-    const osc = ctx.createOscillator(); const g = ctx.createGain();
-    osc.type = 'sine'; osc.frequency.value = f; osc.connect(g); g.connect(ctx.destination);
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.12, t + 0.12);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-    osc.start(t); osc.stop(t + 0.65);
+  const ctx = getAudioCtx(), t = ctx.currentTime;
+  [523,659,784].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type='sine'; osc.frequency.value=f; osc.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.12,t+0.12);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.6); osc.start(t); osc.stop(t+0.65);
   });
 }
 function playObjectSound(kind) {
-  ({ pop: playPop, bell: () => playBell(), twinkle: playTwinkle, rainbow: playRainbow, bloom: playBloom }[kind] || playSparkle)();
+  ({pop:playPop, bell:()=>playBell(), twinkle:playTwinkle, rainbow:playRainbow, bloom:playBloom}[kind] || playSparkle)();
 }
-
-// --- animal calls ---
 const ANIMAL_SOUNDS = {
-  dog()    { tone({ freq: 300, glideTo: 150, type: 'sawtooth', dur: 0.16, gain: 0.25 });
-             tone({ freq: 300, glideTo: 150, type: 'sawtooth', start: 0.24, dur: 0.16, gain: 0.25 }); },
-  cat()    { tone({ freq: 520, glideTo: 880, type: 'sawtooth', dur: 0.18, gain: 0.16 });
-             tone({ freq: 880, glideTo: 480, type: 'sawtooth', start: 0.18, dur: 0.34, gain: 0.16 }); },
-  cow()    { tone({ freq: 180, glideTo: 130, type: 'sawtooth', dur: 0.85, gain: 0.25, vibrato: { rate: 6, depth: 8 } }); },
-  duck()   { for (let i = 0; i < 2; i++) tone({ freq: 430, glideTo: 300, type: 'square', start: i * 0.2, dur: 0.13, gain: 0.13 }); },
-  rooster(){ let s = 0; [[600,0.15],[920,0.2],[720,0.2],[500,0.34]].forEach(([f,d]) => { tone({ freq: f, type: 'sawtooth', start: s, dur: d, gain: 0.15 }); s += d; }); },
-  sheep()  { tone({ freq: 380, glideTo: 330, type: 'sawtooth', dur: 0.6, gain: 0.16, vibrato: { rate: 16, depth: 28 } }); },
-  frog()   { for (let i = 0; i < 3; i++) tone({ freq: 150, type: 'square', start: i * 0.13, dur: 0.09, gain: 0.2 }); },
-  pig()    { for (let i = 0; i < 2; i++) { tone({ freq: 320, glideTo: 200, type: 'sawtooth', start: i * 0.22, dur: 0.12, gain: 0.16 }); noiseBurst({ start: i * 0.22, dur: 0.12, filter: 500, gain: 0.1 }); } },
-  horse()  { tone({ freq: 820, glideTo: 280, type: 'sawtooth', dur: 0.6, gain: 0.15, vibrato: { rate: 20, depth: 45 } }); },
-  bird()   { for (let i = 0; i < 3; i++) tone({ freq: 2000 + i * 250, glideTo: 2600, type: 'sine', start: i * 0.13, dur: 0.08, gain: 0.12 }); },
-  donkey() { tone({ freq: 720, glideTo: 600, type: 'sawtooth', dur: 0.3, gain: 0.16 });
-             tone({ freq: 200, glideTo: 140, type: 'sawtooth', start: 0.34, dur: 0.42, gain: 0.2 }); },
+  dog()    { tone({freq:300,glideTo:150,type:'sawtooth',dur:0.16,gain:0.25}); tone({freq:300,glideTo:150,type:'sawtooth',start:0.24,dur:0.16,gain:0.25}); },
+  cat()    { tone({freq:520,glideTo:880,type:'sawtooth',dur:0.18,gain:0.16}); tone({freq:880,glideTo:480,type:'sawtooth',start:0.18,dur:0.34,gain:0.16}); },
+  cow()    { tone({freq:180,glideTo:130,type:'sawtooth',dur:0.85,gain:0.25,vibrato:{rate:6,depth:8}}); },
+  duck()   { for(let i=0;i<2;i++) tone({freq:430,glideTo:300,type:'square',start:i*0.2,dur:0.13,gain:0.13}); },
+  rooster(){ let s=0; [[600,0.15],[920,0.2],[720,0.2],[500,0.34]].forEach(([f,d])=>{tone({freq:f,type:'sawtooth',start:s,dur:d,gain:0.15}); s+=d;}); },
+  sheep()  { tone({freq:380,glideTo:330,type:'sawtooth',dur:0.6,gain:0.16,vibrato:{rate:16,depth:28}}); },
+  frog()   { for(let i=0;i<3;i++) tone({freq:150,type:'square',start:i*0.13,dur:0.09,gain:0.2}); },
+  pig()    { for(let i=0;i<2;i++){tone({freq:320,glideTo:200,type:'sawtooth',start:i*0.22,dur:0.12,gain:0.16}); noiseBurst({start:i*0.22,dur:0.12,filter:500,gain:0.1});} },
+  horse()  { tone({freq:820,glideTo:280,type:'sawtooth',dur:0.6,gain:0.15,vibrato:{rate:20,depth:45}}); },
+  bird()   { for(let i=0;i<3;i++) tone({freq:2000+i*250,glideTo:2600,type:'sine',start:i*0.13,dur:0.08,gain:0.12}); },
+  donkey() { tone({freq:720,glideTo:600,type:'sawtooth',dur:0.3,gain:0.16}); tone({freq:200,glideTo:140,type:'sawtooth',start:0.34,dur:0.42,gain:0.2}); },
 };
 function playAnimalSound(kind) { (ANIMAL_SOUNDS[kind] || playChime)(); }
-
-// --- gesture sounds (imitation mode) ---
-function playClap() { noiseBurst({ dur: 0.06, filter: 1500, gain: 0.25 }); noiseBurst({ start: 0.15, dur: 0.06, filter: 1500, gain: 0.25 }); }
-function playKiss() { tone({ freq: 520, glideTo: 200, type: 'sine', dur: 0.28, gain: 0.22 }); }
-function playSlap() { noiseBurst({ dur: 0.05, filter: 2000, gain: 0.3 }); }
+function playClap()  { noiseBurst({dur:0.06,filter:1500,gain:0.25}); noiseBurst({start:0.15,dur:0.06,filter:1500,gain:0.25}); }
+function playKiss()  { tone({freq:520,glideTo:200,type:'sine',dur:0.28,gain:0.22}); }
+function playSlap()  { noiseBurst({dur:0.05,filter:2000,gain:0.3}); }
 function playGestureSound(kind) {
-  ({ clap: playClap, kiss: playKiss, slap: playSlap, pop: playPop, bell: () => playBell(),
-     bloom: playBloom, twinkle: playTwinkle }[kind] || (() => playChime(700)))();
+  ({clap:playClap, kiss:playKiss, slap:playSlap, pop:playPop,
+    bell:()=>playBell(), bloom:playBloom, twinkle:playTwinkle}[kind] || (()=>playChime(700)))();
 }
 
 /* =========================================================
-   SPEECH (Croatian; falls back to device voice if no hr voice)
+   SPEECH — Croatian; falls back to device voice.
+   speak() guards against iOS stuck-engine.
+   speakItem() uses parent's own recording if available.
    ========================================================= */
 let hrVoice = null;
 function initTTS() {
   if (!window.speechSynthesis) return;
-  const load = () => {
-    const voices = window.speechSynthesis.getVoices();
-    hrVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('hr')) || null;
-  };
-  if (window.speechSynthesis.getVoices().length) load();
-  else window.speechSynthesis.addEventListener('voiceschanged', load);
+  const load = () => { const v = speechSynthesis.getVoices(); hrVoice = v.find(x => x.lang && x.lang.toLowerCase().startsWith('hr')) || null; };
+  if (speechSynthesis.getVoices().length) load();
+  else speechSynthesis.addEventListener('voiceschanged', load);
 }
 initTTS();
 
 function speak(text) {
   if (!window.speechSynthesis) return;
-  // Only cancel when something is actually queued — calling cancel() on an idle
-  // engine can leave iOS Safari stuck and silent.
-  try { if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); } catch (e) {}
+  try { if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); } catch(e) {}
   const u = new SpeechSynthesisUtterance(text);
-  u.rate = 0.78; u.pitch = 1.22; u.volume = 1.0;  // parentese: slower & higher
-  const voices = window.speechSynthesis.getVoices();
+  u.rate = 0.78; u.pitch = 1.22; u.volume = 1.0;
+  const voices = speechSynthesis.getVoices();
   const hr = hrVoice || voices.find(x => x.lang && x.lang.toLowerCase().startsWith('hr'));
-  if (hr) {
-    u.voice = hr; u.lang = 'hr-HR'; hrVoice = hr;
-  } else if (voices.length) {
-    // No Croatian voice installed — use the device default so it still speaks.
-    const def = voices.find(x => x.default) || voices[0];
-    u.voice = def; u.lang = def.lang || 'hr-HR';
-  } else {
-    u.lang = 'hr-HR';
-  }
-  try { speechSynthesis.resume(); } catch (e) {}  // unstick a paused engine (iOS)
-  window.speechSynthesis.speak(u);
+  if (hr) { u.voice = hr; u.lang = 'hr-HR'; hrVoice = hr; }
+  else if (voices.length) { const def = voices.find(x => x.default) || voices[0]; u.voice = def; u.lang = def.lang || 'hr-HR'; }
+  else { u.lang = 'hr-HR'; }
+  try { speechSynthesis.resume(); } catch(e) {}
+  speechSynthesis.speak(u);
 }
 
-// Delayed speech that can be cancelled if the parent navigates away, so a
-// scheduled reward/label never fires over the next card.
 let speechTimers = [];
 function laterSpeak(text, delay) { speechTimers.push(setTimeout(() => speak(text), delay)); }
 function cancelPendingSpeech() {
-  speechTimers.forEach(clearTimeout);
-  speechTimers = [];
-  if (window.speechSynthesis) { try { speechSynthesis.cancel(); } catch (e) {} }
+  speechTimers.forEach(clearTimeout); speechTimers = [];
+  if (window.speechSynthesis) { try { speechSynthesis.cancel(); } catch(e) {} }
 }
+
+// Play parent's own recording if saved; otherwise fall back to TTS.
+function speakItem(item, text) {
+  const rec = localStorage.getItem(REC_PREFIX + item.key);
+  if (rec) {
+    const audio = new Audio(rec);
+    audio.load();
+    audio.play().catch(() => speak(text));
+  } else {
+    speak(text);
+  }
+}
+
+/* =========================================================
+   COACH BAR — contextual just-in-time parent coaching.
+   ========================================================= */
+const coachBar  = document.getElementById('coach-bar');
+const coachText = document.getElementById('coach-text');
+let coachPhaseTimer = null;
+
+function showCoachPhase(item, phase) {
+  if (!settings.showPrompts) { coachBar.hidden = true; return; }
+  const p = PROMPTS[item.key] || PROMPTS._default;
+  const goal = getCurrentWeekGoal();
+  const isGoal = item.key === goal.key;
+  const txt = phase === 'ask' ? p.ask : p.expand;
+  coachText.innerHTML = (isGoal ? '<span class="coach-goal">🎯 Cilj tjedna!  </span>' : '') +
+                        (phase === 'expand' ? `<span class="coach-b">${txt}</span>` : txt);
+  coachBar.hidden = false;
+}
+function hideCoach() { coachBar.hidden = true; }
+
+/* =========================================================
+   SERVE-AND-RETURN PAUSE
+   ========================================================= */
+const serveHint = document.getElementById('serve-hint');
+let serveTimer = null;
+function startServePause() {
+  const dur = settings.pauseDuration;
+  if (!dur || !settings.showPrompts) return;
+  clearTimeout(serveTimer);
+  serveHint.classList.add('visible');
+  serveTimer = setTimeout(() => serveHint.classList.remove('visible'), dur * 1000);
+}
+function dismissServe() { clearTimeout(serveTimer); serveHint.classList.remove('visible'); }
+
+/* =========================================================
+   VOICE RECORDING (MediaRecorder → base64 localStorage)
+   ========================================================= */
+const canRecord = !!(navigator.mediaDevices && window.MediaRecorder);
+let mediaRecorder = null, recChunks = [];
+
+function updateRecCount() {
+  stats.recordingsCount = Object.keys(localStorage).filter(k => k.startsWith(REC_PREFIX)).length;
+  saveStats();
+}
+
+function startRec(key, onState) {
+  if (!canRecord) { onState('error'); return; }
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    .then(stream => {
+      recChunks = [];
+      // prefer webm; fall back to whatever is supported
+      const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg',''].find(m => !m || MediaRecorder.isTypeSupported(m));
+      mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+      mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) recChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = () => {
+          try { localStorage.setItem(REC_PREFIX + key, reader.result); } catch(e) {
+            // localStorage full — warn and skip
+            onState('full'); return;
+          }
+          updateRecCount(); onState('done');
+        };
+        reader.readAsDataURL(blob);
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorder.start();
+      onState('recording');
+    })
+    .catch(() => onState('error'));
+}
+function stopRec() { if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); }
+function playRec(key) {
+  const data = localStorage.getItem(REC_PREFIX + key);
+  if (!data) return;
+  const audio = new Audio(data); audio.load(); audio.play().catch(() => {});
+}
+function deleteRec(key) { localStorage.removeItem(REC_PREFIX + key); updateRecCount(); }
 
 /* =========================================================
    GENERAL HELPERS
    ========================================================= */
-function haptic(ms = 18) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } }
+function haptic(ms = 18) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch(e) {} } }
 
-function primeAudio() {   // unlock audio + TTS within a user gesture (iOS)
-  try { getAudioCtx(); } catch (e) {}
-  if (window.speechSynthesis) {
-    const u = new SpeechSynthesisUtterance(' ');
-    u.volume = 0; window.speechSynthesis.speak(u);
-  }
+function primeAudio() {
+  try { getAudioCtx(); } catch(e) {}
+  if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); }
 }
 
 function debounced(fn, wait = 350) {
   let last = 0;
-  return function (...args) {
-    const now = Date.now();
-    if (now - last < wait) return;
-    last = now;
-    fn.apply(this, args);
-  };
+  return function(...args) { const now = Date.now(); if (now - last < wait) return; last = now; fn.apply(this, args); };
 }
 
 function spawnRipple(x, y) {
@@ -673,30 +903,21 @@ function spawnRipple(x, y) {
   r.className = 'ripple';
   r.style.left = (x - 30) + 'px'; r.style.top = (y - 30) + 'px';
   r.style.width = '60px'; r.style.height = '60px';
-  document.body.appendChild(r);
-  setTimeout(() => r.remove(), 600);
+  document.body.appendChild(r); setTimeout(() => r.remove(), 600);
 }
 
 function setupIdleHint(element) {
   let idleTimer = null;
   const reset = () => {
-    element.classList.remove('idle-hint');
-    clearTimeout(idleTimer);
+    element.classList.remove('idle-hint'); clearTimeout(idleTimer);
     idleTimer = setTimeout(() => element.classList.add('idle-hint'), 7000);
   };
-  element.addEventListener('pointerdown', reset);
-  reset();
-  return reset;
+  element.addEventListener('pointerdown', reset); reset(); return reset;
 }
 
 function buildDots(containerId, count) {
-  const c = document.getElementById(containerId);
-  c.innerHTML = '';
-  for (let i = 0; i < count; i++) {
-    const d = document.createElement('div');
-    d.className = 'dot';
-    c.appendChild(d);
-  }
+  const c = document.getElementById(containerId); c.innerHTML = '';
+  for (let i = 0; i < count; i++) { const d = document.createElement('div'); d.className = 'dot'; c.appendChild(d); }
 }
 function updateDots(containerId, index) {
   document.getElementById(containerId).querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === index));
@@ -706,20 +927,21 @@ function updateDots(containerId, index) {
    SCREEN MANAGER
    ========================================================= */
 const screens = {};
-['parent', 'home', 'card', 'causal'].forEach(id => { screens[id] = document.getElementById('screen-' + id); });
+['parent', 'home', 'card', 'causal', 'settings'].forEach(id => { screens[id] = document.getElementById('screen-' + id); });
 function showScreen(id) {
-  cancelPendingSpeech();   // stop any scheduled audio from the screen we're leaving
+  cancelPendingSpeech(); dismissServe(); hideCoach();
   Object.values(screens).forEach(s => s.classList.add('hidden'));
   screens[id].classList.remove('hidden');
+  if (id === 'home') initWeeklyGoal();
 }
 
 /* =========================================================
    HOLD-TO-START (parent guard)
    ========================================================= */
-const holdBtn = document.getElementById('btn-start-hold');
-const holdFill = document.getElementById('hold-fill');
+const holdBtn   = document.getElementById('btn-start-hold');
+const holdFill  = document.getElementById('hold-fill');
 const holdLabel = document.getElementById('hold-label');
-const HOLD_MS = 1500;
+const HOLD_MS   = 1500;
 let holdTimer = null, holdStart = null, holdRAF = null;
 function holdAnimate() {
   if (!holdStart) return;
@@ -728,72 +950,53 @@ function holdAnimate() {
   if (pct < 100) holdRAF = requestAnimationFrame(holdAnimate);
 }
 holdBtn.addEventListener('pointerdown', () => {
-  holdStart = Date.now();
-  holdLabel.textContent = 'Drži…';
-  primeAudio();
+  holdStart = Date.now(); holdLabel.textContent = 'Drži…'; primeAudio();
   holdRAF = requestAnimationFrame(holdAnimate);
   holdTimer = setTimeout(() => {
-    cancelAnimationFrame(holdRAF);
-    holdFill.style.width = '100%';
+    cancelAnimationFrame(holdRAF); holdFill.style.width = '100%';
     holdLabel.textContent = '✓ Počinjemo!';
-    playStarted = true;
-    requestWakeLock();
+    playStarted = true; requestWakeLock();
     setTimeout(() => { showScreen('home'); startBreakTimer(); }, 350);
   }, HOLD_MS);
 });
-['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => holdBtn.addEventListener(ev, () => {
+['pointerup','pointercancel','pointerleave'].forEach(ev => holdBtn.addEventListener(ev, () => {
   clearTimeout(holdTimer); cancelAnimationFrame(holdRAF);
   holdStart = null; holdFill.style.width = '0%'; holdLabel.textContent = 'Drži za početak';
 }));
 
 /* =========================================================
-   BREAK TIMER (5 minutes of *active* play)
-   Pauses while the app is backgrounded so it counts real
-   screen time, not time the tablet was put down.
+   BREAK TIMER (active screen time; pauses when backgrounded)
    ========================================================= */
 const BREAK_MS = 5 * 60 * 1000;
 let breakTimer = null, breakDeadline = 0;
 function showBreak() { document.getElementById('break-overlay').classList.add('visible'); }
 function startBreakTimer() {
-  clearTimeout(breakTimer);
-  breakDeadline = Date.now() + BREAK_MS;
+  clearTimeout(breakTimer); breakDeadline = Date.now() + BREAK_MS;
   breakTimer = setTimeout(showBreak, BREAK_MS);
+  stats.sessions++; saveStats();
 }
 function pauseBreakTimer() { if (breakTimer) { clearTimeout(breakTimer); breakTimer = null; } }
 function resumeBreakTimer() {
-  if (breakDeadline && !breakTimer) {
-    breakTimer = setTimeout(showBreak, Math.max(0, breakDeadline - Date.now()));
-  }
+  if (breakDeadline && !breakTimer) breakTimer = setTimeout(showBreak, Math.max(0, breakDeadline - Date.now()));
 }
 function stopBreakTimer() { clearTimeout(breakTimer); breakTimer = null; breakDeadline = 0; }
 document.getElementById('btn-continue-break').addEventListener('click', () => {
-  document.getElementById('break-overlay').classList.remove('visible');
-  startBreakTimer();
+  document.getElementById('break-overlay').classList.remove('visible'); startBreakTimer();
 });
 document.getElementById('btn-home-break').addEventListener('click', () => {
   document.getElementById('break-overlay').classList.remove('visible');
-  showScreen('home');
-  stopBreakTimer();
+  showScreen('home'); stopBreakTimer();
 });
 
-/* =========================================================
-   SCREEN WAKE LOCK — keep the tablet awake during co-play.
-   Re-acquired when the app returns to the foreground.
-   ========================================================= */
+/* Wake lock */
 let wakeLock = null, playStarted = false;
 async function requestWakeLock() {
   if (!('wakeLock' in navigator) || document.hidden) return;
-  try { wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+  try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
 }
-
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    pauseBreakTimer();
-    cancelPendingSpeech();
-  } else {
-    resumeBreakTimer();
-    if (playStarted) requestWakeLock();
-  }
+  if (document.hidden) { pauseBreakTimer(); cancelPendingSpeech(); }
+  else { resumeBreakTimer(); if (playStarted) requestWakeLock(); }
 });
 
 /* =========================================================
@@ -815,81 +1018,87 @@ function setupExit(btnId, targetScreen) {
 }
 setupExit('exit-card', 'home');
 setupExit('exit-causal', 'home');
+setupExit('exit-settings', 'home');
 
 /* =========================================================
    CARD MODE — shared engine for Animals / Words / Imitation
    ========================================================= */
-const cardEl = document.getElementById('card');
+const cardEl    = document.getElementById('card');
 const cardEmoji = document.getElementById('card-emoji');
 const cardLabel = document.getElementById('card-label');
-const cardSub = document.getElementById('card-sub');
-const cardParent = document.getElementById('card-parent');
+const cardSub   = document.getElementById('card-sub');
 
 function triggerCardAnim(name) {
-  cardEmoji.className = 'card-emoji';
-  void cardEmoji.offsetWidth;          // reflow so the animation restarts
+  cardEmoji.className = 'card-emoji'; void cardEmoji.offsetWidth;
   cardEmoji.classList.add('anim-' + (name || 'bounce'));
 }
 
 const CardMode = {
-  cfg: null, items: null, index: 0, taps: 0, idleReset: null,
+  cfg: null, items: null, index: 0, taps: 0, idleReset: null, _phaseTimer: null,
   open(cfg) {
-    this.cfg = cfg; this.items = cfg.items; this.index = 0; this.taps = 0;
+    this.cfg = cfg; this.items = cfg.items; this.taps = 0;
+    // Start at weekly goal item if present in this mode (subtle weekly goal emphasis)
+    const goalKey = getCurrentWeekGoal().key;
+    const goalIdx = this.items.findIndex(it => it.key === goalKey);
+    this.index = goalIdx >= 0 ? goalIdx : 0;
     buildDots('dots-card', this.items.length);
     this.render();
     if (!this.idleReset) this.idleReset = setupIdleHint(cardEl);
-    this.idleReset();
-    showScreen('card');
+    this.idleReset(); showScreen('card');
   },
   render() {
     const it = this.items[this.index];
     cardEmoji.textContent = it.emoji;
     cardLabel.textContent = it.name;
     cardSub.textContent = this.cfg.sub ? this.cfg.sub(it) : '';
-    cardParent.textContent = this.cfg.parentHint ? this.cfg.parentHint(it) : '';
     cardEmoji.className = 'card-emoji';
     updateDots('dots-card', this.index);
+    clearTimeout(this._phaseTimer);
+    dismissServe();
+    showCoachPhase(it, 'ask');
   },
   tap(e) {
-    const it = this.items[this.index];
-    this.taps++;
+    const it = this.items[this.index]; this.taps++;
+    dismissServe();
     triggerCardAnim(this.cfg.anim ? this.cfg.anim(it) : 'bounce');
-    haptic();
-    spawnRipple(e.clientX, e.clientY);
+    haptic(); spawnRipple(e.clientX, e.clientY);
     this.cfg.tap(it, this.taps);
     if (this.idleReset) this.idleReset();
+    // Switch to Phase B then serve-and-return pause
+    clearTimeout(this._phaseTimer);
+    this._phaseTimer = setTimeout(() => {
+      showCoachPhase(it, 'expand');
+      startServePause();
+      this._phaseTimer = setTimeout(() => showCoachPhase(it, 'ask'), 5000);
+    }, 650);
   },
   go(delta) {
-    cancelPendingSpeech();   // drop a queued reward before changing card
+    cancelPendingSpeech();
     this.index = (this.index + delta + this.items.length) % this.items.length;
     this.render();
     if (this.idleReset) this.idleReset();
   },
 };
 
-// Per-mode configuration (data + what happens on tap)
 const MODES = {
   animals: {
     items: ANIMALS,
     sub: i => i.sound,
-    parentHint: i => i.parentHint,
     anim: () => 'bounce',
-    tap: i => { speak(i.name); setTimeout(() => playAnimalSound(i.sfx), 550); },
+    tap: i => { speakItem(i, i.name); setTimeout(() => playAnimalSound(i.sfx), 550); },
   },
   words: {
     items: FIRST_WORDS,
     sub: i => i.hint,
-    parentHint: i => i.parentHint,
     anim: () => 'bounce',
-    tap: i => { speak(i.name); setTimeout(() => playChime(659), 100); },
+    tap: i => { speakItem(i, i.name); setTimeout(() => playChime(659), 100); },
   },
   imitation: {
     items: IMITATION,
     sub: i => i.sub,
-    parentHint: i => i.parentHint,
     anim: i => i.anim,
     tap: (i, taps) => {
-      speak(i.sub);
+      speakItem(i, i.sub);
       setTimeout(() => playGestureSound(i.sfx), 200);
       if (taps % 3 === 0) laterSpeak(i.reward, 1700);
     },
@@ -899,9 +1108,8 @@ const MODES = {
 cardEl.addEventListener('pointerdown', debounced(e => CardMode.tap(e)));
 document.getElementById('next-card').addEventListener('pointerdown', debounced(e => { e.stopPropagation(); haptic(); CardMode.go(1); spawnRipple(e.clientX, e.clientY); }));
 document.getElementById('prev-card').addEventListener('pointerdown', debounced(e => { e.stopPropagation(); haptic(); CardMode.go(-1); spawnRipple(e.clientX, e.clientY); }));
-
-document.getElementById('btn-mode-animals').addEventListener('pointerdown', () => { haptic(); CardMode.open(MODES.animals); });
-document.getElementById('btn-mode-words').addEventListener('pointerdown', () => { haptic(); CardMode.open(MODES.words); });
+document.getElementById('btn-mode-animals').addEventListener('pointerdown',   () => { haptic(); CardMode.open(MODES.animals); });
+document.getElementById('btn-mode-words').addEventListener('pointerdown',     () => { haptic(); CardMode.open(MODES.words); });
 document.getElementById('btn-mode-imitation').addEventListener('pointerdown', () => { haptic(); CardMode.open(MODES.imitation); });
 
 /* =========================================================
@@ -909,77 +1117,171 @@ document.getElementById('btn-mode-imitation').addEventListener('pointerdown', ()
    ========================================================= */
 function spawnParticles(cx, cy, color) {
   for (let i = 0; i < 10; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
+    const p = document.createElement('div'); p.className = 'particle';
     const size = 8 + Math.random() * 12;
     p.style.width = size + 'px'; p.style.height = size + 'px';
-    p.style.background = color;
-    p.style.left = cx + 'px'; p.style.top = cy + 'px';
+    p.style.background = color; p.style.left = cx + 'px'; p.style.top = cy + 'px';
     const angle = (Math.PI * 2 * i) / 10 + Math.random() * 0.5;
-    const dist = 60 + Math.random() * 80;
+    const dist  = 60 + Math.random() * 80;
     p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
     p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
-    document.body.appendChild(p);
-    setTimeout(() => p.remove(), 650);
+    document.body.appendChild(p); setTimeout(() => p.remove(), 650);
   }
 }
-
 function initCausal() {
-  const stage = document.getElementById('causal-stage');
-  stage.innerHTML = '';
+  const stage = document.getElementById('causal-stage'); stage.innerHTML = '';
   const positions = [
-    { top: '10%', left: '8%' }, { top: '10%', left: '60%' },
-    { top: '45%', left: '34%' }, { top: '55%', left: '5%' }, { top: '55%', left: '65%' },
+    {top:'10%',left:'8%'}, {top:'10%',left:'60%'},
+    {top:'45%',left:'34%'}, {top:'55%',left:'5%'}, {top:'55%',left:'65%'},
   ];
   CAUSAL_OBJECTS.forEach((obj, i) => {
-    const pos = positions[i] || { top: '50%', left: '50%' };
+    const pos = positions[i] || {top:'50%',left:'50%'};
     const el = document.createElement('div');
     el.className = 'causal-object';
     el.style.top = pos.top; el.style.left = pos.left;
-    el.style.width = 'clamp(120px, 22vw, 170px)';
-    el.style.height = 'clamp(120px, 22vw, 170px)';
-    el.style.fontSize = 'clamp(68px, 14vw, 100px)';
-    el.style.background = obj.color + '22';
-    const inner = document.createElement('span');
-    inner.className = 'obj-inner';
-    inner.textContent = obj.emoji;
-    el.appendChild(inner);
-    setupIdleHint(el);
-
+    el.style.width = 'clamp(120px,22vw,170px)'; el.style.height = 'clamp(120px,22vw,170px)';
+    el.style.fontSize = 'clamp(68px,14vw,100px)'; el.style.background = obj.color + '22';
+    const inner = document.createElement('span'); inner.className = 'obj-inner'; inner.textContent = obj.emoji;
+    el.appendChild(inner); setupIdleHint(el);
     let taps = 0, lastSound = 0;
-    // Cause-and-effect: EVERY tap gives instant visual + haptic feedback;
-    // only the audio is throttled so rapid taps don't stack harshly.
     el.addEventListener('pointerdown', e => {
       e.stopPropagation();
-      el.classList.remove('tapped');
-      void el.offsetWidth;
-      el.classList.add('tapped');
+      el.classList.remove('tapped'); void el.offsetWidth; el.classList.add('tapped');
       setTimeout(() => el.classList.remove('tapped'), 450);
       spawnParticles(e.clientX, e.clientY, obj.color);
-      spawnRipple(e.clientX, e.clientY);
-      haptic();
+      spawnRipple(e.clientX, e.clientY); haptic();
       const now = Date.now();
       if (now - lastSound > 120) {
-        lastSound = now;
-        playObjectSound(obj.sound);
-        taps++;
+        lastSound = now; playObjectSound(obj.sound); taps++;
         if (taps % 4 === 0) laterSpeak(obj.label + '!', 300);
       }
     });
     stage.appendChild(el);
   });
 }
+document.getElementById('btn-mode-causal').addEventListener('pointerdown', () => {
+  haptic(); initCausal(); showScreen('causal');
+  // Show generic coaching for causal mode
+  showCoachPhase({ key: '_causal' }, 'ask');
+});
 
-document.getElementById('btn-mode-causal').addEventListener('pointerdown', () => { haptic(); initCausal(); showScreen('causal'); });
+/* =========================================================
+   SETTINGS SCREEN
+   ========================================================= */
+function buildRecordingsList() {
+  const list = document.getElementById('rec-list');
+  if (!list) return;
+  if (!canRecord) {
+    list.innerHTML = '<p class="settings-note">Snimanje nije dostupno u ovom pregledniku.</p>';
+    return;
+  }
+  list.innerHTML = '';
+  ALL_ITEMS.forEach(group => {
+    const lbl = document.createElement('div'); lbl.className = 'rec-group-label';
+    lbl.textContent = group.group; list.appendChild(lbl);
+    group.items.forEach(item => {
+      const has = !!localStorage.getItem(REC_PREFIX + item.key);
+      const row = document.createElement('div'); row.className = 'rec-row';
+      row.innerHTML =
+        `<span class="rec-emoji">${item.emoji}</span>` +
+        `<span class="rec-name">${item.name}</span>` +
+        `<div class="rec-actions">` +
+          `<button class="rec-btn rec-record" data-key="${item.key}">${has ? '⏺ Ponovi' : '⏺ Snimi'}</button>` +
+          (has ? `<button class="rec-btn rec-play" data-key="${item.key}">▶</button>
+                  <button class="rec-btn rec-del"  data-key="${item.key}">✕</button>` : '') +
+        `</div>`;
+      list.appendChild(row);
+    });
+  });
+  // Bind buttons (event delegation)
+  list.querySelectorAll('.rec-record').forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      const key = btn.dataset.key;
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopRec(); btn.textContent = '⏳';
+      } else {
+        startRec(key, state => {
+          if (state === 'recording') { btn.textContent = '⏹ Stop'; btn.classList.add('recording'); }
+          else if (state === 'done') { buildRecordingsList(); }
+          else if (state === 'full') { btn.textContent = '✕ Nema prostora'; }
+          else { btn.textContent = '✕ Greška'; }
+        });
+      }
+    });
+  });
+  list.querySelectorAll('.rec-play').forEach(btn => {
+    btn.addEventListener('pointerdown', e => { e.stopPropagation(); playRec(btn.dataset.key); });
+  });
+  list.querySelectorAll('.rec-del').forEach(btn => {
+    btn.addEventListener('pointerdown', e => { e.stopPropagation(); deleteRec(btn.dataset.key); buildRecordingsList(); });
+  });
+}
+
+function buildStatsPanel() {
+  const panel = document.getElementById('stats-panel');
+  if (!panel) return;
+  const recs = stats.recordingsCount, ses = stats.sessions;
+  let msg;
+  if (recs >= 5) msg = '🌟 Sjajno! Vaš glas je najjači poticaj — snimili ste mnogo riječi.';
+  else if (recs >= 1) msg = '👏 Odlično! Svaka snimka vašeg glasa višestruko pomaže bebi.';
+  else msg = '💡 Snimite barem jednu riječ — vaš glas beba prepoznaje bolje od ijednog drugog.';
+  panel.innerHTML =
+    `<div class="stats-row"><span>Sesija odigrano</span><strong>${ses}</strong></div>` +
+    `<div class="stats-row"><span>Snimljenih riječi</span><strong>${recs}</strong></div>` +
+    `<p class="stats-msg">${msg}</p>`;
+}
+
+function openSettings() {
+  // Sync settings UI state
+  const chk = document.getElementById('toggle-prompts');
+  if (chk) chk.checked = settings.showPrompts;
+  document.querySelectorAll('#pause-btns button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === settings.pauseDuration);
+  });
+  buildRecordingsList();
+  buildStatsPanel();
+  showScreen('settings');
+}
+
+// Toggle prompts
+document.getElementById('toggle-prompts').addEventListener('change', e => {
+  settings.showPrompts = e.target.checked; saveSettings();
+});
+
+// Pause duration buttons
+document.querySelectorAll('#pause-btns button').forEach(btn => {
+  btn.addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    settings.pauseDuration = parseInt(btn.dataset.val); saveSettings();
+    document.querySelectorAll('#pause-btns button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Settings button — two-tap baby gate
+(function() {
+  const btn = document.getElementById('btn-open-settings');
+  let armed = false, t = null;
+  btn.addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    if (!armed) {
+      armed = true; btn.textContent = '⚙ Još jednom →';
+      t = setTimeout(() => { armed = false; btn.textContent = '⚙ Za roditelje'; }, 2000);
+    } else {
+      clearTimeout(t); armed = false; btn.textContent = '⚙ Za roditelje';
+      openSettings();
+    }
+  });
+})();
 
 /* =========================================================
    GLOBAL TOUCH GUARDS
    ========================================================= */
-// Block multi-touch zoom, but allow scrolling inside the parent text screen.
 document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 document.addEventListener('touchmove', e => {
-  if (e.target.closest && e.target.closest('#screen-parent')) return;
-  e.preventDefault();
+  const skip = e.target.closest && (e.target.closest('#screen-parent') || e.target.closest('#screen-settings') || e.target.closest('#settings-body'));
+  if (!skip) e.preventDefault();
 }, { passive: false });
 </script>
 </body>
