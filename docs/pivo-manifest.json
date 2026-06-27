@@ -1,0 +1,12 @@
+{
+  "name": "Pivska karta",
+  "short_name": "Pivska karta",
+  "description": "Bilježi gdje si i koju pivu popio na karti",
+  "start_url": "pivo.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF8EC",
+  "theme_color": "#C8821E",
+  "lang": "hr"
+}

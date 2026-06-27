@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Pivska karta">
+  <meta name="theme-color" content="#C8821E">
+  <link rel="manifest" href="pivo-manifest.json">
+  <title>Pivska karta 🍺</title>
+
+  <!-- Leaflet (OpenStreetMap, bez API ključa) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --primary: #C8821E;   /* amber */
+      --primary-dark: #A9690F;
+      --bg: #FFF8EC;        /* cream */
+      --card: #fff;
+      --text: #3A2A14;
+      --muted: #9C8A6E;
+      --border: #EFE6D5;
+      --accent: #E03B3B;    /* crveno za brisanje */
+      --gold: #E8B23A;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    #app { display: flex; flex-direction: column; height: 100dvh; }
+
+    .header {
+      background: var(--bg);
+      padding: 12px 20px 10px;
+      padding-top: calc(12px + env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+      z-index: 500;
+    }
+    .header h1 { font-size: 19px; font-weight: 800; color: var(--primary); letter-spacing: -0.3px; }
+    .header .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .main { flex: 1; overflow: hidden; position: relative; }
+
+    .tab { display: none; height: 100%; }
+    .tab.active { display: block; }
+    .tab.scrolly { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+    /* ── Map ─────────────────────────────────────────── */
+    #map { height: 100%; width: 100%; background: #E8E0D0; }
+
+    .leaflet-popup-content { margin: 12px 14px; font-size: 14px; }
+    .leaflet-popup-content b { color: var(--primary-dark); }
+
+    .beer-pin {
+      font-size: 26px;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+      text-align: center;
+      line-height: 1;
+    }
+
+    .fab {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-size: 32px;
+      font-weight: 300;
+      box-shadow: 0 6px 18px rgba(168,105,15,0.45);
+      cursor: pointer;
+      z-index: 600;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .fab:active { transform: scale(0.93); }
+
+    .map-hint {
+      position: absolute;
+      top: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(58,42,20,0.88);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 600;
+      white-space: nowrap;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    }
+
+    /* ── List ─────────────────────────────────────────── */
+    .list { padding: 14px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 32px; }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 8px rgba(120,90,40,0.08);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .card-emoji { font-size: 30px; line-height: 1.1; }
+    .card-body { flex: 1; min-width: 0; }
+    .card-beer { font-size: 16px; font-weight: 700; }
+    .card-place { font-size: 13px; color: var(--muted); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+    .card-stars { font-size: 14px; margin-top: 6px; letter-spacing: 1px; }
+    .card-note { font-size: 13px; color: #6b5a3e; margin-top: 6px; font-style: italic; }
+    .card-meta { font-size: 11px; color: #bcae90; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .card-meta span { color: var(--muted); }
+    .card-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+    .icon-btn {
+      border: none; background: none; cursor: pointer;
+      font-size: 17px; padding: 4px; border-radius: 8px; color: var(--muted);
+    }
+    .icon-btn.del { color: var(--accent); }
+    .icon-btn:active { background: var(--bg); }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; padding: 32px; gap: 10px; text-align: center;
+    }
+    .empty-emoji { font-size: 60px; }
+    .empty-text { font-size: 16px; font-weight: 600; color: #5a4a30; }
+    .empty-hint { font-size: 13px; color: var(--muted); }
+
+    /* ── Stats ─────────────────────────────────────────── */
+    .stats-content { padding: 16px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 32px; }
+    .summary-row { display: flex; gap: 10px; }
+    .summary-card {
+      flex: 1; background: var(--card); border-radius: 14px; padding: 14px 8px; text-align: center;
+      box-shadow: 0 1px 6px rgba(120,90,40,0.08);
+    }
+    .summary-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .summary-value { font-size: 20px; font-weight: 800; color: var(--primary); }
+
+    .section-title { font-size: 15px; font-weight: 700; margin-top: 4px; }
+
+    .rank-card { background: var(--card); border-radius: 14px; padding: 6px 4px; box-shadow: 0 1px 6px rgba(120,90,40,0.08); }
+    .rank-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .rank-row:last-child { border-bottom: none; }
+    .rank-name { flex: 1; font-size: 14px; font-weight: 600; }
+    .rank-bar-wrap { flex: 1.3; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+    .rank-bar { height: 100%; background: var(--gold); border-radius: 4px; }
+    .rank-count { font-size: 13px; font-weight: 700; color: var(--primary); width: 28px; text-align: right; }
+
+    /* ── Bottom nav ─────────────────────────────────────────── */
+    .nav { display: flex; background: #fff; border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); }
+    .nav-btn {
+      flex: 1; border: none; background: none; padding: 9px 8px; cursor: pointer; color: var(--muted);
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .nav-btn.active { color: var(--primary); }
+    .nav-icon { font-size: 21px; }
+    .nav-label { font-size: 11px; font-weight: 600; }
+
+    /* ── Modal / form sheet ─────────────────────────────────────────── */
+    .sheet-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 1000; display: none; align-items: flex-end;
+    }
+    .sheet-backdrop.open { display: flex; }
+    .sheet {
+      background: var(--bg);
+      width: 100%;
+      border-radius: 22px 22px 0 0;
+      padding: 8px 20px 24px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      max-height: 90dvh;
+      overflow-y: auto;
+      animation: slideUp 0.22s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .sheet-handle { width: 40px; height: 4px; background: #d8cdb8; border-radius: 2px; margin: 6px auto 14px; }
+    .sheet h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; color: var(--primary-dark); }
+    .sheet .loc-line { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #5a4a30; }
+    .field input, .field textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; font-size: 16px; background: #fff; color: var(--text);
+      font-family: inherit;
+    }
+    .field input:focus, .field textarea:focus { outline: none; border-color: var(--primary); }
+    .field textarea { resize: none; }
+    .row2 { display: flex; gap: 10px; }
+    .row2 .field { flex: 1; }
+
+    .star-pick { display: flex; gap: 6px; font-size: 32px; }
+    .star-pick span { cursor: pointer; filter: grayscale(1) opacity(0.4); transition: filter 0.1s; }
+    .star-pick span.on { filter: none; }
+
+    .sheet-btns { display: flex; gap: 10px; margin-top: 8px; }
+    .btn {
+      flex: 1; border: none; border-radius: 14px; padding: 15px; font-size: 16px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-save { background: var(--primary); color: #fff; }
+    .btn-save:active { background: var(--primary-dark); }
+    .btn-save:disabled { opacity: 0.5; }
+    .btn-cancel { background: #EDE3D1; color: #6b5a3e; flex: 0 0 auto; padding: 15px 22px; }
+
+    .geo-btn {
+      width: 100%; border: 1.5px dashed var(--primary); background: #fff; color: var(--primary-dark);
+      border-radius: 12px; padding: 11px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 14px;
+    }
+    .geo-btn:active { background: #FBF1DC; }
+
+    .toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: var(--text); color: #fff; padding: 11px 20px; border-radius: 24px;
+      font-size: 14px; font-weight: 500; z-index: 2000; box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      opacity: 0; transition: opacity 0.25s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header class="header">
+    <h1>🍺 Pivska karta</h1>
+    <div class="sub">Gdje sam i koju pivu popio</div>
+  </header>
+
+  <main class="main">
+    <div id="tab-map" class="tab active">
+      <div id="map"></div>
+      <div class="map-hint" id="map-hint" style="display:none;"></div>
+      <button class="fab" onclick="startAdd()" aria-label="Dodaj pivu">+</button>
+    </div>
+    <div id="tab-list" class="tab scrolly"></div>
+    <div id="tab-stats" class="tab scrolly"></div>
+  </main>
+
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="map" onclick="showTab('map')">
+      <span class="nav-icon">🗺️</span><span class="nav-label">Karta</span>
+    </button>
+    <button class="nav-btn" data-tab="list" onclick="showTab('list')">
+      <span class="nav-icon">📋</span><span class="nav-label">Lista</span>
+    </button>
+    <button class="nav-btn" data-tab="stats" onclick="showTab('stats')">
+      <span class="nav-icon">📊</span><span class="nav-label">Statistike</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Form sheet -->
+<div class="sheet-backdrop" id="sheet-backdrop">
+  <div class="sheet" id="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <h2 id="sheet-title">Nova piva 🍺</h2>
+    <div class="loc-line" id="sheet-loc">Lokacija nije odabrana</div>
+
+    <button class="geo-btn" id="geo-btn" onclick="useCurrentLocation()">📍 Koristi trenutnu lokaciju</button>
+
+    <div class="field">
+      <label for="f-beer">Koja piva? *</label>
+      <input id="f-beer" type="text" placeholder="npr. Ožujsko, Karlovačko, IPA…" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-place">Gdje? (lokal / mjesto)</label>
+      <input id="f-place" type="text" placeholder="npr. Caffe bar Zagreb" autocomplete="off">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Ocjena</label>
+        <div class="star-pick" id="star-pick">
+          <span data-v="1">⭐</span><span data-v="2">⭐</span><span data-v="3">⭐</span><span data-v="4">⭐</span><span data-v="5">⭐</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-price">Cijena (€)</label>
+        <input id="f-price" type="number" inputmode="decimal" step="0.10" placeholder="npr. 2.50">
+      </div>
+    </div>
+    <div class="field">
+      <label for="f-note">Bilješka</label>
+      <textarea id="f-note" rows="2" placeholder="Kakva je bila? S kim si bio?"></textarea>
+    </div>
+
+    <div class="sheet-btns">
+      <button class="btn btn-cancel" onclick="closeSheet()">Odustani</button>
+      <button class="btn btn-save" id="save-btn" onclick="saveEntry()">Spremi</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Storage ────────────────────────────────────────────────────────────────
+const DB_KEY = '@pivo_log';
+const db = {
+  all() {
+    try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); }
+    catch { return []; }
+  },
+  save(list) { localStorage.setItem(DB_KEY, JSON.stringify(list)); },
+  add(entry) { this.save([entry, ...this.all()]); },
+  update(id, patch) {
+    const list = this.all().map(e => e.id === id ? { ...e, ...patch } : e);
+    this.save(list);
+  },
+  remove(id) { this.save(this.all().filter(e => e.id !== id)); },
+};
+
+// ── Formatting ─────────────────────────────────────────────────────────────
+const DEFAULT_CENTER = [45.8150, 15.9819]; // Zagreb
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString('hr-HR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' });
+}
+function stars(n) { return '⭐'.repeat(n) + '☆'.repeat(5 - n); }
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── Map ────────────────────────────────────────────────────────────────────
+let map, markers = {}, tempMarker = null, pickingLocation = false;
+
+const beerIcon = L.divIcon({
+  className: '',
+  html: '<div class="beer-pin">🍺</div>',
+  iconSize: [30, 30],
+  iconAnchor: [15, 28],
+  popupAnchor: [0, -26],
+});
+
+function initMap() {
+  map = L.map('map', { zoomControl: true, attributionControl: true }).setView(DEFAULT_CENTER, 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap',
+  }).addTo(map);
+
+  map.on('click', (e) => {
+    if (!pickingLocation) return;
+    setTempLocation(e.latlng.lat, e.latlng.lng);
+  });
+
+  renderMarkers();
+  fitToEntries();
+}
+
+function renderMarkers() {
+  Object.values(markers).forEach(m => map.removeLayer(m));
+  markers = {};
+  db.all().forEach(e => {
+    const m = L.marker([e.lat, e.lng], { icon: beerIcon }).addTo(map);
+    m.bindPopup(popupHtml(e));
+    markers[e.id] = m;
+  });
+}
+
+function popupHtml(e) {
+  return `
+    <b>${escapeHtml(e.beer)}</b><br>
+    ${e.place ? escapeHtml(e.place) + '<br>' : ''}
+    ${stars(e.rating || 0)}<br>
+    <span style="color:#9C8A6E;font-size:12px;">${fmtDate(e.ts)}${e.price ? ' · ' + e.price + ' €' : ''}</span>
+    ${e.note ? '<br><i style="font-size:12px;">' + escapeHtml(e.note) + '</i>' : ''}
+  `;
+}
+
+function fitToEntries() {
+  const list = db.all();
+  if (!list.length) return;
+  const bounds = L.latLngBounds(list.map(e => [e.lat, e.lng]));
+  map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+}
+
+// ── Add flow ───────────────────────────────────────────────────────────────
+let pendingLoc = null;
+
+function startAdd() {
+  pendingLoc = null;
+  document.getElementById('sheet-title').textContent = 'Nova piva 🍺';
+  document.getElementById('f-beer').value = '';
+  document.getElementById('f-place').value = '';
+  document.getElementById('f-price').value = '';
+  document.getElementById('f-note').value = '';
+  setStars(0);
+  editingId = null;
+
+  // default location: center of current map view
+  const c = map.getCenter();
+  setTempLocation(c.lat, c.lng);
+  openSheet();
+  // also try to get a better current location automatically
+  useCurrentLocation(true);
+}
+
+function setTempLocation(lat, lng) {
+  pendingLoc = { lat, lng };
+  if (tempMarker) map.removeLayer(tempMarker);
+  tempMarker = L.marker([lat, lng], { icon: beerIcon, opacity: 0.7, draggable: true }).addTo(map);
+  tempMarker.on('dragend', () => {
+    const p = tempMarker.getLatLng();
+    pendingLoc = { lat: p.lat, lng: p.lng };
+    updateLocLine();
+  });
+  updateLocLine();
+}
+
+function updateLocLine() {
+  const el = document.getElementById('sheet-loc');
+  if (pendingLoc) {
+    el.textContent = `📍 ${pendingLoc.lat.toFixed(5)}, ${pendingLoc.lng.toFixed(5)} · povuci pin za pomak`;
+  } else {
+    el.textContent = 'Lokacija nije odabrana';
+  }
+}
+
+function useCurrentLocation(silent) {
+  if (!navigator.geolocation) {
+    if (!silent) toast('Geolokacija nije dostupna');
+    return;
+  }
+  const btn = document.getElementById('geo-btn');
+  btn.textContent = '📍 Tražim lokaciju…';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      btn.textContent = '📍 Koristi trenutnu lokaciju';
+      const { latitude, longitude } = pos.coords;
+      setTempLocation(latitude, longitude);
+      map.setView([latitude, longitude], 16);
+    },
+    (err) => {
+      btn.textContent = '📍 Koristi trenutnu lokaciju';
+      if (!silent) toast('Ne mogu dohvatiti lokaciju');
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+  );
+}
+
+// ── Stars picker ───────────────────────────────────────────────────────────
+let currentRating = 0;
+function setStars(n) {
+  currentRating = n;
+  document.querySelectorAll('#star-pick span').forEach(s => {
+    s.classList.toggle('on', Number(s.dataset.v) <= n);
+  });
+}
+document.querySelectorAll('#star-pick span').forEach(s => {
+  s.addEventListener('click', () => {
+    const v = Number(s.dataset.v);
+    setStars(v === currentRating ? 0 : v); // tap same star to clear
+  });
+});
+
+// ── Sheet open/close ───────────────────────────────────────────────────────
+function openSheet() {
+  document.getElementById('sheet-backdrop').classList.add('open');
+}
+function closeSheet() {
+  document.getElementById('sheet-backdrop').classList.remove('open');
+  if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+  pickingLocation = false;
+}
+document.getElementById('sheet-backdrop').addEventListener('click', closeSheet);
+
+// ── Save / edit ────────────────────────────────────────────────────────────
+let editingId = null;
+
+function saveEntry() {
+  const beer = document.getElementById('f-beer').value.trim();
+  if (!beer) { toast('Upiši koju si pivu popio'); document.getElementById('f-beer').focus(); return; }
+  if (!pendingLoc) { toast('Odaberi lokaciju na karti'); return; }
+
+  const data = {
+    beer,
+    place: document.getElementById('f-place').value.trim(),
+    rating: currentRating,
+    price: document.getElementById('f-price').value.trim(),
+    note: document.getElementById('f-note').value.trim(),
+    lat: pendingLoc.lat,
+    lng: pendingLoc.lng,
+  };
+
+  if (editingId) {
+    db.update(editingId, data);
+    toast('Spremljeno ✓');
+  } else {
+    db.add({ id: Date.now().toString(), ts: Date.now(), ...data });
+    toast('Živjeli! 🍻');
+  }
+
+  if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+  document.getElementById('sheet-backdrop').classList.remove('open');
+  editingId = null;
+  renderMarkers();
+  renderList();
+  renderStats();
+}
+
+function editEntry(id) {
+  const e = db.all().find(x => x.id === id);
+  if (!e) return;
+  editingId = id;
+  document.getElementById('sheet-title').textContent = 'Uredi pivu 🍺';
+  document.getElementById('f-beer').value = e.beer || '';
+  document.getElementById('f-place').value = e.place || '';
+  document.getElementById('f-price').value = e.price || '';
+  document.getElementById('f-note').value = e.note || '';
+  setStars(e.rating || 0);
+  showTab('map');
+  map.setView([e.lat, e.lng], 16);
+  setTempLocation(e.lat, e.lng);
+  openSheet();
+}
+
+function deleteEntry(id) {
+  const e = db.all().find(x => x.id === id);
+  if (!e) return;
+  if (!confirm(`Obrisati „${e.beer}"?`)) return;
+  db.remove(id);
+  renderMarkers();
+  renderList();
+  renderStats();
+  toast('Obrisano');
+}
+
+// ── List ───────────────────────────────────────────────────────────────────
+function renderList() {
+  const el = document.getElementById('tab-list');
+  const list = db.all();
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-emoji">🍺</div>
+        <div class="empty-text">Još nema zabilježenih piva</div>
+        <div class="empty-hint">Idi na „Karta" i pritisni + da dodaš prvu</div>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="list">${list.map(e => `
+    <div class="card">
+      <div class="card-emoji">🍺</div>
+      <div class="card-body" onclick="goToOnMap('${e.id}')">
+        <div class="card-beer">${escapeHtml(e.beer)}</div>
+        ${e.place ? `<div class="card-place">📍 ${escapeHtml(e.place)}</div>` : ''}
+        ${e.rating ? `<div class="card-stars">${stars(e.rating)}</div>` : ''}
+        ${e.note ? `<div class="card-note">„${escapeHtml(e.note)}"</div>` : ''}
+        <div class="card-meta">
+          <span>${fmtDate(e.ts)} · ${fmtTime(e.ts)}</span>
+          ${e.price ? `<span>💶 ${escapeHtml(e.price)} €</span>` : ''}
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="icon-btn" onclick="editEntry('${e.id}')" aria-label="Uredi">✏️</button>
+        <button class="icon-btn del" onclick="deleteEntry('${e.id}')" aria-label="Obriši">🗑️</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function goToOnMap(id) {
+  const e = db.all().find(x => x.id === id);
+  if (!e) return;
+  showTab('map');
+  map.setView([e.lat, e.lng], 17);
+  const m = markers[id];
+  if (m) m.openPopup();
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────
+function renderStats() {
+  const el = document.getElementById('tab-stats');
+  const list = db.all();
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-emoji">📊</div>
+        <div class="empty-text">Nema podataka za statistiku</div>
+        <div class="empty-hint">Dodaj koju pivu pa se vrati ovamo</div>
+      </div>`;
+    return;
+  }
+
+  const total = list.length;
+  const uniquePlaces = new Set(list.map(e => (e.place || '').toLowerCase().trim()).filter(Boolean)).size;
+  const rated = list.filter(e => e.rating > 0);
+  const avgRating = rated.length ? (rated.reduce((a, e) => a + e.rating, 0) / rated.length) : 0;
+  const totalSpent = list.reduce((a, e) => a + (parseFloat(e.price) || 0), 0);
+
+  // top piva po broju
+  const counts = {};
+  list.forEach(e => {
+    const k = e.beer.trim();
+    if (!counts[k]) counts[k] = { name: k, n: 0 };
+    counts[k].n++;
+  });
+  const top = Object.values(counts).sort((a, b) => b.n - a.n).slice(0, 6);
+  const maxN = Math.max(...top.map(t => t.n), 1);
+
+  el.innerHTML = `
+    <div class="stats-content">
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="summary-label">Ukupno piva</div>
+          <div class="summary-value">${total}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Lokacija</div>
+          <div class="summary-value">${uniquePlaces}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Prosj. ocjena</div>
+          <div class="summary-value">${avgRating ? avgRating.toFixed(1) + '★' : '—'}</div>
+        </div>
+      </div>
+      ${totalSpent > 0 ? `
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="summary-label">Potrošeno ukupno</div>
+          <div class="summary-value">${totalSpent.toFixed(2)} €</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Prosj. po pivi</div>
+          <div class="summary-value">${(totalSpent / total).toFixed(2)} €</div>
+        </div>
+      </div>` : ''}
+
+      <div class="section-title">Najčešće pive 🏆</div>
+      <div class="rank-card">
+        ${top.map(t => `
+          <div class="rank-row">
+            <div class="rank-name">${escapeHtml(t.name)}</div>
+            <div class="rank-bar-wrap"><div class="rank-bar" style="width:${(t.n / maxN) * 100}%"></div></div>
+            <div class="rank-count">${t.n}×</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === `tab-${tab}`));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'list') renderList();
+  if (tab === 'stats') renderStats();
+  if (tab === 'map' && map) setTimeout(() => map.invalidateSize(), 100);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  initMap();
+});
+</script>
+</body>
+</html>
