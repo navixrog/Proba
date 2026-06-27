@@ -19,7 +19,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <!-- Gun.js – P2P real-time baza, bez računa i API ključeva -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 
   <style>
@@ -68,84 +67,36 @@
       background:var(--bg); color:var(--text); overflow:hidden; -webkit-font-smoothing:antialiased;
     }
 
-    /* ── Fullscreen overlays ───────────────────────────────────────────────── */
+    /* ── Onboarding screen ─────────────────────────────────────────────────── */
     .screen {
       position:fixed; inset:0; background:var(--bg); z-index:3000;
       display:none; flex-direction:column;
       padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-      overflow-y:auto;
     }
     .screen.visible { display:flex; }
 
     .screen-inner {
       flex:1; display:flex; flex-direction:column;
       align-items:center; justify-content:center;
-      padding:32px 24px; gap:0; max-width:440px; margin:0 auto; width:100%;
+      padding:32px 28px; max-width:420px; margin:0 auto; width:100%;
     }
 
-    .screen-icon { font-size:56px; margin-bottom:16px; }
+    .screen-icon { font-size:64px; margin-bottom:12px; }
     .screen-title {
-      font-family:'Fraunces',serif; font-size:26px; font-weight:900;
-      color:var(--amber-dark); text-align:center; margin-bottom:8px;
+      font-family:'Fraunces',serif; font-size:28px; font-weight:900;
+      color:var(--amber-dark); text-align:center; margin-bottom:6px;
     }
     .screen-sub {
       font-size:14px; color:var(--muted); text-align:center;
-      line-height:1.5; margin-bottom:28px; max-width:300px;
+      line-height:1.5; margin-bottom:28px; max-width:280px;
     }
 
-    /* Welcome screen */
-    .welcome-btn {
-      width:100%; border:none; border-radius:16px; padding:18px 20px;
-      font-size:16px; font-weight:700; font-family:'Inter',sans-serif;
-      cursor:pointer; text-align:left; display:flex; align-items:center; gap:14px;
-      margin-bottom:12px; transition:transform .15s ease, box-shadow .15s ease;
-    }
-    .welcome-btn:active { transform:scale(.97); }
-    .welcome-btn-icon { font-size:28px; flex-shrink:0; }
-    .welcome-btn-body { flex:1; }
-    .welcome-btn-title { font-size:16px; font-weight:700; }
-    .welcome-btn-desc { font-size:12px; font-weight:400; opacity:.7; margin-top:2px; }
-    .welcome-btn.primary { background:linear-gradient(135deg,var(--amber),var(--amber-dark)); color:#fff; box-shadow:0 4px 16px rgba(168,105,15,.35); }
-    .welcome-btn.secondary { background:var(--parchment); color:var(--text); border:1.5px solid var(--border); }
-
-    /* Room screen */
-    .room-option {
-      width:100%; border:1.5px solid var(--border); border-radius:14px;
-      padding:16px; background:var(--card); cursor:pointer;
-      display:flex; align-items:center; gap:12px;
-      margin-bottom:10px; font-family:'Inter',sans-serif;
-      transition:border-color .15s ease, box-shadow .15s ease;
-    }
-    .room-option:hover { border-color:var(--amber); box-shadow:var(--shadow-sm); }
-    .room-option:active { transform:scale(.98); }
-    .room-option-icon { font-size:26px; }
-    .room-option-title { font-size:15px; font-weight:700; }
-    .room-option-desc { font-size:12px; color:var(--muted); margin-top:2px; }
-
-    .or-divider {
-      font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.5px;
-      text-transform:uppercase; margin:6px 0 14px; position:relative; width:100%; text-align:center;
-    }
-    .or-divider::before, .or-divider::after {
-      content:''; position:absolute; top:50%; width:42%; height:1px; background:var(--border);
-    }
-    .or-divider::before { left:0; } .or-divider::after { right:0; }
-
-    .code-input {
-      width:100%; border:2px solid var(--border); border-radius:12px;
-      padding:14px; font-size:22px; font-weight:700; letter-spacing:6px;
-      text-align:center; text-transform:uppercase; background:var(--card);
-      color:var(--text); font-family:'Fraunces',serif; margin-bottom:10px;
-    }
-    .code-input:focus { outline:none; border-color:var(--amber); box-shadow:0 0 0 3px rgba(200,130,30,.15); }
-
-    /* Name screen */
     .name-avatar {
-      width:72px; height:72px; border-radius:50%;
+      width:80px; height:80px; border-radius:50%;
       display:flex; align-items:center; justify-content:center;
-      font-size:32px; font-weight:700; color:#fff;
-      margin-bottom:16px; box-shadow:var(--shadow-md);
-      transition:background .3s ease;
+      font-size:36px; font-weight:700; color:#fff;
+      margin-bottom:20px; box-shadow:var(--shadow-md);
+      transition:background .3s ease, transform .2s var(--ease-spring);
     }
 
     /* ── App layout ─────────────────────────────────────────────────────── */
@@ -159,55 +110,41 @@
       z-index:500;
     }
 
-    .header-row {
-      display:flex; align-items:center; justify-content:space-between; gap:8px;
-    }
-
-    .header-brand { display:flex; align-items:center; gap:8px; flex:1; }
+    .header-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .header-brand { display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
     .header-icon {
       font-size:24px; animation:sway 3s ease-in-out infinite;
-      display:inline-block; transform-origin:bottom center;
+      display:inline-block; transform-origin:bottom center; flex-shrink:0;
     }
     @keyframes sway { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
-
     .header h1 {
       font-family:'Fraunces',serif; font-size:20px; font-weight:900;
       color:var(--amber); letter-spacing:-.5px; line-height:1;
     }
 
-    .social-toggle-btn {
-      border:none; background:var(--amber-faint); border-radius:20px;
-      padding:7px 12px; cursor:pointer; font-size:13px; font-weight:600;
-      color:var(--amber-dark); display:flex; align-items:center; gap:6px;
-      flex-shrink:0; transition:background .15s ease;
-      border:1px solid var(--border);
+    .user-btn {
+      border:none; background:none; cursor:pointer; padding:2px; flex-shrink:0;
+      border-radius:50%; transition:transform .15s var(--ease-spring);
     }
-    .social-toggle-btn:hover { background:#FFE8AA; }
-    .social-toggle-btn.active { background:var(--amber); color:#fff; border-color:var(--amber-dark); }
+    .user-btn:active { transform:scale(.9); }
+    .user-avatar-hdr {
+      width:36px; height:36px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:15px; font-weight:700; color:#fff;
+      box-shadow:var(--shadow-md); background:var(--amber);
+    }
 
-    /* Room banner */
-    .room-banner {
-      margin-top:8px; display:none;
-      align-items:center; justify-content:space-between; gap:8px;
-      background:var(--amber-faint); border-radius:10px;
-      padding:7px 12px; border:1px solid var(--border);
+    .header-members {
+      margin-top:7px; display:flex; align-items:center; gap:10px;
+      overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none;
     }
-    .room-banner.visible { display:flex; }
-    .room-code-chip {
-      font-family:'Fraunces',serif; font-size:15px; font-weight:700;
-      color:var(--amber-dark); letter-spacing:2px; cursor:pointer;
+    .header-members::-webkit-scrollbar { display:none; }
+    .header-member-chip {
+      display:flex; align-items:center; gap:4px;
+      font-size:11px; font-weight:600; color:var(--muted);
+      white-space:nowrap; flex-shrink:0;
     }
-    .room-code-chip:hover { text-decoration:underline; }
-    .member-avatars { display:flex; }
-    .member-dot {
-      width:26px; height:26px; border-radius:50%;
-      border:2px solid var(--bg); display:flex; align-items:center;
-      justify-content:center; font-size:11px; font-weight:700; color:#fff;
-      margin-left:-4px; box-shadow:0 1px 4px rgba(0,0,0,.2);
-    }
-    .member-dot:first-child { margin-left:0; }
-
-    .header-sub { font-size:11px; color:var(--muted); margin-top:4px; font-weight:500; letter-spacing:.3px; }
+    .header-member-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
     /* ── Main ───────────────────────────────────────────────────────────── */
     .main { flex:1; overflow:hidden; position:relative; }
@@ -223,16 +160,13 @@
     .leaflet-popup-content b { font-family:'Fraunces',serif; font-size:15px; color:var(--amber-dark); }
 
     .beer-pin { font-size:28px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35)); text-align:center; line-height:1; }
-
     .member-pin {
-      width:32px; height:32px; border-radius:50%;
-      border:2.5px solid #fff;
+      width:32px; height:32px; border-radius:50%; border:2.5px solid #fff;
       display:flex; align-items:center; justify-content:center;
       font-family:'Inter',sans-serif; font-size:13px; font-weight:700; color:#fff;
       box-shadow:0 2px 8px rgba(0,0,0,.35);
     }
 
-    /* Map legend */
     .map-legend {
       position:absolute; left:12px; bottom:12px; z-index:600;
       background:rgba(255,248,236,.92); backdrop-filter:blur(6px);
@@ -279,13 +213,11 @@
     .card {
       background:var(--card); border-radius:16px; padding:14px 14px 14px 0;
       box-shadow:var(--shadow-sm); display:flex; gap:0; align-items:flex-start;
-      overflow:hidden; transition:box-shadow .2s ease, transform .2s ease;
-      border:1px solid var(--border);
+      overflow:hidden; border:1px solid var(--border);
+      transition:box-shadow .2s ease, transform .2s ease;
     }
     .card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
-
     .card-stripe { width:4px; align-self:stretch; min-height:56px; border-radius:0 2px 2px 0; flex-shrink:0; margin-right:12px; }
-
     .card-emoji { font-size:26px; line-height:1; flex-shrink:0; margin-right:10px; margin-top:2px; }
     .card-body { flex:1; min-width:0; }
     .card-member-name { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
@@ -322,11 +254,8 @@
     .rank-pos { font-size:16px; width:22px; text-align:center; flex-shrink:0; }
     .rank-name { flex:1; font-size:14px; font-weight:600; }
     .rank-bar-wrap { flex:1.5; height:7px; background:var(--parchment); border-radius:4px; overflow:hidden; }
-    .rank-bar { height:100%; background:linear-gradient(90deg,var(--amber),var(--gold)); border-radius:4px; width:0; animation:barFill .6s var(--ease-out) forwards; }
-    @keyframes barFill { from{width:0} }
+    .rank-bar { height:100%; background:linear-gradient(90deg,var(--amber),var(--gold)); border-radius:4px; }
     .rank-count { font-size:13px; font-weight:700; color:var(--amber); width:28px; text-align:right; }
-
-    /* Person breakdown */
     .person-section { background:var(--card); border-radius:16px; overflow:hidden; box-shadow:var(--shadow-sm); border:1px solid var(--border); }
     .person-header { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--border); }
     .person-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; flex-shrink:0; }
@@ -347,7 +276,7 @@
     .nav-icon { font-size:20px; }
     .nav-label { font-size:10px; font-weight:600; letter-spacing:.2px; }
 
-    /* ── Sheet ───────────────────────────────────────────────────────────── */
+    /* ── Sheets ──────────────────────────────────────────────────────────── */
     .sheet-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0); z-index:1000; display:none; align-items:flex-end; }
     .sheet-backdrop.open { display:flex; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); }
     .sheet { background:var(--bg); width:100%; border-radius:24px 24px 0 0; padding:6px 20px 20px; padding-bottom:calc(20px + env(safe-area-inset-bottom)); max-height:92dvh; overflow-y:auto; animation:slideUp .26s var(--ease-out); box-shadow:var(--shadow-lg); }
@@ -381,7 +310,7 @@
     .btn:disabled { opacity:.5; cursor:not-allowed; }
     .btn.full { flex:none; width:100%; margin-top:8px; }
 
-    /* Room info sheet */
+    /* Members sheet */
     .room-member-list { display:flex; flex-direction:column; gap:8px; margin:12px 0; }
     .room-member-item { display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--parchment); border-radius:12px; }
     .room-member-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#fff; flex-shrink:0; }
@@ -399,74 +328,27 @@
     /* Toast */
     .toast { position:fixed; bottom:calc(70px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%) translateY(8px); background:var(--text); color:var(--bg); padding:12px 22px; border-radius:28px; font-size:14px; font-weight:600; z-index:2000; box-shadow:var(--shadow-md); opacity:0; transition:opacity .25s ease, transform .25s var(--ease-spring); pointer-events:none; white-space:nowrap; }
     .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-    .spinner { width:24px; height:24px; border:3px solid var(--border); border-top-color:var(--amber); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto; }
-    @keyframes spin { to{transform:rotate(360deg)} }
   </style>
 </head>
 <body>
 
-<!-- ── SCREEN: Welcome ─────────────────────────────────────────────────── -->
-<div id="screen-welcome" class="screen">
+<!-- ── SCREEN: Upiši ime (jedino što treba napraviti) ──────────────────── -->
+<div id="screen-name" class="screen">
   <div class="screen-inner">
     <div class="screen-icon">🍺</div>
     <div class="screen-title">Pivska karta</div>
-    <div class="screen-sub">Bilježi gdje si bio i što si pio — sam ili s cijelim društvom.</div>
+    <div class="screen-sub">Upiši ime da te prijatelji vide na karti.</div>
 
-    <button class="welcome-btn secondary" id="btn-local-mode">
-      <span class="welcome-btn-icon">👤</span>
-      <div class="welcome-btn-body">
-        <div class="welcome-btn-title">Samo ja</div>
-        <div class="welcome-btn-desc">Lokalno na ovom uređaju, bez dijeljenja</div>
-      </div>
-    </button>
-
-    <button class="welcome-btn primary" id="btn-social-mode">
-      <span class="welcome-btn-icon">👥</span>
-      <div class="welcome-btn-body">
-        <div class="welcome-btn-title">Cijelo društvo</div>
-        <div class="welcome-btn-desc">Real-time karta za sve prijatelje</div>
-      </div>
-    </button>
-  </div>
-</div>
-
-<!-- ── SCREEN: Room select ─────────────────────────────────────────────── -->
-<div id="screen-room" class="screen">
-  <div class="screen-inner">
-    <div class="screen-icon">🍻</div>
-    <div class="screen-title">Odaberi društvo</div>
-    <div class="screen-sub">Kreiraj novo društvo i pošalji kôd prijateljima, ili se pridruži postojećem.</div>
-
-    <button class="room-option" id="btn-create-room">
-      <span class="room-option-icon">➕</span>
-      <div>
-        <div class="room-option-title">Kreiraj novo društvo</div>
-        <div class="room-option-desc">Generiraj kôd i pozovi prijatelje</div>
-      </div>
-    </button>
-
-    <div class="or-divider">ili se pridruži postojećem</div>
-
-    <input class="code-input" id="f-room-code" type="text" placeholder="XK42PZ" maxlength="6">
-    <button class="btn btn-primary full" id="btn-join-room">Pridruži se →</button>
-    <button class="btn btn-secondary full" style="margin-top:8px;" id="btn-room-back">← Natrag</button>
-  </div>
-</div>
-
-<!-- ── SCREEN: Name ────────────────────────────────────────────────────── -->
-<div id="screen-name" class="screen">
-  <div class="screen-inner">
-    <div class="name-avatar" id="name-avatar-preview">?</div>
-    <div class="screen-title">Kako te zvati?</div>
-    <div class="screen-sub">Tvoje ime i boja prikazuju se svim članovima društva na karti.</div>
+    <div class="name-avatar" id="name-avatar-preview" style="background:#C8821E">?</div>
 
     <div class="field" style="width:100%">
       <label>Tvoje ime</label>
-      <input id="f-member-name" type="text" placeholder="npr. Marko" maxlength="20" autocomplete="given-name">
+      <input id="f-member-name" type="text" placeholder="npr. Marko" maxlength="20"
+             autocomplete="given-name" autocorrect="off" spellcheck="false">
     </div>
-    <button class="btn btn-primary full" id="btn-save-name">Ulazi u društvo 🍺</button>
-    <button class="btn btn-secondary full" style="margin-top:8px;" id="btn-name-back">← Natrag</button>
+    <button class="btn btn-primary full" id="btn-save-name" style="margin-top:4px">
+      Ulazi u društvo 🍺
+    </button>
   </div>
 </div>
 
@@ -478,13 +360,11 @@
         <span class="header-icon">🍺</span>
         <h1>Pivska karta</h1>
       </div>
-      <button class="social-toggle-btn" id="social-toggle-btn">👥 Društvo</button>
+      <button class="user-btn" id="user-btn" title="Prijatelji i postavke">
+        <div class="user-avatar-hdr" id="user-avatar-hdr">?</div>
+      </button>
     </div>
-    <div class="room-banner" id="room-banner">
-      <span class="room-code-chip" id="room-code-display" title="Klikni za kopiranje kôda"></span>
-      <div class="member-avatars" id="member-avatars-display"></div>
-    </div>
-    <div class="header-sub" id="header-sub">gdje sam bio · što sam pio</div>
+    <div class="header-members" id="header-members"></div>
   </header>
 
   <main class="main">
@@ -504,9 +384,22 @@
   </nav>
 </div>
 
+<!-- ── Prijatelji sheet ────────────────────────────────────────────────── -->
+<div class="sheet-backdrop" id="members-backdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title-row">
+      <h2>Prijatelji 🍻</h2>
+      <button class="sheet-close" id="members-close">✕</button>
+    </div>
+    <div class="room-member-list" id="members-list"></div>
+    <button class="btn btn-secondary full" id="btn-change-name">Promijeni ime ✏️</button>
+  </div>
+</div>
+
 <!-- ── Add/edit sheet ──────────────────────────────────────────────────── -->
 <div class="sheet-backdrop" id="sheet-backdrop">
-  <div class="sheet" id="sheet">
+  <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title-row">
       <h2 id="sheet-title">Nova piva 🍺</h2>
@@ -537,25 +430,6 @@
   </div>
 </div>
 
-<!-- ── Room info sheet ─────────────────────────────────────────────────── -->
-<div class="sheet-backdrop" id="room-sheet-backdrop">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title-row">
-      <h2>Tvoje društvo 🍻</h2>
-      <button class="sheet-close" id="room-sheet-close">✕</button>
-    </div>
-    <div style="margin:12px 0 6px;font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Kôd za pozivanje</div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <div id="room-code-big" style="font-family:'Fraunces',serif;font-size:32px;font-weight:900;color:var(--amber);letter-spacing:6px;flex:1"></div>
-      <button class="btn btn-secondary" id="btn-copy-code" style="flex:0 0 auto;padding:10px 16px;font-size:13px">Kopiraj</button>
-    </div>
-    <div style="margin:16px 0 6px;font-size:13px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Članovi</div>
-    <div class="room-member-list" id="room-member-list"></div>
-    <button class="btn btn-danger full" id="btn-leave-room" style="margin-top:8px">Napusti društvo</button>
-  </div>
-</div>
-
 <!-- ── Delete confirm ──────────────────────────────────────────────────── -->
 <div class="delete-confirm" id="delete-confirm">
   <div class="confirm-box">
@@ -571,11 +445,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Constants ──────────────────────────────────────────────────────────────
-const KEY_MODE   = '@pivo_mode';
-const KEY_ROOM   = '@pivo_room';
+// ── Konstante ──────────────────────────────────────────────────────────────
 const KEY_MEMBER = '@pivo_member';
-const KEY_LOCAL  = '@pivo_log';
 
 const MEMBER_COLORS = [
   '#E53935','#1E88E5','#43A047','#8E24AA',
@@ -584,6 +455,9 @@ const MEMBER_COLORS = [
 
 const DEFAULT_CENTER = [45.815, 15.982];
 
+// Fiksna soba – svi s linkom automatski ulaze zajedno
+const ROOM_ID = 'pivska-karta-nxrg-v1';
+
 const GUN_PEERS = [
   'https://peer.wallie.io/gun',
   'https://gundb-relay-testing.glitch.me/gun',
@@ -591,10 +465,8 @@ const GUN_PEERS = [
 
 // ── State ──────────────────────────────────────────────────────────────────
 const S = {
-  mode: 'local',
   gun: null,
   gunRoom: null,
-  roomCode: null,
   memberId: null,
   memberName: null,
   memberColor: null,
@@ -602,25 +474,16 @@ const S = {
   entries: [],
   filter: 'all',
   activeTab: 'map',
-};
-
-// ── Local DB ───────────────────────────────────────────────────────────────
-const localDb = {
-  all()         { try { return JSON.parse(localStorage.getItem(KEY_LOCAL)||'[]'); } catch { return []; } },
-  save(l)       { localStorage.setItem(KEY_LOCAL, JSON.stringify(l)); },
-  add(e)        { this.save([e, ...this.all()]); },
-  update(id, p) { this.save(this.all().map(e => e.id===id ? {...e,...p} : e)); },
-  remove(id)    { this.save(this.all().filter(e => e.id!==id)); },
+  editingName: false,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function escapeHtml(s) {
-  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function fmtDate(ts) { return new Date(ts).toLocaleDateString('hr-HR',{day:'numeric',month:'short',year:'numeric'}); }
 function fmtTime(ts) { return new Date(ts).toLocaleTimeString('hr-HR',{hour:'2-digit',minute:'2-digit'}); }
 function starStr(n)  { return '⭐'.repeat(n)+'<span style="opacity:.2">⭐</span>'.repeat(5-n); }
-function genCode()   { return Array.from(crypto.getRandomValues(new Uint8Array(6))).map(b=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b%32]).join('').slice(0,6); }
 
 let toastTimer;
 function toast(msg) {
@@ -630,108 +493,79 @@ function toast(msg) {
   toastTimer = setTimeout(()=>el.classList.remove('show'), 2500);
 }
 
-// ── Screen management ──────────────────────────────────────────────────────
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('visible'));
   document.getElementById('app').style.display = 'none';
-  if (id === 'app') {
-    document.getElementById('app').style.display = 'flex';
-  } else {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('visible');
-  }
+  if (id === 'app') document.getElementById('app').style.display = 'flex';
+  else document.getElementById(id)?.classList.add('visible');
 }
 
-// ── Gun.js ─────────────────────────────────────────────────────────────────
+// ── Gun init ───────────────────────────────────────────────────────────────
 function initGun() {
   if (S.gun) return;
   S.gun = Gun(GUN_PEERS);
+  S.gunRoom = S.gun.get('pivo-karta').get(ROOM_ID);
 }
 
-// ── Welcome screen ─────────────────────────────────────────────────────────
-document.getElementById('btn-local-mode').addEventListener('click', () => {
-  S.mode = 'local';
-  localStorage.setItem(KEY_MODE, 'local');
-  enterLocalMode();
-});
-
-document.getElementById('btn-social-mode').addEventListener('click', () => {
-  initGun();
-  showScreen('screen-room');
-});
-
-// ── Room screen ────────────────────────────────────────────────────────────
-document.getElementById('btn-room-back').addEventListener('click', () => showScreen('screen-welcome'));
-
-document.getElementById('btn-create-room').addEventListener('click', () => {
-  const code = genCode();
-  S.gun.get('pivo-karta').get(code).get('meta').put({ created: Date.now() });
-  S.roomCode = code;
-  localStorage.setItem(KEY_ROOM, code);
-  showNameScreen();
-});
-
-document.getElementById('btn-join-room').addEventListener('click', () => {
-  const code = document.getElementById('f-room-code').value.trim().toUpperCase().slice(0,6);
-  if (code.length < 4) { toast('Upiši kôd društva (min. 4 znaka)'); return; }
-  S.roomCode = code;
-  localStorage.setItem(KEY_ROOM, code);
-  showNameScreen();
-});
-
-// ── Name screen ────────────────────────────────────────────────────────────
-function showNameScreen() {
+// ── Ekran za ime ───────────────────────────────────────────────────────────
+function openNameScreen(editMode) {
+  S.editingName = editMode;
   showScreen('screen-name');
-  const colorIdx = Object.keys(S.members).length % MEMBER_COLORS.length;
-  const avatar = document.getElementById('name-avatar-preview');
-  avatar.style.background = MEMBER_COLORS[colorIdx];
-  avatar.textContent = '?';
-  const inp = document.getElementById('f-member-name');
-  inp.value = '';
-  inp.oninput = e => { avatar.textContent = (e.target.value[0]||'?').toUpperCase(); };
-}
 
-document.getElementById('btn-name-back').addEventListener('click', () => showScreen('screen-room'));
+  const usedColors = Object.values(S.members)
+    .filter((_,i) => Object.keys(S.members)[i] !== S.memberId)
+    .map(m => m.color);
+  const previewColor = editMode && S.memberColor
+    ? S.memberColor
+    : (MEMBER_COLORS.find(c=>!usedColors.includes(c)) || MEMBER_COLORS[0]);
+
+  const avatar = document.getElementById('name-avatar-preview');
+  avatar.style.background = previewColor;
+  avatar.textContent = (editMode && S.memberName ? S.memberName[0] : '?').toUpperCase();
+
+  const inp = document.getElementById('f-member-name');
+  inp.value = editMode ? (S.memberName||'') : '';
+  inp.oninput = e => { avatar.textContent = (e.target.value[0]||'?').toUpperCase(); };
+  setTimeout(()=>inp.focus(), 350);
+}
 
 document.getElementById('btn-save-name').addEventListener('click', () => {
   const name = document.getElementById('f-member-name').value.trim();
   if (!name) { toast('Upiši svoje ime'); return; }
 
-  const mid = `${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
-  const usedColors = Object.values(S.members).map(m => m.color);
-  const color = MEMBER_COLORS.find(c => !usedColors.includes(c)) || MEMBER_COLORS[Object.keys(S.members).length % MEMBER_COLORS.length];
+  initGun();
 
-  S.memberId    = mid;
-  S.memberName  = name;
-  S.memberColor = color;
+  if (!S.memberId) {
+    S.memberId = `${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+    const usedColors = Object.values(S.members).map(m=>m.color);
+    S.memberColor = MEMBER_COLORS.find(c=>!usedColors.includes(c)) || MEMBER_COLORS[0];
+  }
 
-  S.gun.get('pivo-karta').get(S.roomCode).get('members').get(mid).put({ name, color, joined: Date.now() });
+  S.memberName = name;
+  S.gunRoom.get('members').get(S.memberId).put({
+    name,
+    color: S.memberColor,
+    joined: S.members[S.memberId]?.joined || Date.now(),
+  });
+  localStorage.setItem(KEY_MEMBER, JSON.stringify({
+    memberId: S.memberId,
+    memberName: name,
+    memberColor: S.memberColor,
+  }));
 
-  localStorage.setItem(KEY_MEMBER, JSON.stringify({ memberId: mid, memberName: name, memberColor: color }));
-  localStorage.setItem(KEY_MODE, 'social');
-
-  enterSocialMode();
+  if (S.editingName) {
+    showScreen('app');
+    updateHeader();
+    toast(`Ime promijenjeno u „${name}" ✓`);
+  } else {
+    enterApp();
+  }
 });
 
-// ── Local mode ─────────────────────────────────────────────────────────────
-function enterLocalMode() {
-  S.mode = 'local';
-  document.getElementById('social-toggle-btn').classList.remove('active');
-  document.getElementById('room-banner').classList.remove('visible');
-  document.getElementById('header-sub').textContent = 'gdje sam bio · što sam pio';
+// ── Ulaz u aplikaciju ─────────────────────────────────────────────────────
+function enterApp() {
   showScreen('app');
-  initMap();
-}
-
-// ── Social mode ────────────────────────────────────────────────────────────
-function enterSocialMode() {
-  S.mode = 'social';
-  S.gunRoom = S.gun.get('pivo-karta').get(S.roomCode);
-  document.getElementById('social-toggle-btn').classList.add('active');
-  document.getElementById('room-banner').classList.add('visible');
-  document.getElementById('room-code-display').textContent = `#${S.roomCode}`;
-  document.getElementById('header-sub').textContent = `${S.memberName} · ${S.roomCode}`;
-  showScreen('app');
+  updateHeader();
   if (!map) initMap();
 
   S.gunRoom.get('members').map().on((data, key) => {
@@ -741,7 +575,7 @@ function enterSocialMode() {
     } else if (!data) {
       delete S.members[key];
     }
-    updateMemberAvatars();
+    updateHeader();
     renderMapMarkers();
     if (S.activeTab === 'list')  renderList();
     if (S.activeTab === 'stats') renderStats();
@@ -752,105 +586,108 @@ function enterSocialMode() {
     if (data && data.beer) {
       const entry = {
         id: key,
-        beer: data.beer,
-        place: data.place || '',
-        rating: data.rating || 0,
-        price: data.price || '',
-        note: data.note || '',
-        lat: data.lat,
-        lng: data.lng,
-        memberId: data.memberId,
-        memberName: data.memberName,
-        memberColor: data.memberColor,
+        beer: data.beer, place: data.place||'',
+        rating: data.rating||0, price: data.price||'', note: data.note||'',
+        lat: data.lat, lng: data.lng,
+        memberId: data.memberId, memberName: data.memberName, memberColor: data.memberColor,
         ts: data.ts,
       };
-      const idx = S.entries.findIndex(e => e.id === key);
-      if (idx >= 0) S.entries[idx] = entry;
-      else S.entries.push(entry);
+      const idx = S.entries.findIndex(e=>e.id===key);
+      if (idx >= 0) S.entries[idx] = entry; else S.entries.push(entry);
     } else {
-      S.entries = S.entries.filter(e => e.id !== key);
+      S.entries = S.entries.filter(e=>e.id!==key);
     }
-    S.entries.sort((a, b) => b.ts - a.ts);
+    S.entries.sort((a,b)=>b.ts-a.ts);
     renderMapMarkers();
     if (S.activeTab === 'list')  renderList();
     if (S.activeTab === 'stats') renderStats();
   });
 }
 
-function updateMemberAvatars() {
-  const el = document.getElementById('member-avatars-display');
-  el.innerHTML = Object.values(S.members).map(m =>
-    `<div class="member-dot" style="background:${m.color}" title="${escapeHtml(m.name)}">${m.name[0].toUpperCase()}</div>`
-  ).join('');
+function updateHeader() {
+  const hdr = document.getElementById('user-avatar-hdr');
+  if (hdr && S.memberColor) {
+    hdr.style.background = S.memberColor;
+    hdr.textContent = (S.memberName||'?')[0].toUpperCase();
+  }
+  const membersEl = document.getElementById('header-members');
+  if (!membersEl) return;
+  const others = Object.entries(S.members).filter(([id])=>id!==S.memberId);
+  membersEl.innerHTML = others.length
+    ? others.map(([,m])=>`<span class="header-member-chip"><span class="header-member-dot" style="background:${m.color}"></span>${escapeHtml(m.name)}</span>`).join('')
+    : '<span style="font-size:11px;color:var(--muted)">Pošalji link prijateljima da se pridruže</span>';
 }
 
-// ── Map ────────────────────────────────────────────────────────────────────
+// ── Prijatelji sheet ───────────────────────────────────────────────────────
+document.getElementById('user-btn').addEventListener('click', () => {
+  const list = document.getElementById('members-list');
+  const memberHtml = Object.entries(S.members).map(([id,m]) => {
+    const cnt = S.entries.filter(e=>e.memberId===id).length;
+    return `<div class="room-member-item">
+      <div class="room-member-avatar" style="background:${m.color}">${m.name[0].toUpperCase()}</div>
+      <div class="room-member-name">${escapeHtml(m.name)}${id===S.memberId?' (ti)':''}</div>
+      <div class="room-member-count">${cnt}×</div>
+    </div>`;
+  }).join('');
+  list.innerHTML = memberHtml || '<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px">Još nema prijatelja — pošalji im link! 🍻</div>';
+  document.getElementById('members-backdrop').classList.add('open');
+});
+
+document.getElementById('members-close').addEventListener('click', ()=>document.getElementById('members-backdrop').classList.remove('open'));
+document.getElementById('members-backdrop').addEventListener('click', e=>{ if(e.target===e.currentTarget) document.getElementById('members-backdrop').classList.remove('open'); });
+document.getElementById('btn-change-name').addEventListener('click', ()=>{
+  document.getElementById('members-backdrop').classList.remove('open');
+  openNameScreen(true);
+});
+
+// ── Karta ──────────────────────────────────────────────────────────────────
 let map, markers = {}, tempMarker = null;
 
 function memberIcon(name, color) {
   return L.divIcon({
-    className: '',
-    html: `<div class="member-pin" style="background:${color}">${(name||'?')[0].toUpperCase()}</div>`,
-    iconSize: [32,32], iconAnchor: [16,16], popupAnchor: [0,-18],
+    className:'',
+    html:`<div class="member-pin" style="background:${color}">${(name||'?')[0].toUpperCase()}</div>`,
+    iconSize:[32,32], iconAnchor:[16,16], popupAnchor:[0,-18],
   });
 }
 
-const beerIcon = L.divIcon({
-  className: '',
-  html: '<div class="beer-pin">🍺</div>',
-  iconSize: [32,32], iconAnchor: [16,30], popupAnchor: [0,-28],
-});
-
 function initMap() {
   if (map) return;
-  map = L.map('map', { zoomControl:true, attributionControl:true }).setView(DEFAULT_CENTER, 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom:19, attribution:'&copy; OpenStreetMap',
-  }).addTo(map);
+  map = L.map('map',{zoomControl:true}).setView(DEFAULT_CENTER, 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
   renderMapMarkers();
   fitToEntries();
 }
 
-function getEntries() {
-  return S.mode === 'social' ? S.entries : localDb.all();
-}
-
 function renderMapMarkers() {
   if (!map) return;
-  Object.values(markers).forEach(m => map.removeLayer(m));
+  Object.values(markers).forEach(m=>map.removeLayer(m));
   markers = {};
   const legend = document.getElementById('map-legend');
-
-  getEntries().forEach(e => addMapMarker(e));
-
-  if (S.mode === 'social') {
-    const legendItems = Object.entries(S.members).map(([id,m]) => {
-      const cnt = getEntries().filter(e=>e.memberId===id).length;
-      return cnt > 0 ? `<div class="legend-item"><div class="legend-dot" style="background:${m.color}"></div><span style="color:var(--text)">${escapeHtml(m.name)}</span><span style="color:var(--muted);margin-left:4px">${cnt}×</span></div>` : '';
-    }).filter(Boolean).join('');
-    if (legendItems) { legend.innerHTML = legendItems; legend.classList.add('visible'); }
-    else legend.classList.remove('visible');
-  } else {
-    legend.classList.remove('visible');
-  }
+  S.entries.forEach(e=>addMapMarker(e));
+  const legendItems = Object.entries(S.members).map(([id,m])=>{
+    const cnt = S.entries.filter(e=>e.memberId===id).length;
+    return cnt>0?`<div class="legend-item"><div class="legend-dot" style="background:${m.color}"></div><span>${escapeHtml(m.name)}</span><span style="color:var(--muted);margin-left:4px">${cnt}×</span></div>`:'';
+  }).filter(Boolean).join('');
+  if (legendItems) { legend.innerHTML=legendItems; legend.classList.add('visible'); }
+  else legend.classList.remove('visible');
 }
 
 function addMapMarker(e) {
-  if (!e.lat || !e.lng) return;
-  const icon = S.mode === 'social' && S.members[e.memberId]
+  if (!e.lat||!e.lng) return;
+  const icon = S.members[e.memberId]
     ? memberIcon(e.memberName||'?', e.memberColor||'#C8821E')
-    : beerIcon;
-  const m = L.marker([e.lat,e.lng], { icon }).addTo(map);
-  m.bindPopup(popupHtml(e), { maxWidth:220 });
+    : L.divIcon({className:'',html:'<div class="beer-pin">🍺</div>',iconSize:[32,32],iconAnchor:[16,30],popupAnchor:[0,-28]});
+  const m = L.marker([e.lat,e.lng],{icon}).addTo(map);
+  m.bindPopup(popupHtml(e),{maxWidth:220});
   markers[e.id] = m;
 }
 
 function popupHtml(e) {
-  const memberLine = S.mode==='social' && e.memberName
+  const memberLine = e.memberName
     ? `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${e.memberColor||'var(--amber)'};margin-bottom:4px">${escapeHtml(e.memberName)}</div>`
     : '';
-  return `${memberLine}
-    <b>${escapeHtml(e.beer)}</b><br>
+  return `${memberLine}<b>${escapeHtml(e.beer)}</b><br>
     ${e.place?`<span style="color:var(--muted);font-size:12px">📍 ${escapeHtml(e.place)}</span><br>`:''}
     <span style="font-size:13px">${starStr(e.rating||0)}</span><br>
     <span style="color:#9A876A;font-size:11px">${fmtDate(e.ts)}${e.price?' · 💶 '+e.price+' €':''}</span>
@@ -858,16 +695,14 @@ function popupHtml(e) {
 }
 
 function fitToEntries() {
-  const list = getEntries();
-  if (!list.length) return;
-  map.fitBounds(L.latLngBounds(list.map(e=>[e.lat,e.lng])), { padding:[50,50], maxZoom:16 });
+  if (!S.entries.length) return;
+  map.fitBounds(L.latLngBounds(S.entries.map(e=>[e.lat,e.lng])),{padding:[50,50],maxZoom:16});
 }
 
-// ── Filter (social list) ───────────────────────────────────────────────────
+// ── Filter ─────────────────────────────────────────────────────────────────
 function buildFilterRow() {
-  if (S.mode !== 'social') return '';
-  const pills = [`<button class="filter-pill ${S.filter==='all'?'active':''}" data-filter="all">Svi · ${getEntries().length}</button>`];
-  Object.entries(S.members).forEach(([id,m]) => {
+  const pills = [`<button class="filter-pill ${S.filter==='all'?'active':''}" data-filter="all">Svi · ${S.entries.length}</button>`];
+  Object.entries(S.members).forEach(([id,m])=>{
     const cnt = S.entries.filter(e=>e.memberId===id).length;
     pills.push(`<button class="filter-pill ${S.filter===id?'active':''}" data-filter="${id}">
       <span class="filter-pill-dot" style="background:${m.color}"></span>${escapeHtml(m.name)} · ${cnt}
@@ -876,30 +711,23 @@ function buildFilterRow() {
   return `<div class="filter-row">${pills.join('')}</div>`;
 }
 
-function bindFilterPills(container) {
-  container.querySelectorAll('.filter-pill').forEach(btn => {
-    btn.addEventListener('click', () => { S.filter = btn.dataset.filter; renderList(); });
-  });
+function bindFilterPills(el) {
+  el.querySelectorAll('.filter-pill').forEach(btn=>btn.addEventListener('click',()=>{ S.filter=btn.dataset.filter; renderList(); }));
 }
 
-// ── List ───────────────────────────────────────────────────────────────────
+// ── Lista ──────────────────────────────────────────────────────────────────
 function renderList() {
   const el = document.getElementById('tab-list');
-  let entries = getEntries();
-  if (S.mode==='social' && S.filter!=='all') entries = entries.filter(e=>e.memberId===S.filter);
-
+  let entries = S.filter==='all' ? S.entries : S.entries.filter(e=>e.memberId===S.filter);
   const filterHtml = buildFilterRow();
-
   if (!entries.length) {
-    el.innerHTML = filterHtml + `<div class="empty-state"><div class="empty-icon-wrap">🍺</div><div class="empty-text">Još nema piva</div><div class="empty-hint">Idi na „Karta" i pritisni ＋</div></div>`;
-    bindFilterPills(el);
-    return;
+    el.innerHTML = filterHtml+`<div class="empty-state"><div class="empty-icon-wrap">🍺</div><div class="empty-text">Još nema piva</div><div class="empty-hint">Idi na „Karta" i pritisni ＋</div></div>`;
+    bindFilterPills(el); return;
   }
-
-  const cardsHtml = entries.map(e => {
-    const member = S.mode==='social' ? S.members[e.memberId] : null;
+  const cardsHtml = entries.map(e=>{
+    const member = S.members[e.memberId];
     const color  = member ? member.color : 'var(--amber)';
-    const isOwn  = S.mode==='local' || e.memberId===S.memberId;
+    const isOwn  = e.memberId===S.memberId;
     return `<div class="card">
       <div class="card-stripe" style="background:linear-gradient(180deg,${color},${color}88)"></div>
       <div class="card-emoji">🍺</div>
@@ -909,111 +737,90 @@ function renderList() {
         ${e.place?`<div class="card-place">📍 ${escapeHtml(e.place)}</div>`:''}
         ${e.rating?`<div class="card-stars">${starStr(e.rating)}</div>`:''}
         ${e.note?`<div class="card-note">„${escapeHtml(e.note)}"</div>`:''}
-        <div class="card-meta">
-          <span>🗓 ${fmtDate(e.ts)} · ${fmtTime(e.ts)}</span>
-          ${e.price?`<span>💶 ${escapeHtml(e.price)} €</span>`:''}
-        </div>
+        <div class="card-meta"><span>🗓 ${fmtDate(e.ts)} · ${fmtTime(e.ts)}</span>${e.price?`<span>💶 ${escapeHtml(e.price)} €</span>`:''}</div>
       </div>
-      <div class="card-actions">
-        ${isOwn?`<button class="icon-btn" data-edit="${e.id}">✏️</button><button class="icon-btn del" data-delete="${e.id}">🗑️</button>`:''}
-      </div>
+      <div class="card-actions">${isOwn?`<button class="icon-btn" data-edit="${e.id}">✏️</button><button class="icon-btn del" data-delete="${e.id}">🗑️</button>`:''}</div>
     </div>`;
   }).join('');
-
-  el.innerHTML = filterHtml + `<div class="list">${cardsHtml}</div>`;
+  el.innerHTML = filterHtml+`<div class="list">${cardsHtml}</div>`;
   bindFilterPills(el);
-  el.querySelectorAll('[data-goto]').forEach(b  => b.addEventListener('click', ()=>goToOnMap(b.dataset.goto)));
-  el.querySelectorAll('[data-edit]').forEach(b  => b.addEventListener('click', ev=>{ev.stopPropagation();editEntry(b.dataset.edit);}));
-  el.querySelectorAll('[data-delete]').forEach(b=> b.addEventListener('click', ev=>{ev.stopPropagation();deleteEntry(b.dataset.delete);}));
+  el.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>goToOnMap(b.dataset.goto)));
+  el.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();editEntry(b.dataset.edit);}));
+  el.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();deleteEntry(b.dataset.delete);}));
 }
 
 function goToOnMap(id) {
-  const e = getEntries().find(x=>x.id===id);
+  const e = S.entries.find(x=>x.id===id);
   if (!e) return;
   showTab('map');
-  map.setView([e.lat,e.lng], 17);
+  map.setView([e.lat,e.lng],17);
   if (markers[id]) markers[id].openPopup();
 }
 
-// ── Stats ──────────────────────────────────────────────────────────────────
+// ── Statistike ─────────────────────────────────────────────────────────────
 function renderStats() {
   const el = document.getElementById('tab-stats');
-  const all = getEntries();
+  const all = S.entries;
   if (!all.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon-wrap">📊</div><div class="empty-text">Nema podataka</div><div class="empty-hint">Dodaj barem jednu pivu pa se vrati ovamo</div></div>`;
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon-wrap">📊</div><div class="empty-text">Nema podataka</div><div class="empty-hint">Dodaj barem jednu pivu pa se vrati ovamo</div></div>`;
     return;
   }
-
   function statsFor(list) {
-    const rated = list.filter(e=>e.rating>0);
-    const spent = list.reduce((a,e)=>a+(parseFloat(e.price)||0), 0);
-    return {
-      total: list.length,
-      places: new Set(list.map(e=>(e.place||'').toLowerCase().trim()).filter(Boolean)).size,
-      avg: rated.length ? rated.reduce((a,e)=>a+e.rating,0)/rated.length : 0,
-      spent,
-    };
+    const rated=list.filter(e=>e.rating>0);
+    const spent=list.reduce((a,e)=>a+(parseFloat(e.price)||0),0);
+    return { total:list.length, places:new Set(list.map(e=>(e.place||'').toLowerCase().trim()).filter(Boolean)).size, avg:rated.length?rated.reduce((a,e)=>a+e.rating,0)/rated.length:0, spent };
   }
-
   const g = statsFor(all);
   const counts = {};
-  all.forEach(e => { const k=e.beer.trim(); if(!counts[k]) counts[k]={name:k,n:0}; counts[k].n++; });
+  all.forEach(e=>{ const k=e.beer.trim(); if(!counts[k]) counts[k]={name:k,n:0}; counts[k].n++; });
   const top  = Object.values(counts).sort((a,b)=>b.n-a.n).slice(0,6);
   const maxN = Math.max(...top.map(t=>t.n),1);
   const medals = ['🥇','🥈','🥉'];
-
-  const rankHtml = `
-    <div class="section-title">Najčešće pive</div>
-    <div class="rank-card">${top.map((t,i)=>`
-      <div class="rank-row">
-        <div class="rank-pos">${medals[i]||(i+1)+'.'}</div>
-        <div class="rank-name">${escapeHtml(t.name)}</div>
-        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${(t.n/maxN)*100}%;animation-delay:${i*80}ms"></div></div>
-        <div class="rank-count">${t.n}×</div>
-      </div>`).join('')}
-    </div>`;
-
+  const rankHtml = `<div class="section-title">Najčešće pive</div>
+    <div class="rank-card">${top.map((t,i)=>`<div class="rank-row">
+      <div class="rank-pos">${medals[i]||(i+1)+'.'}</div>
+      <div class="rank-name">${escapeHtml(t.name)}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${(t.n/maxN)*100}%"></div></div>
+      <div class="rank-count">${t.n}×</div>
+    </div>`).join('')}</div>`;
   let personHtml = '';
-  if (S.mode === 'social' && Object.keys(S.members).length > 1) {
+  if (Object.keys(S.members).length > 1) {
     personHtml = '<div class="section-title">Po osobi</div>';
-    Object.entries(S.members).forEach(([mid, m]) => {
-      const mEntries = all.filter(e=>e.memberId===mid);
-      if (!mEntries.length) return;
-      const ms = statsFor(mEntries);
-      personHtml += `
-        <div class="person-section">
-          <div class="person-header">
-            <div class="person-avatar" style="background:${m.color}">${m.name[0].toUpperCase()}</div>
-            <div class="person-name">${escapeHtml(m.name)}</div>
-            <div class="person-count">${ms.total} piv${ms.total===1?'a':'e'}</div>
-          </div>
-          <div class="person-stats">
-            <div class="person-stat"><div class="person-stat-val">${ms.total}</div><div class="person-stat-lbl">Ukupno</div></div>
-            <div class="person-stat"><div class="person-stat-val">${ms.avg?ms.avg.toFixed(1)+'★':'—'}</div><div class="person-stat-lbl">Ocjena</div></div>
-            <div class="person-stat"><div class="person-stat-val">${ms.spent?ms.spent.toFixed(2)+' €':'—'}</div><div class="person-stat-lbl">Potrošio</div></div>
-          </div>
-        </div>`;
+    Object.entries(S.members).forEach(([mid,m])=>{
+      const mE=all.filter(e=>e.memberId===mid);
+      if (!mE.length) return;
+      const ms=statsFor(mE);
+      personHtml+=`<div class="person-section">
+        <div class="person-header">
+          <div class="person-avatar" style="background:${m.color}">${m.name[0].toUpperCase()}</div>
+          <div class="person-name">${escapeHtml(m.name)}</div>
+          <div class="person-count">${ms.total} piv${ms.total===1?'a':'e'}</div>
+        </div>
+        <div class="person-stats">
+          <div class="person-stat"><div class="person-stat-val">${ms.total}</div><div class="person-stat-lbl">Ukupno</div></div>
+          <div class="person-stat"><div class="person-stat-val">${ms.avg?ms.avg.toFixed(1)+'★':'—'}</div><div class="person-stat-lbl">Ocjena</div></div>
+          <div class="person-stat"><div class="person-stat-val">${ms.spent?ms.spent.toFixed(2)+' €':'—'}</div><div class="person-stat-lbl">Potrošio</div></div>
+        </div>
+      </div>`;
     });
   }
-
-  el.innerHTML = `
-    <div class="stats-content">
-      <div class="stats-header">${S.mode==='social'?'Statistike društva 📊':'Tvoja statistika 📊'}</div>
-      <div class="summary-grid">
-        <div class="summary-card"><div class="summary-icon">🍺</div><div class="summary-value">${g.total}</div><div class="summary-label">Ukupno</div></div>
-        <div class="summary-card"><div class="summary-icon">📍</div><div class="summary-value">${g.places||'—'}</div><div class="summary-label">Lokacija</div></div>
-        <div class="summary-card"><div class="summary-icon">⭐</div><div class="summary-value">${g.avg?g.avg.toFixed(1):'—'}</div><div class="summary-label">Ocjena</div></div>
-      </div>
-      ${g.spent>0?`<div class="summary-grid col2">
-        <div class="summary-card"><div class="summary-icon">💸</div><div class="summary-value">${g.spent.toFixed(2)} €</div><div class="summary-label">Potrošeno</div></div>
-        <div class="summary-card"><div class="summary-icon">💶</div><div class="summary-value">${(g.spent/g.total).toFixed(2)} €</div><div class="summary-label">Prosj./piva</div></div>
-      </div>`:''}
-      ${rankHtml}
-      ${personHtml}
-    </div>`;
+  el.innerHTML=`<div class="stats-content">
+    <div class="stats-header">Statistike društva 📊</div>
+    <div class="summary-grid">
+      <div class="summary-card"><div class="summary-icon">🍺</div><div class="summary-value">${g.total}</div><div class="summary-label">Ukupno</div></div>
+      <div class="summary-card"><div class="summary-icon">📍</div><div class="summary-value">${g.places||'—'}</div><div class="summary-label">Lokacija</div></div>
+      <div class="summary-card"><div class="summary-icon">⭐</div><div class="summary-value">${g.avg?g.avg.toFixed(1):'—'}</div><div class="summary-label">Ocjena</div></div>
+    </div>
+    ${g.spent>0?`<div class="summary-grid col2">
+      <div class="summary-card"><div class="summary-icon">💸</div><div class="summary-value">${g.spent.toFixed(2)} €</div><div class="summary-label">Potrošeno</div></div>
+      <div class="summary-card"><div class="summary-icon">💶</div><div class="summary-value">${(g.spent/g.total).toFixed(2)} €</div><div class="summary-label">Prosj./piva</div></div>
+    </div>`:''}
+    ${rankHtml}
+    ${personHtml}
+  </div>`;
 }
 
-// ── Add / edit ─────────────────────────────────────────────────────────────
+// ── Dodaj / uredi unos ─────────────────────────────────────────────────────
 let pendingLoc = null, editingId = null, currentRating = 0;
 
 document.getElementById('fab-add').addEventListener('click', startAdd);
@@ -1021,7 +828,7 @@ document.getElementById('fab-add').addEventListener('click', startAdd);
 function startAdd() {
   editingId = null;
   document.getElementById('sheet-title').textContent = 'Nova piva 🍺';
-  ['f-beer','f-place','f-price','f-note'].forEach(id => document.getElementById(id).value='');
+  ['f-beer','f-place','f-price','f-note'].forEach(id=>document.getElementById(id).value='');
   setStars(0);
   const c = map.getCenter();
   setTempLoc(c.lat, c.lng);
@@ -1030,211 +837,121 @@ function startAdd() {
 }
 
 function setTempLoc(lat, lng) {
-  pendingLoc = { lat, lng };
+  pendingLoc = {lat,lng};
   if (tempMarker) map.removeLayer(tempMarker);
-  const icon = S.mode==='social' ? memberIcon(S.memberName||'?', S.memberColor||'#C8821E') : beerIcon;
-  tempMarker = L.marker([lat,lng], { icon, opacity:.7, draggable:true }).addTo(map);
-  tempMarker.on('dragend', ()=>{ const p=tempMarker.getLatLng(); pendingLoc={lat:p.lat,lng:p.lng}; updateLocChip(); });
+  tempMarker = L.marker([lat,lng],{icon:memberIcon(S.memberName||'?',S.memberColor||'#C8821E'),opacity:.7,draggable:true}).addTo(map);
+  tempMarker.on('dragend',()=>{ const p=tempMarker.getLatLng(); pendingLoc={lat:p.lat,lng:p.lng}; updateLocChip(); });
   updateLocChip();
 }
 
 function updateLocChip() {
-  const el = document.getElementById('sheet-loc');
+  const el=document.getElementById('sheet-loc');
   if (pendingLoc) el.innerHTML=`📍 ${pendingLoc.lat.toFixed(5)}, ${pendingLoc.lng.toFixed(5)} <span style="color:var(--muted);font-weight:400">· povuci pin</span>`;
   else el.textContent='📍 Lokacija nije odabrana';
 }
 
 function useGeo(silent) {
   if (!navigator.geolocation) { if(!silent) toast('Geolokacija nije dostupna'); return; }
-  const lbl = document.getElementById('geo-btn-label');
+  const lbl=document.getElementById('geo-btn-label');
   lbl.textContent='Tražim lokaciju…';
   navigator.geolocation.getCurrentPosition(
-    pos => { lbl.textContent='Koristi trenutnu lokaciju'; setTempLoc(pos.coords.latitude, pos.coords.longitude); map.setView([pos.coords.latitude,pos.coords.longitude], 16); },
-    ()  => { lbl.textContent='Koristi trenutnu lokaciju'; if(!silent) toast('Ne mogu dohvatiti lokaciju'); },
-    { enableHighAccuracy:true, timeout:8000, maximumAge:60000 }
+    pos=>{ lbl.textContent='Koristi trenutnu lokaciju'; setTempLoc(pos.coords.latitude,pos.coords.longitude); map.setView([pos.coords.latitude,pos.coords.longitude],16); },
+    ()=>{ lbl.textContent='Koristi trenutnu lokaciju'; if(!silent) toast('Ne mogu dohvatiti lokaciju'); },
+    {enableHighAccuracy:true,timeout:8000,maximumAge:60000}
   );
 }
 
 function setStars(n) {
-  currentRating = n;
-  document.querySelectorAll('#star-pick .star').forEach(s=>s.classList.toggle('on', Number(s.dataset.v)<=n));
+  currentRating=n;
+  document.querySelectorAll('#star-pick .star').forEach(s=>s.classList.toggle('on',Number(s.dataset.v)<=n));
 }
 document.querySelectorAll('#star-pick .star').forEach(s=>s.addEventListener('click',()=>setStars(Number(s.dataset.v)===currentRating?0:Number(s.dataset.v))));
 
-function openSheet()  { document.getElementById('sheet-backdrop').classList.add('open'); setTimeout(()=>document.getElementById('f-beer').focus(), 300); }
+function openSheet()  { document.getElementById('sheet-backdrop').classList.add('open'); setTimeout(()=>document.getElementById('f-beer').focus(),300); }
 function closeSheet() {
   document.getElementById('sheet-backdrop').classList.remove('open');
   if (tempMarker) { map.removeLayer(tempMarker); tempMarker=null; }
-  editingId = null;
+  editingId=null;
 }
-document.getElementById('sheet-backdrop').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeSheet(); });
-document.getElementById('sheet-close-btn').addEventListener('click', closeSheet);
-document.getElementById('sheet-cancel-btn').addEventListener('click', closeSheet);
-document.getElementById('geo-btn').addEventListener('click', ()=>useGeo(false));
+document.getElementById('sheet-backdrop').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeSheet(); });
+document.getElementById('sheet-close-btn').addEventListener('click',closeSheet);
+document.getElementById('sheet-cancel-btn').addEventListener('click',closeSheet);
+document.getElementById('geo-btn').addEventListener('click',()=>useGeo(false));
 
-document.getElementById('save-btn').addEventListener('click', saveEntry);
-
-function saveEntry() {
-  const beer = document.getElementById('f-beer').value.trim();
+document.getElementById('save-btn').addEventListener('click',()=>{
+  const beer=document.getElementById('f-beer').value.trim();
   if (!beer) { toast('Upiši koju si pivu popio'); document.getElementById('f-beer').focus(); return; }
   if (!pendingLoc) { toast('Odaberi lokaciju na karti'); return; }
-
-  const data = {
-    beer,
-    place:  document.getElementById('f-place').value.trim(),
-    rating: currentRating,
-    price:  document.getElementById('f-price').value.trim(),
-    note:   document.getElementById('f-note').value.trim(),
-    lat: pendingLoc.lat, lng: pendingLoc.lng,
-  };
-
-  if (S.mode === 'social') {
-    if (editingId) {
-      S.gunRoom.get('entries').get(editingId).put(data);
-      toast('Spremljeno ✓');
-    } else {
-      const entryId = `e${Date.now()}${Math.random().toString(36).slice(2,5)}`;
-      S.gunRoom.get('entries').get(entryId).put({
-        ...data,
-        memberId: S.memberId,
-        memberName: S.memberName,
-        memberColor: S.memberColor,
-        ts: Date.now(),
-      });
-      toast('Živjeli! 🍻');
-    }
+  const data={beer,place:document.getElementById('f-place').value.trim(),rating:currentRating,price:document.getElementById('f-price').value.trim(),note:document.getElementById('f-note').value.trim(),lat:pendingLoc.lat,lng:pendingLoc.lng};
+  if (editingId) {
+    S.gunRoom.get('entries').get(editingId).put(data);
+    toast('Spremljeno ✓');
   } else {
-    if (editingId) {
-      localDb.update(editingId, data);
-      toast('Spremljeno ✓');
-    } else {
-      localDb.add({ id: Date.now().toString(), ts: Date.now(), ...data });
-      toast('Živjeli! 🍻');
-    }
-    renderMapMarkers();
-    renderList();
-    renderStats();
+    const id=`e${Date.now()}${Math.random().toString(36).slice(2,5)}`;
+    S.gunRoom.get('entries').get(id).put({...data,memberId:S.memberId,memberName:S.memberName,memberColor:S.memberColor,ts:Date.now()});
+    toast('Živjeli! 🍻');
   }
-
   if (tempMarker) { map.removeLayer(tempMarker); tempMarker=null; }
   closeSheet();
-}
+});
 
 function editEntry(id) {
-  const e = getEntries().find(x=>x.id===id);
+  const e=S.entries.find(x=>x.id===id);
   if (!e) return;
-  editingId = id;
-  document.getElementById('sheet-title').textContent = 'Uredi pivu ✏️';
-  document.getElementById('f-beer').value  = e.beer||'';
-  document.getElementById('f-place').value = e.place||'';
-  document.getElementById('f-price').value = e.price||'';
-  document.getElementById('f-note').value  = e.note||'';
+  editingId=id;
+  document.getElementById('sheet-title').textContent='Uredi pivu ✏️';
+  document.getElementById('f-beer').value=e.beer||'';
+  document.getElementById('f-place').value=e.place||'';
+  document.getElementById('f-price').value=e.price||'';
+  document.getElementById('f-note').value=e.note||'';
   setStars(e.rating||0);
   showTab('map');
-  map.setView([e.lat,e.lng], 16);
-  setTempLoc(e.lat, e.lng);
+  map.setView([e.lat,e.lng],16);
+  setTempLoc(e.lat,e.lng);
   openSheet();
 }
 
-// ── Delete ─────────────────────────────────────────────────────────────────
+// ── Brisanje ───────────────────────────────────────────────────────────────
 let pendingDeleteId = null;
 function deleteEntry(id) {
-  const e = getEntries().find(x=>x.id===id);
+  const e=S.entries.find(x=>x.id===id);
   if (!e) return;
-  pendingDeleteId = id;
-  document.getElementById('confirm-sub').textContent = `„${e.beer}" bit će trajno obrisan.`;
+  pendingDeleteId=id;
+  document.getElementById('confirm-sub').textContent=`„${e.beer}" bit će trajno obrisan.`;
   document.getElementById('delete-confirm').classList.add('open');
 }
-document.getElementById('confirm-cancel-btn').addEventListener('click', ()=>{
-  document.getElementById('delete-confirm').classList.remove('open');
-  pendingDeleteId = null;
-});
-document.getElementById('confirm-ok-btn').addEventListener('click', ()=>{
+document.getElementById('confirm-cancel-btn').addEventListener('click',()=>{ document.getElementById('delete-confirm').classList.remove('open'); pendingDeleteId=null; });
+document.getElementById('confirm-ok-btn').addEventListener('click',()=>{
   if (!pendingDeleteId) return;
   document.getElementById('delete-confirm').classList.remove('open');
-  if (S.mode === 'social') {
-    S.gunRoom.get('entries').get(pendingDeleteId).put(null);
-  } else {
-    if (markers[pendingDeleteId]) { map.removeLayer(markers[pendingDeleteId]); delete markers[pendingDeleteId]; }
-    localDb.remove(pendingDeleteId);
-    renderMapMarkers(); renderList(); renderStats();
-  }
-  pendingDeleteId = null;
+  if (markers[pendingDeleteId]) { map.removeLayer(markers[pendingDeleteId]); delete markers[pendingDeleteId]; }
+  S.gunRoom.get('entries').get(pendingDeleteId).put(null);
+  pendingDeleteId=null;
   toast('Obrisano 🗑️');
 });
 
-// ── Social toggle / room info ──────────────────────────────────────────────
-document.getElementById('social-toggle-btn').addEventListener('click', () => {
-  if (S.mode === 'social') {
-    openRoomSheet();
-  } else {
-    initGun();
-    showScreen('screen-room');
-  }
-});
-
-function openRoomSheet() {
-  document.getElementById('room-code-big').textContent = S.roomCode;
-  const memberHtml = Object.entries(S.members).map(([id,m]) => {
-    const cnt = S.entries.filter(e=>e.memberId===id).length;
-    const you = id===S.memberId ? ' (ti)' : '';
-    return `<div class="room-member-item">
-      <div class="room-member-avatar" style="background:${m.color}">${m.name[0].toUpperCase()}</div>
-      <div class="room-member-name">${escapeHtml(m.name)}${you}</div>
-      <div class="room-member-count">${cnt}×</div>
-    </div>`;
-  }).join('');
-  document.getElementById('room-member-list').innerHTML = memberHtml;
-  document.getElementById('room-sheet-backdrop').classList.add('open');
-}
-
-document.getElementById('room-sheet-close').addEventListener('click', ()=>document.getElementById('room-sheet-backdrop').classList.remove('open'));
-document.getElementById('room-sheet-backdrop').addEventListener('click', e=>{ if(e.target===e.currentTarget) document.getElementById('room-sheet-backdrop').classList.remove('open'); });
-
-document.getElementById('btn-copy-code').addEventListener('click', ()=>{
-  navigator.clipboard.writeText(S.roomCode).then(()=>toast('Kôd kopiran! 📋')).catch(()=>toast(S.roomCode));
-});
-
-document.getElementById('room-code-display').addEventListener('click', ()=>{
-  navigator.clipboard.writeText(S.roomCode).then(()=>toast('Kôd kopiran! 📋')).catch(()=>{});
-});
-
-document.getElementById('btn-leave-room').addEventListener('click', ()=>{
-  if (!confirm('Napustiti društvo?')) return;
-  localStorage.removeItem(KEY_ROOM);
-  localStorage.removeItem(KEY_MEMBER);
-  localStorage.setItem(KEY_MODE, 'local');
-  location.reload();
-});
-
-// ── Tabs ───────────────────────────────────────────────────────────────────
+// ── Tabovi ─────────────────────────────────────────────────────────────────
 function showTab(tab) {
-  S.activeTab = tab;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.id===`tab-${tab}`));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  S.activeTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id===`tab-${tab}`));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   if (tab==='list')  renderList();
   if (tab==='stats') renderStats();
-  if (tab==='map' && map) setTimeout(()=>map.invalidateSize(), 100);
+  if (tab==='map'&&map) setTimeout(()=>map.invalidateSize(),100);
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>showTab(btn.dataset.tab)));
 
 // ── Init ───────────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
-  const mode   = localStorage.getItem(KEY_MODE);
-  const room   = localStorage.getItem(KEY_ROOM);
-  const member = (() => { try { return JSON.parse(localStorage.getItem(KEY_MEMBER)); } catch { return null; } })();
-
-  if (mode==='social' && room && member) {
+  const saved = (() => { try { return JSON.parse(localStorage.getItem(KEY_MEMBER)); } catch { return null; } })();
+  if (saved && saved.memberId && saved.memberName) {
+    S.memberId    = saved.memberId;
+    S.memberName  = saved.memberName;
+    S.memberColor = saved.memberColor;
     initGun();
-    S.roomCode    = room;
-    S.memberId    = member.memberId;
-    S.memberName  = member.memberName;
-    S.memberColor = member.memberColor;
-    enterSocialMode();
-  } else if (mode==='local') {
-    enterLocalMode();
+    enterApp();
   } else {
-    showScreen('screen-welcome');
+    openNameScreen(false);
   }
 });
 </script>
