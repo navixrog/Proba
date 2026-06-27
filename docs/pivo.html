@@ -19,7 +19,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <!-- Y.js loaded via ES module import in script below -->
 
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -444,7 +444,12 @@
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script type="module">
+// ── Y.js imports (esm.sh, ?deps ensures shared yjs instance) ──────────────────
+import * as Y from 'https://esm.sh/yjs@13';
+import { WebrtcProvider } from 'https://esm.sh/y-webrtc@10?deps=yjs@13';
+import { IndexeddbPersistence } from 'https://esm.sh/y-indexeddb@9?deps=yjs@13';
+
 // ── Konstante ──────────────────────────────────────────────────────────────
 const KEY_MEMBER = '@pivo_member';
 
@@ -458,15 +463,17 @@ const DEFAULT_CENTER = [45.815, 15.982];
 // Fiksna soba – svi s linkom automatski ulaze zajedno
 const ROOM_ID = 'pivska-karta-nxrg-v1';
 
-const GUN_PEERS = [
-  'https://peer.wallie.io/gun',
-  'https://gundb-relay-testing.glitch.me/gun',
-];
+// ── Y.js setup ────────────────────────────────────────────────────────────
+const ydoc = new Y.Doc();
+new WebrtcProvider(ROOM_ID, ydoc, {
+  signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-ys24.onrender.com'],
+});
+new IndexeddbPersistence(ROOM_ID, ydoc);
+const yMembers = ydoc.getMap('members');
+const yEntries = ydoc.getMap('entries');
 
 // ── State ──────────────────────────────────────────────────────────────────
 const S = {
-  gun: null,
-  gunRoom: null,
   memberId: null,
   memberName: null,
   memberColor: null,
@@ -500,11 +507,13 @@ function showScreen(id) {
   else document.getElementById(id)?.classList.add('visible');
 }
 
-// ── Gun init ───────────────────────────────────────────────────────────────
-function initGun() {
-  if (S.gun) return;
-  S.gun = Gun(GUN_PEERS);
-  S.gunRoom = S.gun.get('pivo-karta').get(ROOM_ID);
+// ── Rebuild local state from Y.js maps ────────────────────────────────────
+function rebuildState() {
+  S.members = {};
+  yMembers.forEach((val, key) => { if (val && val.name) S.members[key] = val; });
+  S.entries = [];
+  yEntries.forEach((val, key) => { if (val && val.beer) S.entries.push({id: key, ...val}); });
+  S.entries.sort((a,b) => b.ts - a.ts);
 }
 
 // ── Ekran za ime ───────────────────────────────────────────────────────────
@@ -533,8 +542,6 @@ document.getElementById('btn-save-name').addEventListener('click', () => {
   const name = document.getElementById('f-member-name').value.trim();
   if (!name) { toast('Upiši svoje ime'); return; }
 
-  initGun();
-
   if (!S.memberId) {
     S.memberId = `${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
     const usedColors = Object.values(S.members).map(m=>m.color);
@@ -542,7 +549,7 @@ document.getElementById('btn-save-name').addEventListener('click', () => {
   }
 
   S.memberName = name;
-  S.gunRoom.get('members').get(S.memberId).put({
+  yMembers.set(S.memberId, {
     name,
     color: S.memberColor,
     joined: S.members[S.memberId]?.joined || Date.now(),
@@ -568,40 +575,21 @@ function enterApp() {
   updateHeader();
   if (!map) initMap();
 
-  S.gunRoom.get('members').map().on((data, key) => {
-    if (!key || key === '_') return;
-    if (data && data.name) {
-      S.members[key] = { name: data.name, color: data.color, joined: data.joined };
-    } else if (!data) {
-      delete S.members[key];
-    }
+  const refresh = () => {
+    rebuildState();
     updateHeader();
     renderMapMarkers();
     if (S.activeTab === 'list')  renderList();
     if (S.activeTab === 'stats') renderStats();
-  });
+  };
 
-  S.gunRoom.get('entries').map().on((data, key) => {
-    if (!key || key === '_') return;
-    if (data && data.beer) {
-      const entry = {
-        id: key,
-        beer: data.beer, place: data.place||'',
-        rating: data.rating||0, price: data.price||'', note: data.note||'',
-        lat: data.lat, lng: data.lng,
-        memberId: data.memberId, memberName: data.memberName, memberColor: data.memberColor,
-        ts: data.ts,
-      };
-      const idx = S.entries.findIndex(e=>e.id===key);
-      if (idx >= 0) S.entries[idx] = entry; else S.entries.push(entry);
-    } else {
-      S.entries = S.entries.filter(e=>e.id!==key);
-    }
-    S.entries.sort((a,b)=>b.ts-a.ts);
-    renderMapMarkers();
-    if (S.activeTab === 'list')  renderList();
-    if (S.activeTab === 'stats') renderStats();
-  });
+  yMembers.observe(refresh);
+  yEntries.observe(refresh);
+
+  // Load data already in IndexedDB
+  rebuildState();
+  updateHeader();
+  renderMapMarkers();
 }
 
 function updateHeader() {
@@ -884,11 +872,11 @@ document.getElementById('save-btn').addEventListener('click',()=>{
   if (!pendingLoc) { toast('Odaberi lokaciju na karti'); return; }
   const data={beer,place:document.getElementById('f-place').value.trim(),rating:currentRating,price:document.getElementById('f-price').value.trim(),note:document.getElementById('f-note').value.trim(),lat:pendingLoc.lat,lng:pendingLoc.lng};
   if (editingId) {
-    S.gunRoom.get('entries').get(editingId).put(data);
+    yEntries.set(editingId, {...(yEntries.get(editingId)||{}), ...data});
     toast('Spremljeno ✓');
   } else {
     const id=`e${Date.now()}${Math.random().toString(36).slice(2,5)}`;
-    S.gunRoom.get('entries').get(id).put({...data,memberId:S.memberId,memberName:S.memberName,memberColor:S.memberColor,ts:Date.now()});
+    yEntries.set(id, {...data, memberId:S.memberId, memberName:S.memberName, memberColor:S.memberColor, ts:Date.now()});
     toast('Živjeli! 🍻');
   }
   if (tempMarker) { map.removeLayer(tempMarker); tempMarker=null; }
@@ -925,7 +913,7 @@ document.getElementById('confirm-ok-btn').addEventListener('click',()=>{
   if (!pendingDeleteId) return;
   document.getElementById('delete-confirm').classList.remove('open');
   if (markers[pendingDeleteId]) { map.removeLayer(markers[pendingDeleteId]); delete markers[pendingDeleteId]; }
-  S.gunRoom.get('entries').get(pendingDeleteId).put(null);
+  yEntries.delete(pendingDeleteId);
   pendingDeleteId=null;
   toast('Obrisano 🗑️');
 });
@@ -941,19 +929,16 @@ function showTab(tab) {
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>showTab(btn.dataset.tab)));
 
-// ── Init ───────────────────────────────────────────────────────────────────
-window.addEventListener('load', () => {
-  const saved = (() => { try { return JSON.parse(localStorage.getItem(KEY_MEMBER)); } catch { return null; } })();
-  if (saved && saved.memberId && saved.memberName) {
-    S.memberId    = saved.memberId;
-    S.memberName  = saved.memberName;
-    S.memberColor = saved.memberColor;
-    initGun();
-    enterApp();
-  } else {
-    openNameScreen(false);
-  }
-});
+// ── Init (modules are deferred so DOM is ready here) ──────────────────────
+const saved = (() => { try { return JSON.parse(localStorage.getItem(KEY_MEMBER)); } catch { return null; } })();
+if (saved && saved.memberId && saved.memberName) {
+  S.memberId    = saved.memberId;
+  S.memberName  = saved.memberName;
+  S.memberColor = saved.memberColor;
+  enterApp();
+} else {
+  openNameScreen(false);
+}
 </script>
 </body>
 </html>
