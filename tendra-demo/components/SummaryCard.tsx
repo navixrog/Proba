@@ -65,7 +65,7 @@ export default function SummaryCard({ summary }: { summary: TenderSummary }) {
         </Section>
       </div>
 
-      {summary.skrivene_zamke.length > 0 && (
+      {summary.skrivene_zamke.length > 0 ? (
         <div className="mt-5 rounded-lg border-2 border-tendra-red/40 bg-tendra-red/5 p-4">
           <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-tendra-red">
             <span aria-hidden>⚠</span> Skrivene zamke
@@ -75,6 +75,16 @@ export default function SummaryCard({ summary }: { summary: TenderSummary }) {
               <li key={i}>{item}</li>
             ))}
           </ul>
+        </div>
+      ) : (
+        <div className="mt-5 rounded-lg border-2 border-tendra-green/30 bg-tendra-green/5 p-4">
+          <h4 className="flex items-center gap-2 text-sm font-bold text-tendra-green">
+            <span aria-hidden>✓</span> Skrivene zamke
+          </h4>
+          <p className="mt-1 text-sm text-slate-700">
+            AI nije uočio sitni tisak, rokove u fusnotama ili uvjete zakopane u prilozima — barem ne u
+            tekstu koji ste zalijepili.
+          </p>
         </div>
       )}
     </div>

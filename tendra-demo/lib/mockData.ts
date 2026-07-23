@@ -153,14 +153,9 @@ function heuristicFit(profile: CompanyProfile, tenderId: string): FitScore {
     const nezadovoljeni: FitScore["nezadovoljeni_uvjeti"] = [];
 
     if (/it|softver|digital/i.test(profile.djelatnost)) {
-      zadovoljeni.push({
-        uvjet: "Sektorska prihvatljivost djelatnosti",
-        obrazlozenje: `Djelatnost "${profile.djelatnost}" je digitalno-tehnološke prirode, no poziv izričito traži prerađivačku industriju, trgovinu ili usluge — potrebna dodatna provjera NKD oznake.`,
-      });
       nezadovoljeni.push({
-        uvjet: "Usklađenost NKD oznake s Dodatkom A",
-        obrazlozenje:
-          "Profil ne sadrži točnu NKD oznaku pa se ne može potvrditi je li djelatnost na popisu isključenih iz Dodatka A.",
+        uvjet: "Sektorska prihvatljivost djelatnosti (NKD oznaka)",
+        obrazlozenje: `Djelatnost "${profile.djelatnost}" je digitalno-tehnološke prirode, no poziv izričito traži prerađivačku industriju, trgovinu ili usluge, a profil ne sadrži točnu NKD oznaku. Nije potvrđeno odgovara li djelatnost popisu iz Dodatka A.`,
         status: "nejasno",
       });
     } else {

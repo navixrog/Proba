@@ -1,10 +1,31 @@
 import { FitScore } from "@/lib/types";
 
-const LABEL_STYLES: Record<FitScore["fit_label"], { text: string; bg: string; ring: string }> = {
-  visok: { text: "text-tendra-green", bg: "bg-tendra-green/10", ring: "ring-tendra-green/30" },
-  srednji: { text: "text-tendra-yellow", bg: "bg-tendra-yellow/10", ring: "ring-tendra-yellow/30" },
-  nizak: { text: "text-tendra-red", bg: "bg-tendra-red/10", ring: "ring-tendra-red/30" },
+const LABEL_STYLES: Record<
+  FitScore["fit_label"],
+  { text: string; bg: string; ring: string; hex: string }
+> = {
+  visok: { text: "text-tendra-green", bg: "bg-tendra-green/10", ring: "ring-tendra-green/30", hex: "#16A34A" },
+  srednji: { text: "text-tendra-yellow", bg: "bg-tendra-yellow/10", ring: "ring-tendra-yellow/30", hex: "#CA8A04" },
+  nizak: { text: "text-tendra-red", bg: "bg-tendra-red/10", ring: "ring-tendra-red/30", hex: "#DC2626" },
 };
+
+function ScoreGauge({ score, hex }: { score: number; hex: string }) {
+  const percentage = Math.max(0, Math.min(100, score));
+  return (
+    <div
+      className="relative h-20 w-20 shrink-0 rounded-full"
+      style={{ background: `conic-gradient(${hex} ${percentage}%, #e2e8f0 0)` }}
+      role="img"
+      aria-label={`Fit score: ${score} od 100`}
+    >
+      <div className="absolute inset-[6px] flex items-center justify-center rounded-full bg-white">
+        <span className="text-xl font-extrabold" style={{ color: hex }}>
+          {score}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function FitScoreCard({ fitScore }: { fitScore: FitScore }) {
   const style = LABEL_STYLES[fitScore.fit_label];
@@ -14,7 +35,7 @@ export default function FitScoreCard({ fitScore }: { fitScore: FitScore }) {
       <h3 className="mb-4 text-lg font-bold text-slate-900">Vaš fit score</h3>
 
       <div className={`mb-5 flex items-center gap-4 rounded-lg ${style.bg} p-4 ring-1 ${style.ring}`}>
-        <div className={`text-5xl font-extrabold ${style.text}`}>{fitScore.fit_score}</div>
+        <ScoreGauge score={fitScore.fit_score} hex={style.hex} />
         <div>
           <div className={`text-sm font-bold uppercase tracking-wide ${style.text}`}>
             {fitScore.fit_label} fit
