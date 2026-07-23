@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/claude-md-docs-tfxt71
+      - claude/tendra-ai-demo-xs103q
       - main
 
 permissions:

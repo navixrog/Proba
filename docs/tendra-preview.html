@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tendra — pregled za testiranje</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --surface-muted: #f1f2f8;
+    --border: #e1e3ee;
+    --border-strong: #c9cce0;
+    --text: #1e2130;
+    --text-muted: #5b5f75;
+    --text-faint: #9497ab;
+    --accent: #4F46E5;
+    --accent-soft: #eeecfc;
+    --accent-contrast: #ffffff;
+    --green: #16A34A;
+    --green-soft: #e8f6ec;
+    --yellow: #CA8A04;
+    --yellow-soft: #fbf3e0;
+    --red: #DC2626;
+    --red-soft: #fdecec;
+    --shadow: 0 1px 2px rgba(30, 33, 48, 0.05), 0 1px 8px rgba(30, 33, 48, 0.04);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14141c;
+      --surface: #1c1c28;
+      --surface-muted: #23232f;
+      --border: #33333f;
+      --border-strong: #43434f;
+      --text: #eceef7;
+      --text-muted: #9a9db2;
+      --text-faint: #6d7086;
+      --accent: #8b83f0;
+      --accent-soft: #2a2650;
+      --accent-contrast: #101018;
+      --green: #4ade80;
+      --green-soft: #16321f;
+      --yellow: #fbbf24;
+      --yellow-soft: #3a2c0c;
+      --red: #f87171;
+      --red-soft: #3a1414;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 10px rgba(0, 0, 0, 0.25);
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { width: 100%; overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2rem 1.1rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .preview-banner {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .preview-banner strong { color: var(--accent); }
+
+  header { display: flex; flex-direction: column; gap: 0.5rem; }
+  .title-row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+  h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    text-wrap: balance;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    background: var(--yellow-soft);
+    color: var(--yellow);
+    cursor: default;
+  }
+  header p { margin: 0; color: var(--text-muted); max-width: 62ch; }
+
+  section { display: flex; flex-direction: column; gap: 0.75rem; }
+  label.field-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .seed-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .seed-btn {
+    border: 1px solid var(--accent);
+    background: var(--surface);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .seed-btn:hover { background: var(--accent-soft); }
+  .seed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  textarea, select, input[type="text"] {
+    font: inherit;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 0.6rem 0.75rem;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  textarea:focus, select:focus, input[type="text"]:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+  textarea { resize: vertical; line-height: 1.55; }
+  textarea:disabled, select:disabled, input:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .profile-box {
+    border: 1px solid var(--border);
+    background: var(--surface-muted);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+  @media (min-width: 560px) { .profile-grid { grid-template-columns: 1fr 1fr; } }
+  .profile-grid .full { grid-column: 1 / -1; }
+  .kv dt {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-faint);
+    margin: 0;
+  }
+  .kv dd { margin: 0.1rem 0 0; color: var(--text); }
+  dl.profile-grid { margin: 0; }
+
+  .field-group { display: flex; flex-direction: column; gap: 0.3rem; }
+  .field-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+  .field-group label .req { color: var(--red); }
+  .field-invalid { border-color: var(--red) !important; }
+  .validation-msg { font-size: 0.78rem; font-weight: 600; color: var(--red); margin: 0.6rem 0 0; }
+
+  .actions-row { display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center; }
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1.4rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  button.primary:hover { opacity: 0.92; }
+  button.primary:disabled { opacity: 0.55; cursor: not-allowed; }
+  button.secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 0.6rem 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.secondary:hover { background: var(--surface-muted); }
+
+  .loading-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-size: 0.87rem;
+    font-weight: 600;
+  }
+  .spinner {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    border-top-color: transparent;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-row {
+    border: 1px solid var(--red);
+    background: var(--red-soft);
+    color: var(--red);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-size: 0.87rem;
+    font-weight: 600;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.4rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+  .card h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+  .lede {
+    background: var(--accent-soft);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    font-weight: 600;
+    font-size: 0.92rem;
+    margin: 0;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @media (min-width: 620px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
+  .summary-grid h3, .block h3 {
+    margin: 0 0 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  .summary-grid p, .block p { margin: 0; font-size: 0.88rem; }
+  .muted-italic { font-style: italic; color: var(--text-faint); }
+  ul.plain { margin: 0; padding-left: 1.1rem; font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.3rem; }
+
+  .traps-box {
+    border: 2px solid var(--red);
+    background: var(--red-soft);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+  }
+  .traps-box.ok { border-color: var(--green); background: var(--green-soft); }
+  .traps-box h3 { margin: 0 0 0.4rem; font-size: 0.85rem; font-weight: 700; color: var(--red); display: flex; gap: 0.4rem; align-items: center; }
+  .traps-box.ok h3 { color: var(--green); }
+  .traps-box ul { margin: 0; padding-left: 1.1rem; font-size: 0.88rem; }
+  .traps-box p { margin: 0; font-size: 0.88rem; }
+
+  .gauge-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .gauge {
+    position: relative;
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .gauge::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background: var(--surface);
+  }
+  .gauge-score {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+    z-index: 1;
+  }
+  .fit-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .fit-reco { margin: 0.15rem 0 0; font-size: 0.88rem; }
+
+  .conditions-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  @media (min-width: 620px) { .conditions-grid { grid-template-columns: 1fr 1fr; } }
+  .conditions-grid h3 { margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 700; }
+  .cond-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .cond-item { border-radius: 8px; padding: 0.55rem 0.65rem; font-size: 0.86rem; }
+  .cond-item .cond-title { font-weight: 600; }
+  .cond-item p { margin: 0.15rem 0 0; color: var(--text-muted); }
+  .cond-item.sat { background: var(--green-soft); }
+  .cond-item.unclear { background: var(--yellow-soft); }
+  .cond-item.bad { background: var(--red-soft); }
+  .cond-head { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+  .status-pill { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 999px; }
+  .status-pill.unclear { background: var(--yellow); color: var(--surface); }
+  .status-pill.bad { background: var(--red); color: var(--surface); }
+
+  footer.note { color: var(--text-faint); font-size: 0.78rem; text-align: center; margin-top: 1rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="preview-banner">
+    <span aria-hidden="true">🧪</span>
+    <span><strong>Statički pregled za testiranje toka.</strong> Ovo je klon MOCK načina rada — ista logika i podaci kao u pravoj Next.js aplikaciji, bez servera. Stvarna aplikacija (s pravim Claude API pozivima) živi u <code>tendra-demo/</code> u repozitoriju.</span>
+  </div>
+
+  <header>
+    <div class="title-row">
+      <h1>Tendra</h1>
+      <span class="badge" title="Odgovori su unaprijed pripremljeni, bez stvarnog poziva Claude API-ju.">MOCK način rada</span>
+    </div>
+    <p>AI pomoćnik koji pojednostavljuje tekst javnog natječaja i procjenjuje koliko vaša tvrtka odgovara njegovim uvjetima.</p>
+  </header>
+
+  <section>
+    <label class="field-label" for="tender-text">Tekst natječaja</label>
+    <div class="seed-row" id="seed-row"></div>
+    <textarea id="tender-text" rows="10" placeholder="Zalijepite ovdje sirovi tekst natječaja..."></textarea>
+  </section>
+
+  <section>
+    <label class="field-label" for="profile-select">Profil tvrtke</label>
+    <select id="profile-select"></select>
+    <div id="profile-detail"></div>
+  </section>
+
+  <section>
+    <div class="actions-row">
+      <button class="primary" id="analyze-btn" type="button">Analiziraj</button>
+      <button class="secondary" id="reset-btn" type="button" style="display:none;">Nova analiza</button>
+    </div>
+  </section>
+
+  <div id="status-region" aria-live="polite"></div>
+
+  <div id="results" style="display:flex; flex-direction:column; gap:1.75rem;"></div>
+
+  <footer class="note">Sludge audit + fit-score demo · sav sadržaj je izmišljen, isključivo za testiranje toka.</footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var SEEDS = [
+    {
+      id: "ruralni-turizam",
+      naziv: "Primjer 1 — Ulaganje u ruralni turizam",
+      tekst: "JAVNI POZIV za dodjelu bespovratnih sredstava u okviru mjere ruralnog turizma. Ukupna alokacija 25.000.000 EUR, potpora 5.000-200.000 EUR uz 70% sufinanciranja. Rok: 15. rujna 2024. Obvezan prethodni uvid na lokaciji 30 dana ranije. [Skraćena verzija seed teksta 1 — u pravoj app-i ovo je pun natječajni tekst od ~500 riječi.]",
+      summary: {
+        raw_summary: "Poziv financira ulaganja u ruralni turizam do 200.000 EUR uz sufinanciranje 70%. Ukupno je raspoloživo 25 milijuna EUR. Prijave se podnose elektronički najkasnije do 15. rujna 2024.",
+        tko_se_moze_prijaviti: "Nositelji nepoljoprivrednih djelatnosti u ruralnim područjima — detaljni uvjeti (kategorija subjekta, broj zaposlenih) nalaze se samo u Prilogu 1 i nisu navedeni u glavnom tekstu.",
+        iznos: "Sufinanciranje do 70% troškova, potpora od 5.000 do 200.000 EUR.",
+        rokovi: { glavni_rok: "15. rujna 2024. do 12:00 sati", medjukoraci: ["Obvezan prethodni uvid stručnog povjerenstva na lokaciji ulaganja, potrebno zatražiti najmanje 30 dana prije isteka roka."] },
+        prihvatljive_aktivnosti: ["Građenje i/ili opremanje objekata za turističke i ugostiteljske usluge (do 20 kreveta)", "Turistička infrastruktura za aktivni i seoski turizam", "Kupnja opreme i strojeva za obavljanje djelatnosti"],
+        neprihvatljive_aktivnosti: ["Kupnja zemljišta i objekata", "Plaćanje poreza", "Kupnja rabljene opreme", "Ulaganja započeta prije podnošenja zahtjeva (osim općih troškova)"],
+        kriteriji_bodovanja: ["Ulaganje na području s indeksom razvijenosti I. ili II. skupine — 15 bodova", "Nositelj mlađi od 41 godine — 10 bodova", "Otvaranje najmanje jednog novog radnog mjesta — 20 bodova", "Prijavitelj ranije nije koristio potpore iz javnih izvora — 10 bodova", "Mjere energetske učinkovitosti u ulaganju — 15 bodova", "Usklađenost s lokalnom razvojnom strategijom — 10 bodova"],
+        skrivene_zamke: ["Detaljni uvjeti prihvatljivosti korisnika nalaze se samo u Prilogu 1, ne u glavnom tekstu poziva.", "Prethodni uvid na lokaciji mora se zatražiti 30 dana unaprijed — lako se propusti jer je spomenuto tek u dijelu o rokovima.", "Zahtjevi bez zapisnika o uvidu na lokaciji automatski se smatraju nepotpunima, bez mogućnosti naknadne dopune."]
+      }
+    },
+    {
+      id: "digitalizacija-msp",
+      naziv: "Primjer 2 — Digitalizacija poslovanja MSP-ova",
+      tekst: "POZIV NA DOSTAVU PROJEKTNIH PRIJEDLOGA za jačanje digitalne zrelosti MSP-ova. Alokacija 40.000.000 EUR, potpora 10.000-150.000 EUR (50-70% intenzitet). Rok: 31. listopada 2024. [Skraćena verzija seed teksta 2.]",
+      summary: {
+        raw_summary: "Poziv sufinancira digitalizaciju poslovanja MSP-ova s do 150.000 EUR potpore, ovisno o veličini poduzeća. Ukupna alokacija je 40 milijuna EUR, poziv otvoren do 31. listopada 2024. ili do iskorištenja sredstava.",
+        tko_se_moze_prijaviti: "Trgovačka društva ili obrti registrirani najmanje 12 mjeseci, iz prerađivačke industrije, trgovine ili usluga, bez predstečajnog/stečajnog postupka. Popis isključenih djelatnosti nalazi se u Dodatku A.",
+        iznos: "10.000-150.000 EUR, intenzitet 50% (srednja), 60% (mala) ili 70% (mikro poduzeća).",
+        rokovi: { glavni_rok: "31. listopada 2024. ili do iskorištenja sredstava", medjukoraci: ["Tehnički upit u sustavu potrebno podnijeti najmanje 15 dana prije prijave ako se odgovor želi uzeti u obzir kod ocjene formalne ispravnosti."] },
+        prihvatljive_aktivnosti: ["Računalna oprema i softver za automatizaciju (ERP, CRM, upravljanje skladištem)", "Izrada/unaprjeđenje web-shopa i digitalnih prodajnih kanala", "Edukacija zaposlenika (do 10% proračuna projekta)", "Rješenja za kibernetičku sigurnost"],
+        neprihvatljive_aktivnosti: ["Oprema koja se koristi izvan poslovnih prostora prijavitelja", "Softverske licence za osobne potrebe", "Redovno održavanje postojećih sustava bez unaprjeđenja"],
+        kriteriji_bodovanja: ["Doprinos zelenoj tranziciji — do 20 bodova", "Niži stupanj digitalne zrelosti prije projekta — do 25 bodova", "Udio vlastitih sredstava iznad minimuma — do 15 bodova", "Broj zaposlenih koji koriste rješenja — do 20 bodova", "Postojanje prethodne strategije digitalizacije — do 20 bodova"],
+        skrivene_zamke: ["Prijavitelj mora sam izračunati status povezanog/partnerskog poduzeća prema Prilogu 3 — lako se pogrešno procijeni veličina poduzeća.", "Popis isključenih NKD djelatnosti nalazi se samo u Dodatku A, ne u glavnom tekstu.", "Tehnički upit 15 dana unaprijed nije obavezan za samu prijavu, ali njegov izostanak može značiti da se eventualna greška u dokumentaciji ne ispravi na vrijeme."]
+      }
+    },
+    {
+      id: "energetska-ucinkovitost",
+      naziv: "Primjer 3 — Energetska učinkovitost u poduzetništvu",
+      tekst: "POZIV ZA ISKAZ INTERESA za energetsku obnovu poslovnih zgrada i OIE. Potpora do 65% troškova, max 100.000 EUR (de minimis). Trajno otvoren do iskorištenja sredstava. [Skraćena verzija seed teksta 3.]",
+      summary: {
+        raw_summary: "Poziv financira energetsku obnovu i obnovljive izvore energije u poduzećima s do 100.000 EUR potpore (65% troškova), u okviru pravila de minimis. Poziv je trajno otvoren do iskorištenja sredstava.",
+        tko_se_moze_prijaviti: "Poduzetnici s djelatnošću na području županije koja sufinancira poziv, bez nepodmirenih obveza prema županiji i državi. Isključeni su pojedini sektori (poljoprivreda, ribarstvo, dio cestovnog prijevoza) prema Prilogu 1.",
+        iznos: "Do 65% prihvatljivih troškova, najviše 100.000 EUR po poduzetniku (de minimis, limit 300.000 EUR u 3 fiskalne godine).",
+        rokovi: { glavni_rok: "Trajno otvoren do objave obustave zbog iskorištenosti sredstava", medjukoraci: ["Obvezni energetski pregled objekta (o trošku poduzetnika) mora se dostaviti u roku 60 dana od obavijesti o formalnoj ispravnosti, inače se gubi pravo prvenstva."] },
+        prihvatljive_aktivnosti: ["Toplinska izolacija ovojnice zgrade", "Zamjena vanjske stolarije", "Fotonaponske elektrane za vlastitu potrošnju do 500 kW", "Dizalice topline", "Energetski pregled kao prateća aktivnost"],
+        neprihvatljive_aktivnosti: ["Fotonaponske elektrane namijenjene prodaji energije na tržištu", "Generatori na fosilna goriva", "Troškovi nastali prije podnošenja iskaza interesa"],
+        kriteriji_bodovanja: ["Očekivana ušteda energije u odnosu na investiciju — 30 bodova", "Postojanje energetskog certifikata prije ulaganja — 15 bodova", "Udio obnovljivih izvora u ulaganju — 25 bodova", "Manji broj zaposlenih nosi više bodova — 15 bodova", "Ranije korištenje sredstava Fonda smanjuje bodove (0 ako je korišteno u zadnje 3 godine) — 15 bodova"],
+        skrivene_zamke: ["Rok od 60 dana za dostavu energetskog pregleda nakon formalne ispravnosti lako se propusti jer je naveden tek u dijelu o postupku, ne u sažetku roka.", "Ranije korištenje potpore Fonda u zadnje 3 godine nosi 0 bodova na tom kriteriju — nije jasno rečeno na početku teksta.", "De minimis limit od 300.000 EUR odnosi se na sve potpore primljene u tekućoj i prethodne dvije fiskalne godine, ne samo na ovaj poziv."]
+      }
+    }
+  ];
+
+  var CUSTOM_ID = "vlastiti";
+  var PROFILES = [
+    { id: "obrt-turizam", naziv: "Obiteljski obrt — ruralni turizam (Ličko-senjska)", djelatnost: "Turizam i ugostiteljstvo — seoski turizam, iznajmljivanje smještaja", brojZaposlenih: "3", zupanija: "Ličko-senjska županija", reference: "Obrt posluje 6 godina. Uređen jedan objekt seoskog turizma s 4 sobe. Nema prethodno povučenih bespovratnih sredstava." },
+    { id: "doo-prehrana", naziv: "d.o.o. — prerada hrane (Osječko-baranjska)", djelatnost: "Prerada i konzerviranje voća i povrća", brojZaposlenih: "18", zupanija: "Osječko-baranjska županija", reference: "Tvrtka posluje 11 godina, izvozi u tri zemlje EU. 2022. godine povučena bespovratna sredstva iz mjere ruralnog razvoja za nabavu opreme." },
+    { id: "startup-it", naziv: "Startup — razvoj softvera (Grad Zagreb)", djelatnost: "Razvoj softvera i digitalnih usluga (SaaS)", brojZaposlenih: "5", zupanija: "Grad Zagreb", reference: "Tvrtka osnovana prije 18 mjeseci. Bez dosadašnjih bespovratnih sredstava. Jedan proizvod u ranoj komercijalizaciji, prihodi u zadnjoj poslovnoj godini ispod 200.000 EUR." }
+  ];
+
+  var state = {
+    selectedProfileId: PROFILES[0].id,
+    customProfile: { djelatnost: "", brojZaposlenih: "", zupanija: "", reference: "" },
+    showValidation: false,
+    loadingStep: null,
+    summary: null,
+    fitScore: null,
+    error: null
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function buildScore(zadovoljeni, nezadovoljeni) {
+    var neZadovoljava = nezadovoljeni.filter(function (u) { return u.status === "ne zadovoljava"; }).length;
+    var nejasno = nezadovoljeni.filter(function (u) { return u.status === "nejasno"; }).length;
+    var ukupno = zadovoljeni.length + nezadovoljeni.length || 1;
+    var raw = (zadovoljeni.length * 100 - neZadovoljava * 60 - nejasno * 25) / ukupno;
+    var fit_score = Math.max(5, Math.min(95, Math.round(raw)));
+    var fit_label = "nizak";
+    if (fit_score >= 70) fit_label = "visok";
+    else if (fit_score >= 40) fit_label = "srednji";
+    var preporuka = nejasno > 0
+      ? "Prije prijave prikupite dodatne podatke za " + nejasno + " nejasan/a uvjet/a — bez toga nije moguće pouzdano procijeniti prihvatljivost."
+      : (neZadovoljava > 0
+        ? "Trenutni profil ne zadovoljava ključne uvjete poziva, prijava se ne preporučuje bez izmjene ulaganja."
+        : "Profil dobro odgovara uvjetima poziva, preporučuje se pripremiti prijavu.");
+    return { fit_score: fit_score, fit_label: fit_label, zadovoljeni_uvjeti: zadovoljeni, nezadovoljeni_uvjeti: nezadovoljeni, preporuka: preporuka };
+  }
+
+  function heuristicFit(profile, tenderId) {
+    var zaposlenih = parseInt(profile.brojZaposlenih, 10) || 0;
+
+    if (tenderId === "ruralni-turizam") {
+      var zad = [{ uvjet: "Djelatnost vezana uz turizam/seoski turizam", obrazlozenje: "Profil navodi djelatnost \"" + profile.djelatnost + "\", što odgovara prihvatljivim aktivnostima poziva." }];
+      var nez = [
+        { uvjet: "Ulaganje na području s indeksom razvijenosti I. ili II. skupine", obrazlozenje: "Profil tvrtke navodi samo županiju, ne i indeks razvijenosti jedinice lokalne samouprave.", status: "nejasno" },
+        { uvjet: "Otvaranje najmanje jednog novog radnog mjesta", obrazlozenje: "Profil ne navodi planira li se novo zapošljavanje u sklopu ulaganja.", status: "nejasno" }
+      ];
+      if (zaposlenih > 20) {
+        nez.push({ uvjet: "Detaljni uvjeti veličine poduzetnika (Prilog 1)", obrazlozenje: "Broj zaposlenih premašuje uobičajene pragove za male ruralne subjekte, a detaljni prag nije naveden u glavnom tekstu.", status: "nejasno" });
+      }
+      return buildScore(zad, nez);
+    }
+
+    if (tenderId === "digitalizacija-msp") {
+      var zad2 = [];
+      var nez2 = [];
+      if (/it|softver|digital/i.test(profile.djelatnost)) {
+        nez2.push({ uvjet: "Sektorska prihvatljivost djelatnosti (NKD oznaka)", obrazlozenje: "Djelatnost \"" + profile.djelatnost + "\" je digitalno-tehnološke prirode, no poziv izričito traži prerađivačku industriju, trgovinu ili usluge, a profil ne sadrži točnu NKD oznaku. Nije potvrđeno odgovara li djelatnost popisu iz Dodatka A.", status: "nejasno" });
+      } else {
+        zad2.push({ uvjet: "Sektorska prihvatljivost djelatnosti", obrazlozenje: "Djelatnost \"" + profile.djelatnost + "\" odgovara prerađivačkoj industriji/uslugama koje poziv navodi kao prihvatljive." });
+      }
+      if (zaposlenih <= 9) {
+        zad2.push({ uvjet: "Kategorija mikro poduzeća (viši intenzitet potpore 70%)", obrazlozenje: "Profil navodi " + zaposlenih + " zaposlenih, što odgovara kategoriji mikro poduzeća." });
+      } else if (zaposlenih <= 49) {
+        zad2.push({ uvjet: "Kategorija malog poduzeća (intenzitet potpore 60%)", obrazlozenje: "Profil navodi " + zaposlenih + " zaposlenih, što odgovara kategoriji malog poduzeća." });
+      }
+      nez2.push({ uvjet: "Registracija najmanje 12 mjeseci prije objave Poziva", obrazlozenje: "Profil ne navodi točan datum osnivanja/registracije, pa se uvjet ne može potvrditi.", status: "nejasno" });
+      return buildScore(zad2, nez2);
+    }
+
+    var zad3 = [{ uvjet: "Poduzetnik s registriranom gospodarskom djelatnošću", obrazlozenje: "Profil potvrđuje registriranu djelatnost \"" + profile.djelatnost + "\" u " + profile.zupanija + "." }];
+    var nez3 = [
+      { uvjet: "Vlasništvo ili drugo odgovarajuće pravo na objektu", obrazlozenje: "Profil ne sadrži podatak o vlasničkom statusu poslovnog objekta.", status: "nejasno" },
+      { uvjet: "Nepostojanje nepodmirenih obveza prema županiji/državi", obrazlozenje: "Profil ne navodi status podmirenja obveza.", status: "nejasno" },
+      { uvjet: "Ranije korištenje sredstava Fonda u zadnje 3 godine", obrazlozenje: "Profil ne navodi je li tvrtka ranije koristila sredstva Fonda, što izravno utječe na broj bodova.", status: "nejasno" }
+    ];
+    return buildScore(zad3, nez3);
+  }
+
+  function buildGenericMockSummary(rawText) {
+    var trimmed = rawText.trim();
+    var preview = trimmed.slice(0, 220);
+    return {
+      raw_summary: "MOCK način rada: uneseni tekst ne odgovara nijednom pripremljenom primjeru, pa je ovo generički prikaz. Početak unesenog teksta: \"" + preview + (trimmed.length > 220 ? "..." : "") + "\"",
+      tko_se_moze_prijaviti: null, iznos: null,
+      rokovi: { glavni_rok: null, medjukoraci: [] },
+      prihvatljive_aktivnosti: [], neprihvatljive_aktivnosti: [], kriteriji_bodovanja: [],
+      skrivene_zamke: ["MOCK način rada ne analizira stvarni sadržaj unesenog teksta — uključite pravi API poziv (MOCK_MODE=false) za stvarnu analizu."]
+    };
+  }
+
+  function buildGenericMockFitScore(profile) {
+    return buildScore([], [
+      { uvjet: "Uvjeti prihvatljivosti natječaja", obrazlozenje: "MOCK način rada ne može procijeniti stvarne uvjete jer sažetak natječaja nije prepoznat kao jedan od pripremljenih primjera.", status: "nejasno" },
+      { uvjet: "Usklađenost profila s natječajem", obrazlozenje: "Potrebna je stvarna AI analiza (isključite MOCK_MODE) za pouzdanu procjenu.", status: "nejasno" }
+    ]);
+  }
+
+  function activeProfile() {
+    if (state.selectedProfileId === CUSTOM_ID) {
+      return { naziv: "Vlastiti profil", djelatnost: state.customProfile.djelatnost, brojZaposlenih: state.customProfile.brojZaposlenih, zupanija: state.customProfile.zupanija, reference: state.customProfile.reference };
+    }
+    var p = PROFILES.filter(function (x) { return x.id === state.selectedProfileId; })[0];
+    return p || PROFILES[0];
+  }
+
+  function isCustomComplete() {
+    var c = state.customProfile;
+    return Boolean(c.djelatnost.trim() && c.brojZaposlenih.trim() && c.zupanija.trim());
+  }
+
+  function esc(s) {
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : s;
+    return d.innerHTML;
+  }
+
+  function renderSeedButtons() {
+    var row = $("seed-row");
+    row.innerHTML = "";
+    SEEDS.forEach(function (seed) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "seed-btn";
+      b.textContent = seed.naziv;
+      b.disabled = state.loadingStep !== null;
+      b.addEventListener("click", function () {
+        $("tender-text").value = seed.tekst;
+      });
+      row.appendChild(b);
+    });
+  }
+
+  function renderProfileSelect() {
+    var sel = $("profile-select");
+    sel.innerHTML = "";
+    PROFILES.forEach(function (p) {
+      var opt = document.createElement("option");
+      opt.value = p.id; opt.textContent = p.naziv;
+      sel.appendChild(opt);
+    });
+    var customOpt = document.createElement("option");
+    customOpt.value = CUSTOM_ID; customOpt.textContent = "Vlastiti profil...";
+    sel.appendChild(customOpt);
+    sel.value = state.selectedProfileId;
+    sel.disabled = state.loadingStep !== null;
+    sel.onchange = function () {
+      state.selectedProfileId = sel.value;
+      renderProfileDetail();
+    };
+  }
+
+  function fieldRow(labelText, key, required, textarea) {
+    var wrap = document.createElement("div");
+    wrap.className = "field-group" + (key === "reference" ? " full" : "");
+    var label = document.createElement("label");
+    label.setAttribute("for", "custom-" + key);
+    label.innerHTML = esc(labelText) + (required ? ' <span class="req">*</span>' : "");
+    wrap.appendChild(label);
+    var invalid = state.showValidation && required && !state.customProfile[key].trim();
+    var input = document.createElement(textarea ? "textarea" : "input");
+    if (!textarea) input.type = "text";
+    else input.rows = 2;
+    input.id = "custom-" + key;
+    input.value = state.customProfile[key];
+    input.disabled = state.loadingStep !== null;
+    if (invalid) input.className = "field-invalid";
+    input.addEventListener("input", function () {
+      state.customProfile[key] = input.value;
+    });
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  function renderProfileDetail() {
+    var host = $("profile-detail");
+    host.innerHTML = "";
+    if (state.selectedProfileId === CUSTOM_ID) {
+      var box = document.createElement("div");
+      box.className = "profile-box";
+      var grid = document.createElement("div");
+      grid.className = "profile-grid";
+      grid.appendChild(fieldRow("Djelatnost", "djelatnost", true, false));
+      grid.appendChild(fieldRow("Broj zaposlenih", "brojZaposlenih", true, false));
+      grid.appendChild(fieldRow("Županija", "zupanija", true, false));
+      grid.appendChild(fieldRow("Kratke reference (nije obavezno)", "reference", false, true));
+      box.appendChild(grid);
+      if (state.showValidation && !isCustomComplete()) {
+        var msg = document.createElement("p");
+        msg.className = "validation-msg";
+        msg.textContent = "Popunite djelatnost, broj zaposlenih i županiju prije analize.";
+        box.appendChild(msg);
+      }
+      host.appendChild(box);
+    } else {
+      var p = PROFILES.filter(function (x) { return x.id === state.selectedProfileId; })[0];
+      var dl = document.createElement("dl");
+      dl.className = "profile-box profile-grid kv";
+      [["Djelatnost", p.djelatnost], ["Broj zaposlenih", p.brojZaposlenih], ["Županija", p.zupanija], ["Reference", p.reference]].forEach(function (pair) {
+        var dt = document.createElement("dt"); dt.textContent = pair[0];
+        var dd = document.createElement("dd"); dd.textContent = pair[1];
+        dl.appendChild(dt); dl.appendChild(dd);
+      });
+      host.appendChild(dl);
+    }
+  }
+
+  function renderStatus() {
+    var host = $("status-region");
+    host.innerHTML = "";
+    if (state.loadingStep) {
+      var row = document.createElement("div");
+      row.className = "loading-row";
+      var spin = document.createElement("span"); spin.className = "spinner"; spin.setAttribute("aria-hidden", "true");
+      var label = document.createElement("span");
+      label.textContent = state.loadingStep === 1 ? "Čitam natječaj..." : "Uspoređujem s profilom...";
+      row.appendChild(spin); row.appendChild(label);
+      host.appendChild(row);
+    }
+    if (state.error) {
+      var err = document.createElement("div");
+      err.className = "error-row";
+      err.textContent = state.error;
+      host.appendChild(err);
+    }
+  }
+
+  function textOrNull(v) {
+    var p = document.createElement("p");
+    if (!v) { p.className = "muted-italic"; p.textContent = "Nije navedeno u tekstu."; }
+    else { p.textContent = v; }
+    return p;
+  }
+  function listOrEmpty(items) {
+    if (!items.length) {
+      var p = document.createElement("p"); p.className = "muted-italic"; p.textContent = "Nije navedeno u tekstu."; return p;
+    }
+    var ul = document.createElement("ul"); ul.className = "plain";
+    items.forEach(function (it) { var li = document.createElement("li"); li.textContent = it; ul.appendChild(li); });
+    return ul;
+  }
+  function section(title, node) {
+    var d = document.createElement("div");
+    var h = document.createElement("h3"); h.textContent = title;
+    d.appendChild(h); d.appendChild(node);
+    return d;
+  }
+
+  function renderSummaryCard(summary) {
+    var card = document.createElement("div");
+    card.className = "card";
+    var h2 = document.createElement("h2"); h2.textContent = "Sažetak natječaja";
+    var lede = document.createElement("p"); lede.className = "lede"; lede.textContent = summary.raw_summary;
+    var grid = document.createElement("div"); grid.className = "summary-grid";
+    grid.appendChild(section("Tko se može prijaviti", textOrNull(summary.tko_se_moze_prijaviti)));
+    grid.appendChild(section("Iznos financiranja", textOrNull(summary.iznos)));
+    grid.appendChild(section("Glavni rok", textOrNull(summary.rokovi.glavni_rok)));
+    grid.appendChild(section("Međukoraci / ostali rokovi", listOrEmpty(summary.rokovi.medjukoraci)));
+    grid.appendChild(section("Prihvatljive aktivnosti", listOrEmpty(summary.prihvatljive_aktivnosti)));
+    grid.appendChild(section("Neprihvatljive aktivnosti", listOrEmpty(summary.neprihvatljive_aktivnosti)));
+    var bod = section("Kriteriji bodovanja", listOrEmpty(summary.kriteriji_bodovanja));
+
+    var traps = document.createElement("div");
+    if (summary.skrivene_zamke.length > 0) {
+      traps.className = "traps-box";
+      var h3 = document.createElement("h3"); h3.innerHTML = "⚠ Skrivene zamke";
+      var ul = document.createElement("ul");
+      summary.skrivene_zamke.forEach(function (t) { var li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+      traps.appendChild(h3); traps.appendChild(ul);
+    } else {
+      traps.className = "traps-box ok";
+      var h3ok = document.createElement("h3"); h3ok.innerHTML = "✓ Skrivene zamke";
+      var pok = document.createElement("p"); pok.textContent = "AI nije uočio sitni tisak, rokove u fusnotama ili uvjete zakopane u prilozima — barem ne u tekstu koji ste zalijepili.";
+      traps.appendChild(h3ok); traps.appendChild(pok);
+    }
+
+    card.appendChild(h2); card.appendChild(lede); card.appendChild(grid); card.appendChild(bod); card.appendChild(traps);
+    return card;
+  }
+
+  function labelStyle(label) {
+    if (label === "visok") return { text: "var(--green)", soft: "var(--green-soft)" };
+    if (label === "srednji") return { text: "var(--yellow)", soft: "var(--yellow-soft)" };
+    return { text: "var(--red)", soft: "var(--red-soft)" };
+  }
+
+  function renderFitCard(fit) {
+    var card = document.createElement("div");
+    card.className = "card";
+    var h2 = document.createElement("h2"); h2.textContent = "Vaš fit score";
+    var style = labelStyle(fit.fit_label);
+
+    var gaugeRow = document.createElement("div");
+    gaugeRow.className = "gauge-row";
+    gaugeRow.style.background = style.soft;
+    var gauge = document.createElement("div");
+    gauge.className = "gauge";
+    gauge.style.background = "conic-gradient(" + style.text + " " + fit.fit_score + "%, var(--border) 0)";
+    var gscore = document.createElement("span");
+    gscore.className = "gauge-score";
+    gscore.style.color = style.text;
+    gscore.textContent = fit.fit_score;
+    gauge.appendChild(gscore);
+    var info = document.createElement("div");
+    var flabel = document.createElement("div"); flabel.className = "fit-label"; flabel.style.color = style.text; flabel.textContent = fit.fit_label + " fit";
+    var freco = document.createElement("p"); freco.className = "fit-reco"; freco.textContent = fit.preporuka;
+    info.appendChild(flabel); info.appendChild(freco);
+    gaugeRow.appendChild(gauge); gaugeRow.appendChild(info);
+
+    var condGrid = document.createElement("div");
+    condGrid.className = "conditions-grid";
+
+    var satCol = document.createElement("div");
+    var satH = document.createElement("h3"); satH.style.color = "var(--green)"; satH.textContent = "Zadovoljeni uvjeti";
+    satCol.appendChild(satH);
+    if (!fit.zadovoljeni_uvjeti.length) {
+      var pn = document.createElement("p"); pn.className = "muted-italic"; pn.textContent = "Nema jasno zadovoljenih uvjeta."; satCol.appendChild(pn);
+    } else {
+      var sList = document.createElement("ul"); sList.className = "cond-list";
+      fit.zadovoljeni_uvjeti.forEach(function (u) {
+        var li = document.createElement("li"); li.className = "cond-item sat";
+        var t = document.createElement("div"); t.className = "cond-title"; t.textContent = u.uvjet;
+        var p = document.createElement("p"); p.textContent = u.obrazlozenje;
+        li.appendChild(t); li.appendChild(p); sList.appendChild(li);
+      });
+      satCol.appendChild(sList);
+    }
+
+    var unsCol = document.createElement("div");
+    var unsH = document.createElement("h3"); unsH.textContent = "Nezadovoljeni / nejasni uvjeti";
+    unsCol.appendChild(unsH);
+    if (!fit.nezadovoljeni_uvjeti.length) {
+      var pn2 = document.createElement("p"); pn2.className = "muted-italic"; pn2.textContent = "Nema nezadovoljenih ili nejasnih uvjeta."; unsCol.appendChild(pn2);
+    } else {
+      var uList = document.createElement("ul"); uList.className = "cond-list";
+      fit.nezadovoljeni_uvjeti.forEach(function (u) {
+        var isBad = u.status === "ne zadovoljava";
+        var li = document.createElement("li"); li.className = "cond-item " + (isBad ? "bad" : "unclear");
+        var head = document.createElement("div"); head.className = "cond-head";
+        var t = document.createElement("span"); t.className = "cond-title"; t.textContent = u.uvjet;
+        var pill = document.createElement("span"); pill.className = "status-pill " + (isBad ? "bad" : "unclear"); pill.textContent = u.status;
+        head.appendChild(t); head.appendChild(pill);
+        var p = document.createElement("p"); p.textContent = u.obrazlozenje;
+        li.appendChild(head); li.appendChild(p); uList.appendChild(li);
+      });
+      unsCol.appendChild(uList);
+    }
+
+    condGrid.appendChild(satCol); condGrid.appendChild(unsCol);
+    card.appendChild(h2); card.appendChild(gaugeRow); card.appendChild(condGrid);
+    return card;
+  }
+
+  function renderResults() {
+    var host = $("results");
+    host.innerHTML = "";
+    if (state.summary) host.appendChild(renderSummaryCard(state.summary));
+    if (state.fitScore) host.appendChild(renderFitCard(state.fitScore));
+  }
+
+  function renderActions() {
+    var hasResults = state.summary !== null || state.fitScore !== null;
+    $("reset-btn").style.display = (hasResults && !state.loadingStep) ? "inline-block" : "none";
+    $("analyze-btn").disabled = state.loadingStep !== null;
+    $("analyze-btn").textContent = state.loadingStep ? "Analiziram..." : "Analiziraj";
+    $("tender-text").disabled = state.loadingStep !== null;
+  }
+
+  function findSeedByText(text) {
+    for (var i = 0; i < SEEDS.length; i++) {
+      if (SEEDS[i].tekst === text) return SEEDS[i];
+    }
+    return null;
+  }
+
+  function analyze() {
+    var text = $("tender-text").value;
+    state.error = null; state.summary = null; state.fitScore = null;
+    renderResults();
+
+    if (!text.trim()) {
+      state.error = "Zalijepite tekst natječaja prije analize.";
+      renderStatus();
+      return;
+    }
+    if (state.selectedProfileId === CUSTOM_ID && !isCustomComplete()) {
+      state.showValidation = true;
+      state.error = "Popunite obavezna polja profila tvrtke (djelatnost, broj zaposlenih, županija).";
+      renderProfileDetail(); renderStatus();
+      return;
+    }
+    state.showValidation = false;
+
+    state.loadingStep = 1;
+    renderStatus(); renderActions(); renderSeedButtons(); renderProfileSelect();
+
+    setTimeout(function () {
+      var seed = findSeedByText(text);
+      state.summary = seed ? seed.summary : buildGenericMockSummary(text);
+      renderResults();
+      state.loadingStep = 2;
+      renderStatus();
+
+      setTimeout(function () {
+        var profile = activeProfile();
+        state.fitScore = seed ? heuristicFit(profile, seed.id) : buildGenericMockFitScore(profile);
+        state.loadingStep = null;
+        renderResults(); renderStatus(); renderActions(); renderSeedButtons(); renderProfileSelect();
+      }, 700);
+    }, 650);
+  }
+
+  function resetAll() {
+    $("tender-text").value = "";
+    state.summary = null; state.fitScore = null; state.error = null; state.showValidation = false;
+    renderResults(); renderStatus(); renderActions(); renderProfileDetail();
+  }
+
+  $("analyze-btn").addEventListener("click", analyze);
+  $("reset-btn").addEventListener("click", resetAll);
+
+  renderSeedButtons();
+  renderProfileSelect();
+  renderProfileDetail();
+  renderActions();
+})();
+</script>
+</body>
+</html>
