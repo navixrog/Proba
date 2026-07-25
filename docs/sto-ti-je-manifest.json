@@ -1,0 +1,12 @@
+{
+  "name": "ŠTO TI JE?!",
+  "short_name": "Što ti je?!",
+  "description": "Društvena igra pogađanja emocija, tjelesnih reakcija i ponašanja — pass-and-play na jednom uređaju",
+  "start_url": "sto-ti-je.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1D2FA3",
+  "theme_color": "#1D2FA3",
+  "lang": "hr"
+}
