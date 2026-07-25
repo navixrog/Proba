@@ -183,6 +183,17 @@
   .action-row .btn-ok { flex: 2; min-height: 66px; font-size: 19px; }
   .action-row .btn-skip { flex: 1; min-height: 66px; font-size: 15px; background: transparent; border: 2px solid rgba(255,133,162,0.85); color: #FF9DB5; box-shadow: none; }
 
+  /* ── Pojašnjenje ── */
+  #screen-pojasnjenje { align-items: center; gap: 12px; }
+  .skip-badge {
+    background: rgba(255,255,255,0.14); border-radius: 20px; padding: 7px 16px;
+    font-size: 13px; font-weight: 700; color: var(--text-dim); text-align: center;
+  }
+  #exp-card { justify-content: flex-start; padding-top: 20px; }
+  .exp-divider { width: 44px; height: 3px; border-radius: 2px; background: rgba(0,0,0,0.12); margin: 4px 0 2px; }
+  .exp-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; opacity: .55; }
+  .exp-text { font-size: clamp(15px, 4.4vw, 18px); line-height: 1.45; font-weight: 600; }
+
   /* ── Bonus ── */
   #screen-bonus { align-items: center; justify-content: center; text-align: center; gap: 18px; }
   #screen-bonus .bonus-box { background: rgba(255,255,255,0.1); border-radius: 18px; padding: 20px; }
@@ -331,6 +342,19 @@
       <button class="btn btn-skip" onclick="handlePreskoci()">PRESKOČI</button>
       <button class="btn btn-ok" onclick="handlePogodjeno()">POGOĐENO</button>
     </div>
+  </div>
+
+  <!-- POJAŠNJENJE (nakon preskakanja) -->
+  <div id="screen-pojasnjenje" class="screen">
+    <div class="skip-badge">Nitko nije pogodio — evo što je bilo</div>
+    <div class="term-card" id="exp-card">
+      <div class="deck-name" id="exp-deck"></div>
+      <div class="term" id="exp-term"></div>
+      <div class="exp-divider"></div>
+      <div class="exp-label" id="exp-label"></div>
+      <div class="exp-text" id="exp-text"></div>
+    </div>
+    <button class="btn btn-wide" onclick="closeExplanation()">DALJE</button>
   </div>
 
   <!-- BONUS (tjelesne reakcije) -->
@@ -694,6 +718,315 @@ const CARD_DB = [
   mk("Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.", "SITUACIJE", 3, ["O","P"]),
   mk("Oprostio si nekome, ali odnos više nije isti.", "SITUACIJE", 3, ["O","P"]),
 ];
+
+// Pojašnjenje se prikazuje kad tim preskoči karticu — trenutak kad nitko nije znao pojam
+// najbolji je trenutak za učenje. Kod situacija se nabrajaju emocije koje se priznaju kao točne.
+const POJASNJENJA = {
+  // ── EMOCIJE ★ ──
+  "sreća": "Ugodan osjećaj kad ti je lijepo i sve ti se čini dobro. Npr. kad provedeš dan s nekim koga voliš.",
+  "tuga": "Težak osjećaj kad izgubiš nešto ili nekoga tko ti je važan. Često dolazi sa suzama.",
+  "ljutnja": "Osjećaj vatre u tebi kad se dogodi nešto nepravedno. Tijelo se napne, glas postane glasniji.",
+  "strah": "Osjećaj koji te upozorava na opasnost. Srce lupa, želiš pobjeći ili se sakriti.",
+  "iznenađenje": "Kratak osjećaj kad se dogodi nešto što nisi očekivao. Oči i usta se sami otvore.",
+  "gađenje": "Osjećaj „fuj“ koji te tjera da se odmakneš. Npr. od pokvarene hrane ili ružnog prizora.",
+  "radost": "Vesela, poskakujuća sreća koju je teško sakriti. Npr. kad saznaš da ideš na more.",
+  "umor": "Osjećaj da ti je tijelo teško i da nemaš snage. Tijelo traži odmor.",
+  "dosada": "Osjećaj kad nemaš što raditi i vrijeme sporo prolazi.",
+  "uzbuđenje": "Nemirna radost prije nečeg lijepog. Teško je mirno sjediti.",
+  "znatiželja": "Želja da saznaš više. Postavljaš pitanja i želiš zaviriti.",
+  "usamljenost": "Osjećaj da si sam iako oko tebe možda ima ljudi. Nedostaje ti netko blizak.",
+  "sram": "Neugodan osjećaj kad misliš da si napravio nešto krivo i da te drugi gledaju. Lice se zacrveni.",
+  "ponos": "Topao osjećaj kad si napravio nešto dobro. Želiš to pokazati drugima.",
+  "ljubav": "Snažan topao osjećaj prema nekome. Želiš mu biti blizu i da mu bude dobro.",
+  "briga": "Kad ti je stalo do nekoga pa razmišljaš je li mu dobro.",
+  "smirenost": "Osjećaj mira u tijelu. Disanje je mirno, ništa te ne žuri.",
+  "veselje": "Vedro raspoloženje uz smijeh i šalu. Npr. na rođendanskoj proslavi.",
+  "zabrinutost": "Osjećaj kad misliš da bi se moglo dogoditi nešto loše.",
+  "hrabrost": "Kad napraviš nešto iako te je strah.",
+  "sramežljivost": "Kad ti je nelagodno pred drugima pa se povučeš i tiho govoriš.",
+  "zbunjenost": "Kad ne razumiješ što se događa i ne znaš što učiniti.",
+  "nestrpljivost": "Kad ne možeš dočekati nešto pa se vrpoljiš i stalno pitaš „kad će“.",
+  "razigranost": "Raspoloženje za igru i zezanje.",
+  "opuštenost": "Kad ti tijelo nije napeto i ništa te ne pritišće.",
+  "ugoda": "Osjećaj da ti je lijepo i udobno. Npr. pod toplom dekom.",
+  "nježnost": "Blag, pažljiv osjećaj prema nekome. Npr. kad gladiš mačku.",
+  "toplina": "Osjećaj bliskosti i sigurnosti uz nekoga.",
+  "vedrina": "Raspoloženje kad ti je lako i često se smiješ.",
+  "živahnost": "Kad si pun energije i ne možeš mirovati.",
+  "energičnost": "Kad imaš puno snage i volje za nešto.",
+  "odlučnost": "Kad si siguran što želiš i ne odustaješ.",
+  "ugodno iznenađenje": "Kad se dogodi nešto neočekivano, ali lijepo.",
+  "zaštićenost": "Osjećaj da te netko čuva i da ti se ništa loše ne može dogoditi.",
+  "bezbrižnost": "Kad te ništa ne muči i ne razmišljaš o problemima.",
+  "utješenost": "Osjećaj olakšanja nakon što te netko utješio.",
+  // ── EMOCIJE ★★ ──
+  "ljubomora": "Strah da ćeš izgubiti nečiju pažnju jer je netko drugi dobiva. Npr. kad se tvoj prijatelj igra s drugim.",
+  "zavist": "Kad želiš ono što netko drugi ima. Ljubomora se boji gubitka, zavist želi tuđe.",
+  "razočaranje": "Osjećaj kad se nešto čemu si se veselio ne ostvari.",
+  "olakšanje": "Osjećaj kad prođe nešto teško ili se strah pokaže nepotrebnim. Tijelo se opusti.",
+  "trema": "Nervoza prije nastupa ili ispita. Leptirići u trbuhu, drhtave ruke.",
+  "frustracija": "Ljutnja koja dolazi kad ti nešto stalno ne uspijeva.",
+  "oduševljenje": "Jaka radost zbog nečega što ti se jako svidjelo.",
+  "zahvalnost": "Topao osjećaj prema nekome tko ti je pomogao.",
+  "suosjećanje": "Kad osjetiš tuđu bol kao da je malo i tvoja i želiš pomoći.",
+  "sažaljenje": "Kad ti je nekoga žao, ali ga gledaš kao slabijeg. Zato je neugodnije primiti ga nego suosjećanje.",
+  "povjerenje": "Osjećaj da se na nekoga možeš osloniti.",
+  "nepovjerenje": "Osjećaj da nekome ne možeš vjerovati.",
+  "sigurnost": "Osjećaj da si na sigurnom i da znaš što slijedi.",
+  "nesigurnost": "Osjećaj da nisi siguran u sebe ili u ono što dolazi.",
+  "panika": "Nagli, jaki strah u kojem je teško razmišljati.",
+  "krivnja": "Neugodan osjećaj kad znaš da si nekoga povrijedio.",
+  "nada": "Vjerovanje da će biti bolje, čak i kad je sad teško.",
+  "čežnja": "Jaka želja za nekim ili nečim što nije tu.",
+  "bijes": "Vrlo jaka ljutnja koju je teško kontrolirati.",
+  "iritacija": "Blaga ljutnja zbog nečeg sitnog što se ponavlja.",
+  "ravnodušnost": "Kad ti je svejedno i ništa ne osjećaš prema nečemu.",
+  "odbačenost": "Osjećaj da te netko ne želi u svom društvu.",
+  "pripadnost": "Osjećaj da si dio grupe i da tu pripadaš.",
+  "prihvaćenost": "Osjećaj da te drugi vole takvog kakav jesi.",
+  "inat": "Kad napraviš suprotno od onoga što traže, baš zato što traže.",
+  "prkos": "Otvoreno odbijanje da poslušaš. Slično inatu, ali glasnije i izravnije.",
+  "zadovoljstvo": "Osjećaj da je nešto dobro onako kako jest.",
+  "nezadovoljstvo": "Osjećaj da nešto nije dobro i da bi trebalo drugačije.",
+  "divljenje": "Kad nekoga jako cijeniš zbog onoga što jest ili radi.",
+  "nelagoda": "Blag neugodan osjećaj da nešto nije u redu.",
+  "uznemirenost": "Kad si nemiran i ne možeš se smiriti.",
+  "ushićenje": "Vrlo jaka radost, kao da ćeš poletjeti.",
+  "poniženost": "Osjećaj kad te netko pred drugima učinio malim.",
+  "iščekivanje": "Napeto čekanje nečega što dolazi.",
+  "nemir": "Osjećaj da ne možeš mirovati ni se smiriti.",
+  "optimizam": "Očekivanje da će stvari ispasti dobro.",
+  "zaljubljenost": "Jak, uzbudljiv osjećaj privlačnosti prema nekome.",
+  "simpatija": "Kad ti je netko drag, ali blaže nego zaljubljenost.",
+  "privrženost": "Kad si nekome jako vezan i želiš biti uz njega.",
+  "bliskost": "Osjećaj da nekoga stvarno poznaješ i on tebe.",
+  "povezanost": "Osjećaj da s nekim dijeliš nešto važno.",
+  "očaranost": "Kad te nešto ili netko toliko privuče da ne možeš skrenuti pogled.",
+  "motiviranost": "Kad imaš volju i energiju nešto napraviti.",
+  "razdraganost": "Vedro, poskakujuće raspoloženje.",
+  "osjećaj postignuća": "Ponos nakon što si nešto uspješno završio.",
+  "osjećaj dobrodošlice": "Osjećaj da te negdje rado vide.",
+  "polet": "Nalet energije i volje, kao da te nešto nosi.",
+  "lakoća": "Osjećaj da ti ništa ne teži, ni tijelo ni misli.",
+  "veselo iščekivanje": "Čekanje nečega lijepog uz radost.",
+  "očaj": "Osjećaj da nema izlaza i da ništa neće pomoći.",
+  "preplavljenost": "Kad je svega previše odjednom pa ne znaš odakle početi.",
+  "tuga za nekim tko je otišao": "Tuga zbog nekoga koga više nema u tvom životu.",
+  "dostojanstvo": "Kad se prema sebi odnosiš s poštovanjem i ne dopustiš da te ponize.",
+  "osjećaj krivnje bez razloga": "Kad se osjećaš krivim iako nisi napravio ništa loše.",
+  // ── EMOCIJE ★★★ ──
+  "anksioznost": "Dugotrajna napetost i strah bez jasnog razloga. Tijelo je stalno na oprezu.",
+  "euforija": "Vrlo jaka, gotovo neobuzdana sreća.",
+  "prijezir": "Osjećaj da je netko ispod tebe i da ga ne poštuješ.",
+  "ganutost": "Kad te nešto lijepo dirne toliko da ti navru suze.",
+  "dirnutost": "Kad ti nešto dođe do srca. Vrlo slično ganutosti.",
+  "samopouzdanje": "Vjerovanje u sebe i svoje sposobnosti.",
+  "melankolija": "Blaga, tiha tuga bez jasnog razloga koja traje dulje.",
+  "nostalgija": "Slatko-gorka čežnja za nečim lijepim iz prošlosti.",
+  "zanos": "Stanje u kojem te nešto toliko ponese da zaboraviš na sve.",
+  "strahopoštovanje": "Mješavina divljenja i malo straha pred nečim velikim. Npr. pred olujom ili planinom.",
+  "ranjivost": "Kad se otvoriš pred nekim znajući da te može povrijediti.",
+  "otuđenost": "Osjećaj da ne pripadaš ni tamo gdje bi trebao.",
+  "praznina": "Osjećaj da u tebi nema ničega, ni tuge ni radosti.",
+  "sjeta": "Tiha tuga pomiješana s lijepim sjećanjem.",
+  "sumnja u sebe": "Kad ne vjeruješ da si dovoljno dobar ili sposoban.",
+  "tjeskoba": "Stezanje i nemir bez jasnog razloga. Hrvatska riječ za anksioznost.",
+  "nadahnuće": "Iznenadna želja i ideja da nešto stvoriš.",
+  "spokoj": "Duboki unutarnji mir.",
+  "blaženstvo": "Potpuna, mirna sreća.",
+  "zanesenost": "Kad si toliko zaokupljen nečim da ne primjećuješ ostalo.",
+  "unutarnji mir": "Osjećaj da je u tebi sve na svom mjestu.",
+  "osjećaj slobode": "Osjećaj da te ništa ne sputava i da možeš birati.",
+  "apatija": "Kad ti se ništa ne da i ništa te ne zanima.",
+  "rezignacija": "Kad prestaneš pokušavati jer misliš da nema smisla.",
+  "samosažaljenje": "Kad sam sebe žališ i vrtiš se u tome.",
+  "potpuna uronjenost u ono što radiš": "Kad te posao toliko uvuče da izgubiš pojam o vremenu.",
+  "ambivalentnost": "Kad prema istoj stvari osjećaš dvije suprotne stvari odjednom.",
+  "gorčina": "Tuga koja se s vremenom pretvorila u ljutnju.",
+  "ogorčenost": "Duboka, dugotrajna gorčina zbog nepravde.",
+  "poniznost": "Kad znaš svoju vrijednost, ali se ne uzdižeš iznad drugih.",
+  "ispunjenost": "Osjećaj da ti u životu ništa bitno ne nedostaje.",
+  "zluradost": "Kad ti je drago zbog tuđe nesreće.",
+  "empatija": "Sposobnost da osjetiš i razumiješ što drugi osjeća.",
+  "žal": "Tiha tuga zbog nečega što je prošlo ili se nije dogodilo.",
+  "pomirenost sa sudbinom": "Kad prihvatiš ono što ne možeš promijeniti.",
+  "zahvalnost pomiješana s tugom": "Kad si zahvalan na nečemu što je gotovo, pa ti je i lijepo i teško.",
+  "sram zbog tuđeg ponašanja": "Kad je tebi neugodno zbog onoga što je netko drugi napravio.",
+  "sreća zbog tuđeg uspjeha": "Kad se iskreno veseliš tome što je netko drugi uspio.",
+  "osjećaj smisla": "Osjećaj da ono što radiš ima svrhu.",
+  "osjećaj da te netko stvarno razumije": "Kad netko shvati kako se osjećaš bez da moraš objašnjavati.",
+  "predanost": "Kad se nekome ili nečemu posvetiš u potpunosti.",
+  "ponos pomiješan s ganućem": "Kad si ponosan na nekoga toliko da ti navru suze.",
+  // ── TJELESNE REAKCIJE ★ ──
+  "drhtanje": "Tijelo se trese bez tvoje volje. Od straha, hladnoće ili treme.",
+  "crvenjenje": "Lice postane crveno jer krv navre u obraze. Najčešće od srama.",
+  "znojni dlanovi": "Ruke se ovlaže kad si nervozan ili te strah.",
+  "ubrzano lupanje srca": "Srce kuca brže i jače nego inače.",
+  "naježena koža": "Sitne kvržice na koži i dizanje dlačica. Od hladnoće ili jake emocije.",
+  "suze u očima": "Oči se ovlaže. Od tuge, ali i od sreće ili smijeha.",
+  "smijeh koji ne možeš zaustaviti": "Smijeh koji te uhvati i ne prestaje iako pokušavaš.",
+  "klecanje koljena": "Koljena oslabe i savijaju se od straha ili uzbuđenja.",
+  "otvorena usta od čuda": "Usta se sama otvore kad vidiš nešto nevjerojatno.",
+  "uzdah olakšanja": "Dubok izdah kad prođe napetost.",
+  "skakanje na mjestu": "Tijelo samo poskakuje od uzbuđenja ili veselja.",
+  "pokrivanje očiju rukama": "Rukama zakloniš oči kad je nešto strašno ili neugodno.",
+  // ── TJELESNE REAKCIJE ★★ ──
+  "knedla u grlu": "Osjećaj kvrge u grlu koja te sprječava da progovoriš. Dolazi prije plača.",
+  "leptirići u trbuhu": "Škakljanje u trbuhu od uzbuđenja ili zaljubljenosti.",
+  "čvor u želucu": "Osjećaj stezanja u želucu kad si zabrinut.",
+  "hladan znoj": "Znojenje uz osjećaj hladnoće. Od jakog straha.",
+  "stisnuta čeljust": "Zubi se stisnu, mišići lica se napnu. Često od ljutnje.",
+  "stisnute šake": "Prsti se skupe u šaku. Znak ljutnje ili napetosti.",
+  "vrućina u licu": "Osjećaj da ti lice gori. Od srama ili ljutnje.",
+  "osjećaj da ti je srce na trenutak stalo": "Kratak trenutak kad se od šoka učini da srce preskoči.",
+  "nemirne noge": "Noge se same miču ili tresu kad si nervozan.",
+  "grickanje noktiju": "Navika grickanja noktiju kad si napet.",
+  "prevrtanje u krevetu bez sna": "Kad ne možeš zaspati jer ti misli ne daju mira.",
+  "plitko i brzo disanje": "Disanje postane kratko i ubrzano. Od straha ili panike.",
+  // ── TJELESNE REAKCIJE ★★★ ──
+  "težina u prsima": "Osjećaj pritiska u prsima, kao da nešto pritišće. Od tuge ili brige.",
+  "praznina u želucu": "Osjećaj šupljine u trbuhu. Od straha ili loše vijesti.",
+  "toplina koja se širi prsima": "Ugodan topao osjećaj u prsima. Od ljubavi, ganuća ili ponosa.",
+  "napetost u ramenima koje ne primjećuješ dok te netko ne upozori": "Ramena se sama dignu i stegnu od stresa, a ti to ne osjetiš dok ti netko ne kaže.",
+  "osjećaj laganosti u cijelom tijelu": "Kad ti je tijelo lako, kao da lebdiš. Nakon olakšanja ili velike sreće.",
+  "disanje koje se samo produbi kad se smiriš": "Kad se opustiš, dah postane dublji i sporiji bez da to namjerno radiš.",
+  "umor koji ne dolazi od napora": "Iscrpljenost iako se nisi fizički trudio. Dolazi od briga i osjećaja.",
+  "osjećaj da ti tijelo reagira prije nego što shvatiš zašto": "Kad ti srce ubrza ili se stegneš, a tek poslije shvatiš što te uznemirilo.",
+  // ── PONAŠANJA ★ ──
+  "zagrljaj": "Obgrliš nekoga rukama da mu pokažeš ljubav ili utjehu.",
+  "tješenje": "Kad nekome tužnom pomažeš da mu bude lakše.",
+  "isprika": "Kad kažeš „oprosti“ jer si nekoga povrijedio.",
+  "dijeljenje": "Kad ono što imaš daš i drugome.",
+  "čekanje na red": "Kad strpljivo čekaš da dođeš ti na red.",
+  "pomaganje": "Kad nekome olakšaš nešto što sam teško može.",
+  "smijanje": "Kad ti je smiješno pa se glasno smiješ.",
+  "plakanje": "Kad ti suze teku od tuge, boli ili velike sreće.",
+  "durenje": "Kad se naljutiš pa šutiš i okreneš glavu.",
+  "mrštenje": "Kad skupiš obrve jer si ljut ili ne razumiješ.",
+  "slijeganje ramenima": "Podigneš ramena da pokažeš „ne znam“ ili „svejedno mi je“.",
+  "hvalisanje": "Kad previše pričaš o tome koliko si dobar.",
+  "prekidanje drugoga": "Kad upadneš nekome u riječ dok govori.",
+  "ignoriranje": "Kad se praviš da nekoga ne vidiš ili ne čuješ.",
+  "ohrabrivanje": "Kad nekome daš snage da nešto pokuša.",
+  "pozdravljanje": "Kad nekoga pozdraviš pri dolasku ili odlasku.",
+  "mirenje nakon svađe": "Kad se nakon svađe ponovno počnete lijepo ponašati.",
+  "duboko disanje": "Kad namjerno polako dišeš da se smiriš.",
+  "čestitanje": "Kad nekome kažeš „bravo“ jer je uspio.",
+  "zahvaljivanje": "Kad kažeš „hvala“.",
+  "darivanje": "Kad nekome daš poklon.",
+  "pljeskanje": "Kad udaraš dlanom o dlan da pokažeš odobravanje.",
+  "„daj pet“": "Kad pljesneš dlanom o tuđi dlan u znak slavlja.",
+  "držanje za ruku": "Kad nekoga uhvatiš za ruku da mu budeš blizu.",
+  "nasmijavanje nekoga": "Kad se trudiš da se netko drugi nasmije.",
+  "skakanje od veselja": "Kad od sreće poskakuješ.",
+  "ples od sreće": "Kad od sreće počneš plesati.",
+  "smijeh do suza": "Kad se toliko smiješ da ti krenu suze.",
+  "pjevušenje": "Kad tiho pjevaš sebi u bradu.",
+  "namigivanje": "Kad zatvoriš jedno oko da nekome pošalješ tajni znak.",
+  "tapšanje po ramenu": "Kad nekoga lagano potapšaš da mu daš podršku.",
+  "puštanje drugoga da bude prvi": "Kad se odrekneš svog reda za nekog drugog.",
+  "posuđivanje stvari": "Kad nekome daš svoju stvar na neko vrijeme.",
+  "ustupanje mjesta": "Kad ustaneš da netko drugi sjedne.",
+  // ── PONAŠANJA ★★ ──
+  "aktivno slušanje": "Kad slušaš pažljivo, gledaš u osobu i pokazuješ da te zanima.",
+  "prevrtanje očima": "Kad zakolutaš očima da pokažeš da ti je nešto glupo.",
+  "zadirkivanje": "Kad nekoga zafrkavaš. Može biti prijateljski, ali i neugodno.",
+  "ruganje": "Kad se nekome smiješ da ga povrijediš.",
+  "obrana prijatelja": "Kad staneš uz prijatelja kad ga netko napada.",
+  "priznavanje pogreške": "Kad kažeš „pogriješio sam“.",
+  "traženje pomoći": "Kad zamoliš nekoga da ti pomogne.",
+  "odbijanje (reći „ne“)": "Kad jasno kažeš da nešto nećeš.",
+  "pohvala": "Kad nekome kažeš da je nešto dobro napravio.",
+  "kritika": "Kad nekome kažeš što nije dobro. Može biti korisna ili ružna.",
+  "kompromis": "Kad se obje strane malo odreknu da bi se dogovorile.",
+  "cmizdrenje": "Kad plačljivo kukaš da nešto dobiješ.",
+  "pravljenje da te nije briga": "Kad glumiš ravnodušnost iako ti je stalo.",
+  "glumljenje da je sve u redu": "Kad kažeš da si dobro iako nisi.",
+  "šutnja iz ljutnje": "Kad namjerno ne govoriš da pokažeš da si ljut.",
+  "pretjerivanje": "Kad nešto prikažeš većim nego što jest.",
+  "okrivljavanje drugoga": "Kad krivnju za nešto svoje prebaciš na drugoga.",
+  "isprika koju ne misliš ozbiljno": "Kad kažeš „oprosti“ samo da prestane, bez da to osjećaš.",
+  "navijanje za nekoga": "Kad glasno podržavaš nekoga da uspije.",
+  "smirivanje druge osobe": "Kad pomogneš nekome uzrujanom da se smiri.",
+  "uključivanje nekoga tko stoji sa strane": "Kad pozoveš u igru onoga tko je sam.",
+  "pripremanje iznenađenja za nekoga": "Kad potajno spremiš nešto lijepo za drugoga.",
+  "davanje komplimenta": "Kad nekome kažeš nešto lijepo o njemu.",
+  "primjećivanje da je netko tužan": "Kad zamijetiš tuđu tugu i prije nego što je izgovorena.",
+  "pitanje „kako si?“ — i čekanje odgovora": "Kad stvarno želiš čuti odgovor, a ne pitaš iz pristojnosti.",
+  "čuvanje tajne": "Kad ne odaš ono što ti je netko povjerio.",
+  "držanje obećanja": "Kad napraviš ono što si obećao.",
+  "strpljivo objašnjavanje": "Kad mirno objasniš više puta dok osoba ne razumije.",
+  "brisanje suza nekome": "Kad nekome obrišeš suze i budeš uz njega.",
+  "prepuštanje zadnjeg komada kolača": "Kad se odrekneš zadnjeg komada za nekog drugog.",
+  "pospremanje bez da te itko pita": "Kad sam od sebe pospremiš.",
+  "osmijeh nepoznatoj osobi": "Kad se nasmiješ nekome koga ne poznaješ.",
+  "pisanje poruke podrške": "Kad nekome napišeš poruku da mu daš snage.",
+  "veseljenje tuđem uspjehu": "Kad se iskreno raduješ tome što je netko drugi uspio.",
+  // ── PONAŠANJA ★★★ ──
+  "traženje pažnje": "Kad radiš stvari da bi te drugi primijetili.",
+  "izbjegavanje sukoba": "Kad bježiš od svađe iako bi trebalo nešto reći.",
+  "postavljanje granica": "Kad jasno kažeš što ti ne odgovara i što nećeš dopustiti.",
+  "pasivna agresija": "Kad ljutnju ne pokažeš otvoreno, nego kroz šutnju, poruge ili „zaboravljanje“.",
+  "potiskivanje emocija": "Kad osjećaj gurneš u sebe i praviš se da ga nema.",
+  "pretvaranje tuge u šalu": "Kad se šališ o nečemu što te zapravo boli.",
+  "slušanje bez davanja savjeta": "Kad samo slušaš, bez da odmah govoriš što treba napraviti.",
+  "prihvaćanje komplimenta": "Kad na lijepu riječ kažeš „hvala“ umjesto da je odbiješ.",
+  "priznanje da je netko drugi bio u pravu": "Kad kažeš „imao si pravo“, iako je neugodno.",
+  "javno zauzimanje za nekoga": "Kad pred svima staneš u nečiju obranu.",
+  "provjera kako je netko nakon teškog dana": "Kad se sjetiš pitati kako je nekome prošao težak dan.",
+  "davanje prostora nekome kome je previše svega": "Kad shvatiš da netko treba mir pa ga pustiš.",
+  "manipuliranje osjećajima": "Kad tuđe osjećaje koristiš da dobiješ što želiš.",
+  "projiciranje ljutnje na krivu osobu": "Kad se iskališ na nekome tko nije kriv.",
+  "preuzimanje odgovornosti": "Kad kažeš „to je moja odgovornost“ i to i napraviš.",
+  "opraštanje": "Kad odlučiš pustiti ljutnju prema nekome tko te povrijedio.",
+  "traženje tuđeg mišljenja": "Kad pitaš druge što misle prije nego što odlučiš.",
+  "iskrena isprika bez „ali“": "Isprika u kojoj se ne opravdavaš. Samo „oprosti, pogriješio sam“.",
+  "davanje podrške bez riječi": "Kad si samo tu, bez govora. Npr. sjedneš pored i držiš za ruku.",
+  "slušanje bez prekidanja": "Kad pustiš osobu da završi misao.",
+  // ── SITUACIJE ★ ──
+  "Srušio ti se toranj od kockica koji si gradio cijelo popodne.": "Razočaranje, ljutnja, tuga. Trud je nestao u trenutku.",
+  "Netko ti je uzeo igračku bez pitanja.": "Ljutnja, osjećaj nepravde, bespomoćnost.",
+  "Dobio si poklon koji si dugo želio.": "Radost, uzbuđenje, zahvalnost.",
+  "Pas ti je pojeo zadaću (stvarno).": "Zbunjenost, panika pred školu, ali i smijeh jer zvuči nevjerojatno.",
+  "Prvi si dan u novoj školi.": "Trema, nesigurnost, znatiželja — sve odjednom.",
+  "Netko se smije tvojoj frizuri.": "Sram, ljutnja, povrijeđenost.",
+  "Pronašao si izgubljenu igračku ispod kreveta.": "Olakšanje i radost.",
+  "Mama i tata te hvale pred gostima.": "Ponos, ali kod mnogih i nelagoda što su svi pogledi na njima.",
+  "Moraš pjevati pred cijelim razredom.": "Trema, strah, kod nekih i uzbuđenje.",
+  "Prijatelj ti je otkrio tajnu koju si mu povjerio.": "Osjećaj izdaje, ljutnja, tuga, gubitak povjerenja.",
+  "Gubiš u igri treći put zaredom.": "Frustracija, ljutnja na sebe, želja da odustaneš.",
+  "Netko mlađi te pobijedio u nečemu.": "Iznenađenje, sram, ali i divljenje.",
+  "Dijeliš sobu i brat/sestra ti dira stvari.": "Iritacija, ljutnja, potreba za vlastitim prostorom.",
+  "Svi su pozvani na rođendan osim tebe.": "Odbačenost, tuga, usamljenost.",
+  "Uspio si nešto što dugo nisi mogao.": "Ponos, olakšanje, osjećaj postignuća.",
+  // ── SITUACIJE ★★ ──
+  "Prijatelj se odselio u drugi grad.": "Tuga, čežnja, praznina.",
+  "Pobijedio si na natjecanju, a najbolji prijatelj je izgubio.": "Pomiješano: radost zbog sebe i krivnja zbog njega.",
+  "Zaboravio si tekst na priredbi pred svima.": "Panika, sram, želja da nestaneš.",
+  "Roditelji su ti obećali nešto i odustali.": "Razočaranje i gubitak povjerenja.",
+  "Netko je proširio neistinu o tebi.": "Bijes, nemoć, osjećaj nepravde.",
+  "Vidiš da netko zadirkuje mlađe dijete.": "Ljutnja, suosjećanje, dvojba trebaš li reagirati.",
+  "Dobio si lošiju ocjenu od očekivane — a učio si.": "Razočaranje, osjećaj nepravde, sumnja u sebe.",
+  "Prijatelji su se počeli družiti bez tebe.": "Odbačenost, usamljenost, ljubomora.",
+  "Moraš se ispričati, a misliš da nisi kriv.": "Inat, poniženost, nelagoda.",
+  "Netko ti je pomogao kad to nisi očekivao.": "Ganutost, zahvalnost, ugodno iznenađenje.",
+  "Stariji brat/sestra odlazi na studij.": "Tuga, ponos, strah od promjene.",
+  "Priznao si nešto što si skrivao.": "Olakšanje pomiješano sa strahom od reakcije.",
+  "Netko plače, a ti ne znaš što reći.": "Bespomoćnost, nelagoda, želja da pomogneš.",
+  "Uspio je plan u koji nitko nije vjerovao.": "Ushićenje, ponos, zadovoljstvo.",
+  "Roditelji se svađaju, a ti to čuješ iz sobe.": "Strah, nesigurnost, želja da to prestane.",
+  // ── SITUACIJE ★★★ ──
+  "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.": "Osjećaj iskorištenosti, gorčina, tuga zbog nejednakog prijateljstva.",
+  "Dobio si što si želio i shvatio da te ne veseli.": "Praznina, razočaranje u sebe, zbunjenost.",
+  "Netko ti se ispričao poslije mnogo godina.": "Ganutost, olakšanje, ali i gorčina što je trebalo toliko dugo.",
+  "Morao si izabrati između dva prijatelja.": "Krivnja bez obzira na izbor, rastrganost.",
+  "Shvatio si da si u svađi zapravo ti bio u krivu.": "Sram, krivnja, potreba da se ispričaš.",
+  "Netko koga voliš donosi odluku koju smatraš pogrešnom.": "Briga, nemoć, poštovanje tuđeg izbora.",
+  "Vraćaš se na mjesto iz djetinjstva i sve je drugačije.": "Nostalgija, sjeta, osjećaj da je vrijeme prošlo.",
+  "Ponosan si na nekoga više nego na sebe.": "Ganuti ponos, nesebična radost.",
+  "Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.": "Usamljenost u trudu, osjećaj neprimjećenosti.",
+  "Oprostio si nekome, ali odnos više nije isti.": "Pomirenost s gubitkom, tiha tuga.",
+};
 
 const DECK_LABEL = { EMOCIJE: 'EMOCIJE', TJELESNE: 'TJELESNE REAKCIJE', PONASANJA: 'PONAŠANJA', SITUACIJE: 'SITUACIJE' };
 const DECK_COLOR = { EMOCIJE: 'var(--emocije)', TJELESNE: 'var(--tjelesne)', PONASANJA: 'var(--ponasanja)', SITUACIJE: 'var(--situacije)' };
@@ -1254,7 +1587,35 @@ function handlePogodjeno() {
 
 function handlePreskoci() {
   stopTimer();
-  finalizeMove(false, elapsedSeconds(), '');
+  // Vrijeme se hvata odmah, prije ekrana s pojašnjenjem — čitanje pojašnjenja
+  // ne smije ući u izmjereno trajanje kartice.
+  state.pendingResult = { seconds: elapsedSeconds() };
+  showExplanation();
+}
+
+/* ═══════════════════════════ POJAŠNJENJE POJMA ═══════════════════════════ */
+function showExplanation() {
+  const d = state.currentDraw;
+  const isSituacija = d.deck === 'SITUACIJE';
+
+  document.getElementById('exp-deck').textContent = DECK_LABEL[d.deck];
+  document.getElementById('exp-card').style.borderColor = DECK_COLOR[d.deck];
+
+  const termEl = document.getElementById('exp-term');
+  const len = d.card.term.length;
+  const sentence = isSituacija || len > 34;
+  termEl.className = 'term ' + (sentence ? (len > 50 ? 'sentence long' : 'sentence') : (len > 18 ? 'medium' : 'single'));
+  termEl.textContent = sentence ? d.card.term : d.card.term.toUpperCase();
+
+  document.getElementById('exp-label').textContent = isSituacija ? 'MOGUĆE EMOCIJE' : 'ŠTO TO ZNAČI';
+  document.getElementById('exp-text').textContent =
+    POJASNJENJA[d.card.term] || 'Za ovaj pojam još nema pojašnjenja.';
+
+  goScreen('pojasnjenje');
+}
+
+function closeExplanation() {
+  finalizeMove(false, state.pendingResult.seconds, '');
 }
 
 function handleBonus(correct) {
