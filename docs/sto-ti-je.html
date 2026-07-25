@@ -41,47 +41,32 @@
     flex-direction: column;
     max-width: 560px;
     margin: 0 auto;
-    padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
   }
-  .screen { display: none; flex-direction: column; flex: 1; gap: 18px; animation: fadeIn .25s ease; }
+  .screen { display: none; flex-direction: column; flex: 1; gap: 16px; animation: fadeIn .25s ease; }
   .screen.active { display: flex; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .screen { animation: none; } }
 
   h1, h2, h3 { font-weight: 700; }
-  button {
-    font-family: inherit;
-    border: none;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
+  button { font-family: inherit; border: none; cursor: pointer; }
   button:active { transform: scale(0.97); }
-  button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+  button:disabled { cursor: not-allowed; transform: none; }
+  /* Izblijedjela žuta na plavoj daje mutno maslinastu boju koja izgleda pokvareno —
+     neaktivni gumb radije prikaži kao neutralnu plohu. */
+  .btn:disabled { background: rgba(255,255,255,0.1); color: var(--text-dim); box-shadow: none; }
 
   .btn {
     display: flex; align-items: center; justify-content: center;
-    min-height: 58px;
-    border-radius: 16px;
-    font-size: 18px;
-    font-weight: 700;
-    padding: 12px 20px;
-    color: var(--accent-text);
-    background: var(--accent);
+    min-height: 58px; border-radius: 16px;
+    font-size: 18px; font-weight: 700; padding: 12px 20px;
+    color: var(--accent-text); background: var(--accent);
     box-shadow: 0 4px 0 rgba(0,0,0,0.2);
   }
-  .btn-outline {
-    background: transparent;
-    border: 2px solid var(--text-dim);
-    color: var(--text);
-    box-shadow: none;
-  }
-  .btn-small {
-    min-height: 44px;
-    font-size: 14px;
-    padding: 8px 14px;
-    border-radius: 12px;
-  }
+  .btn-outline { background: transparent; border: 2px solid var(--text-dim); color: var(--text); box-shadow: none; }
+  .btn-small { min-height: 40px; font-size: 13px; padding: 6px 12px; border-radius: 10px; }
   .btn-danger { background: #FF85A2; color: #fff; }
-  .btn-ok { background: #1F8A63; color: #fff; }
+  .btn-ok { background: #22A971; color: #fff; }
   .btn-wide { width: 100%; }
 
   /* ── Naslovni ── */
@@ -90,162 +75,150 @@
   .wordmark div { font-size: clamp(42px, 15vw, 68px); font-weight: 800; letter-spacing: 1px; }
   .wordmark .qm { color: var(--accent); }
   .tagline { color: var(--text-dim); font-size: 16px; margin-bottom: 28px; max-width: 320px; }
-  #screen-naslovna .btn { width: 220px; }
+  #screen-naslovna .btn { width: 240px; }
 
   /* ── Postavke ── */
   .field-group { display: flex; flex-direction: column; gap: 8px; }
-  .field-label { font-size: 14px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .field-label { font-size: 13px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
   .stepper { display: flex; align-items: center; gap: 14px; }
-  .stepper button {
-    width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.12);
-    color: var(--text); font-size: 22px; font-weight: 700;
-  }
+  .stepper button { width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,0.12); color: var(--text); font-size: 24px; font-weight: 700; }
   .stepper .count { font-size: 24px; font-weight: 700; min-width: 24px; text-align: center; }
+  .team-input-row { display: flex; align-items: center; gap: 10px; }
+  .team-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.35); }
   .team-name-input {
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px;
-    padding: 12px 14px;
-    color: var(--text);
-    font-size: 16px;
-    font-family: inherit;
+    flex: 1; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 12px; padding: 12px 14px; color: var(--text); font-size: 16px; font-family: inherit;
+    -webkit-user-select: text; user-select: text;
   }
   .team-name-input::placeholder { color: var(--text-dim); }
-  .option-row { display: flex; flex-direction: column; gap: 10px; }
+  .option-row { display: flex; flex-direction: column; gap: 8px; }
   .option-btn {
-    text-align: left;
-    background: rgba(255,255,255,0.08);
-    border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 14px;
-    padding: 14px 16px;
-    color: var(--text);
-    font-size: 15px;
-    font-weight: 600;
+    text-align: left; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 14px; padding: 13px 16px; color: var(--text); font-size: 15px; font-weight: 600;
   }
   .option-btn.selected { border-color: var(--accent); background: rgba(242,233,59,0.15); }
-  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; }
-  .switch { width: 50px; height: 28px; border-radius: 20px; background: rgba(255,255,255,0.2); position: relative; }
+  .option-btn .opt-sub { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-top: 2px; }
+  .option-btn.selected .opt-sub { color: #EDE9B0; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 2px; }
+  .switch { width: 50px; height: 28px; border-radius: 20px; background: rgba(255,255,255,0.2); position: relative; flex-shrink: 0; }
   .switch.on { background: var(--accent); }
   .switch .knob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .15s; }
   .switch.on .knob { left: 25px; background: var(--bg); }
 
+  /* ── Napredak timova ── */
+  .progress-box { display: flex; flex-direction: column; gap: 7px; }
+  .tp-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 10px; }
+  .tp-row.active { background: rgba(255,255,255,0.12); }
+  .tp-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(0,0,0,0.25); }
+  .tp-name { font-size: 12px; font-weight: 700; width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+  .tp-bar { flex: 1; height: 12px; background: rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; }
+  .tp-fill { height: 100%; border-radius: 8px; transition: width .35s ease; }
+  .tp-pos { font-size: 12px; font-weight: 700; color: var(--text-dim); width: 46px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) { .tp-fill { transition: none; } }
+
   /* ── Staza ── */
-  .track-wrap { overflow-x: auto; padding: 6px 2px 10px; -webkit-overflow-scrolling: touch; }
-  .track { display: flex; gap: 4px; width: max-content; padding-bottom: 4px; }
+  .track-wrap { overflow-x: auto; padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .track-wrap::-webkit-scrollbar { display: none; }
+  .track { display: flex; gap: 4px; width: max-content; }
   .cell {
-    width: 40px; height: 52px; border-radius: 8px;
+    width: 34px; height: 44px; border-radius: 8px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-    font-size: 10px; font-weight: 700; color: var(--text-dim); position: relative; flex-shrink: 0;
+    background: rgba(255,255,255,0.08); border: 2px solid transparent;
+    font-size: 9px; font-weight: 700; color: var(--text-dim); flex-shrink: 0;
   }
-  .cell.type-S { background: var(--situacije); color: var(--accent-text); border-color: var(--situacije); }
-  .cell.type-W { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .cell.start, .cell.finish { background: rgba(255,255,255,0.18); color: var(--text); font-size: 9px; }
-  .cell .icon { font-size: 15px; line-height: 1; margin-bottom: 2px; }
-  .pawns { display: flex; gap: 1px; position: absolute; bottom: -14px; flex-wrap: wrap; justify-content: center; width: 100%; }
-  .pawn { width: 9px; height: 9px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.3); }
+  .cell.type-S { background: var(--situacije); color: var(--accent-text); }
+  .cell.type-W { background: rgba(255,255,255,0.16); color: var(--accent); border-color: rgba(242,233,59,0.55); }
+  .cell.start, .cell.finish { background: rgba(255,255,255,0.2); color: var(--text); font-size: 8px; }
+  .cell.here { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
+  .cell .icon { font-size: 14px; line-height: 1; margin-bottom: 1px; }
 
   /* ── Potez ── */
-  .card-panel {
-    background: rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .turn-title { font-size: 22px; font-weight: 800; text-align: center; }
+  .card-panel { background: rgba(255,255,255,0.08); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 13px; }
+  .turn-title { font-size: 21px; font-weight: 800; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .turn-title .tp-dot { width: 16px; height: 16px; }
   .field-info { display: flex; align-items: center; gap: 14px; justify-content: center; }
-  .field-icon {
-    width: 64px; height: 64px; border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px; font-weight: 800; background: var(--accent); color: var(--accent-text);
-  }
-  .field-icon.type-S { background: var(--situacije); }
-  .field-icon.type-O, .field-icon.type-C, .field-icon.type-P { background: rgba(255,255,255,0.15); color: #fff; }
+  .field-icon { width: 62px; height: 62px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 27px; font-weight: 800; background: rgba(255,255,255,0.15); color: #fff; flex-shrink: 0; }
+  .field-icon.type-S { background: var(--situacije); color: var(--accent-text); }
+  .field-icon.type-W { background: var(--accent); color: var(--accent-text); }
   .field-text .field-label-big { font-size: 20px; font-weight: 800; }
   .field-text .field-sub { font-size: 13px; color: var(--text-dim); }
 
-  .weight-row, .channel-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .weight-row, .channel-row { display: flex; gap: 8px; justify-content: center; }
   .weight-btn, .channel-btn {
-    flex: 1; min-width: 84px; min-height: 64px;
-    border-radius: 14px; background: rgba(255,255,255,0.1); border: 2px solid transparent;
-    color: var(--text); font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    font-size: 13px;
+    flex: 1; min-height: 62px; border-radius: 14px; background: rgba(255,255,255,0.1);
+    border: 2px solid transparent; color: var(--text); font-weight: 700;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px;
   }
-  .weight-btn .stars, .channel-btn .glyph { font-size: 18px; color: var(--accent); }
-  .weight-btn.selected, .channel-btn.selected { border-color: var(--accent); background: rgba(242,233,59,0.18); }
+  .weight-btn .stars, .channel-btn .glyph { font-size: 17px; color: var(--accent); }
+  .weight-btn.selected, .channel-btn.selected { border-color: var(--accent); background: rgba(242,233,59,0.2); }
 
   /* ── Predaja ── */
-  #screen-predaja { align-items: center; justify-content: center; text-align: center; gap: 24px; }
-  #screen-predaja .handoff-icon { font-size: 60px; }
-  #screen-predaja p { font-size: 19px; font-weight: 700; max-width: 320px; line-height: 1.4; }
+  #screen-predaja { align-items: center; justify-content: center; text-align: center; gap: 22px; }
+  #screen-predaja .handoff-icon { font-size: 56px; }
+  #screen-predaja p { font-size: 19px; font-weight: 700; max-width: 330px; line-height: 1.4; }
   #screen-predaja .team-chip { color: var(--accent); }
+  #screen-predaja .handoff-hint { font-size: 14px; font-weight: 600; color: var(--text-dim); max-width: 300px; }
 
   /* ── Kartica ── */
-  #screen-kartica { align-items: center; gap: 16px; }
-  .timer-display {
-    font-size: 56px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text);
-    transition: color .2s;
-  }
-  .timer-display.warn { color: #FF6B6B; }
+  #screen-kartica { align-items: center; gap: 12px; }
+  .timer-display { font-size: 52px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; transition: color .2s; }
+  .timer-display.warn { color: #FFD166; }
+  .timer-display.danger { color: #FF6B6B; }
   .term-card {
-    background: var(--card-bg);
-    color: var(--card-text);
-    border-radius: 22px;
-    padding: 28px 20px;
-    width: 100%;
-    text-align: center;
-    border: 6px solid var(--emocije);
-    display: flex; flex-direction: column; gap: 10px; align-items: center;
-    min-height: 220px;
-    justify-content: center;
+    background: var(--card-bg); color: var(--card-text); border-radius: 22px;
+    padding: 24px 18px; width: 100%; text-align: center; border: 6px solid var(--emocije);
+    display: flex; flex-direction: column; gap: 9px; align-items: center;
+    flex: 1; max-height: 62vh; justify-content: center; overflow-y: auto;
   }
-  .term-card .deck-name { font-size: 13px; font-weight: 800; letter-spacing: 1px; opacity: .65; }
-  .term-card .stars-line { font-size: 18px; color: #C9820A; }
-  .term-card .term { font-size: clamp(24px, 8vw, 34px); font-weight: 800; text-transform: uppercase; line-height: 1.2; }
-  .term-card .card-note { font-size: 13px; opacity: .7; margin-top: 4px; }
+  .term-card .deck-name { font-size: 12px; font-weight: 800; letter-spacing: 1px; opacity: .6; }
+  .term-card .stars-line { font-size: 17px; color: #C9820A; letter-spacing: 2px; }
+  .term-card .term { font-weight: 800; line-height: 1.15; }
+  .term-card .term.single { font-size: clamp(26px, 9vw, 38px); text-transform: uppercase; }
+  .term-card .term.sentence { font-size: clamp(19px, 5.6vw, 25px); line-height: 1.3; text-transform: none; }
+  .term-card .card-note { font-size: 13px; opacity: .72; line-height: 1.35; margin-top: 2px; }
   .term-card .repeat-tag { font-size: 11px; background: rgba(0,0,0,0.08); border-radius: 8px; padding: 2px 8px; }
-  .action-row { display: flex; gap: 12px; width: 100%; }
-  .action-row .btn { flex: 1; }
+  .action-row { display: flex; gap: 10px; width: 100%; align-items: stretch; }
+  .action-row .btn-ok { flex: 2; min-height: 66px; font-size: 19px; }
+  .action-row .btn-skip { flex: 1; min-height: 66px; font-size: 15px; background: transparent; border: 2px solid rgba(255,133,162,0.85); color: #FF9DB5; box-shadow: none; }
 
   /* ── Bonus ── */
-  #screen-bonus { align-items: center; justify-content: center; text-align: center; gap: 20px; }
-  #screen-bonus .bonus-box { background: rgba(255,255,255,0.1); border-radius: 18px; padding: 22px; }
+  #screen-bonus { align-items: center; justify-content: center; text-align: center; gap: 18px; }
+  #screen-bonus .bonus-box { background: rgba(255,255,255,0.1); border-radius: 18px; padding: 20px; }
   #screen-bonus h3 { font-size: 19px; margin-bottom: 6px; }
-  #screen-bonus p { color: var(--text-dim); font-size: 14px; }
+  #screen-bonus .bonus-term { font-size: 15px; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+  #screen-bonus p { color: var(--text-dim); font-size: 14px; line-height: 1.4; }
 
   /* ── Kraj ── */
-  #screen-kraj { align-items: center; justify-content: center; text-align: center; gap: 18px; }
-  .winner-banner { font-size: 26px; font-weight: 800; color: var(--accent); }
+  #screen-kraj { align-items: center; justify-content: center; text-align: center; gap: 16px; }
+  .winner-banner { font-size: 25px; font-weight: 800; color: var(--accent); }
   .rank-list { width: 100%; display: flex; flex-direction: column; gap: 8px; }
-  .rank-row {
-    display: flex; align-items: center; justify-content: space-between;
-    background: rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 16px; font-weight: 700;
-  }
+  .rank-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; font-weight: 700; }
   .rank-row.winner { background: rgba(242,233,59,0.2); border: 2px solid var(--accent); }
+  .rank-row .rank-pos { margin-left: auto; color: var(--text-dim); font-size: 14px; }
 
   /* ── Statistika ── */
-  #screen-statistika { gap: 14px; overflow-y: auto; }
-  .stat-summary { display: flex; gap: 10px; }
-  .stat-card { flex: 1; background: rgba(255,255,255,0.08); border-radius: 14px; padding: 12px; text-align: center; }
-  .stat-card .val { font-size: 22px; font-weight: 800; color: var(--accent); }
-  .stat-card .lbl { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-  .stat-section { background: rgba(255,255,255,0.06); border-radius: 14px; padding: 14px; }
+  #screen-statistika { gap: 12px; }
+  .stat-summary { display: flex; gap: 8px; }
+  .stat-card { flex: 1; background: rgba(255,255,255,0.08); border-radius: 14px; padding: 11px 6px; text-align: center; }
+  .stat-card .val { font-size: 21px; font-weight: 800; color: var(--accent); }
+  .stat-card .lbl { font-size: 10px; color: var(--text-dim); margin-top: 2px; line-height: 1.25; }
+  .stat-section { background: rgba(255,255,255,0.06); border-radius: 14px; padding: 13px; }
   .stat-section h4 { font-size: 14px; margin-bottom: 8px; color: var(--accent); }
-  .stat-list { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-  .stat-list .row { display: flex; justify-content: space-between; gap: 8px; color: var(--text-dim); }
-  .stat-list .row span:first-child { color: var(--text); }
-  .empty-note { color: var(--text-dim); font-size: 13px; text-align: center; padding: 12px; }
+  .stat-list { display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+  .stat-list .row { display: flex; justify-content: space-between; gap: 10px; color: var(--text-dim); align-items: baseline; }
+  .stat-list .row .k { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stat-list .row .v { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .stat-note { font-size: 11px; color: var(--text-dim); opacity: .8; margin-top: 7px; line-height: 1.35; }
+  .empty-note { color: var(--text-dim); font-size: 13px; text-align: center; padding: 10px; }
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: var(--accent); color: var(--accent-text); font-weight: 700;
     padding: 10px 20px; border-radius: 30px; font-size: 14px; opacity: 0; pointer-events: none;
-    transition: opacity .2s; z-index: 50;
+    transition: opacity .2s; z-index: 50; max-width: 88vw; text-align: center;
   }
   .toast.show { opacity: 1; }
-
-  .top-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .top-bar { display: flex; align-items: center; gap: 8px; }
+  .top-bar h2 { font-size: 17px; margin-right: auto; }
 </style>
 </head>
 <body>
@@ -260,6 +233,7 @@
     </div>
     <div class="tagline">Pogodi što mi je — prije nego što ti kažem.</div>
     <button class="btn" onclick="startNewGame()">NOVA IGRA</button>
+    <button class="btn btn-outline btn-small" id="naslovna-stat-btn" style="display:none;" onclick="goScreen('statistika')">Statistika sesije</button>
   </div>
 
   <!-- 2. POSTAVKE -->
@@ -269,9 +243,9 @@
     <div class="field-group">
       <div class="field-label">Broj timova</div>
       <div class="stepper">
-        <button onclick="changeTeamCount(-1)">−</button>
+        <button onclick="changeTeamCount(-1)" aria-label="Manje timova">−</button>
         <div class="count" id="team-count-display">2</div>
-        <button onclick="changeTeamCount(1)">+</button>
+        <button onclick="changeTeamCount(1)" aria-label="Više timova">+</button>
       </div>
     </div>
 
@@ -285,9 +259,14 @@
       <div class="option-row" id="age-filter-options"></div>
     </div>
 
+    <div class="field-group">
+      <div class="field-label">Duljina staze</div>
+      <div class="option-row" id="track-len-options"></div>
+    </div>
+
     <div class="toggle-row">
-      <span class="field-label" style="text-transform:none;">Zvuk timera</span>
-      <div class="switch" id="sound-toggle" onclick="toggleSound()"><div class="knob"></div></div>
+      <span style="font-size:15px; font-weight:700;">Zvuk timera</span>
+      <div class="switch" id="sound-toggle" onclick="toggleSound()"></div>
     </div>
 
     <button class="btn btn-wide" onclick="goToPotez()">KRENI</button>
@@ -296,10 +275,13 @@
   <!-- 3. POTEZ -->
   <div id="screen-potez" class="screen">
     <div class="top-bar">
-      <h2 style="font-size:18px;">Staza</h2>
-      <button class="btn btn-outline btn-small" id="undo-btn" onclick="undoLastMove()" style="display:none;">↺ Poništi zadnji potez</button>
+      <h2>Staza</h2>
+      <button class="btn btn-outline btn-small" id="undo-btn" onclick="undoLastMove()" style="display:none;">↺ Poništi</button>
+      <button class="btn btn-outline btn-small" onclick="abortGame()">Prekini</button>
     </div>
-    <div class="track-wrap"><div class="track" id="track"></div></div>
+
+    <div class="progress-box" id="progress-box"></div>
+    <div class="track-wrap" id="track-wrap"><div class="track" id="track"></div></div>
 
     <div class="card-panel">
       <div class="turn-title" id="turn-title"></div>
@@ -329,6 +311,7 @@
   <div id="screen-predaja" class="screen">
     <div class="handoff-icon">📱</div>
     <p>Dodaj uređaj izvođaču iz tima <span class="team-chip" id="predaja-team-name"></span> — zatim pritisni OTKRIJ POJAM</p>
+    <div class="handoff-hint" id="predaja-hint"></div>
     <button class="btn" onclick="revealCard()">OTKRIJ POJAM</button>
   </div>
 
@@ -343,7 +326,7 @@
       <div class="repeat-tag" id="card-repeat" style="display:none;">↺ ponovljena kartica</div>
     </div>
     <div class="action-row">
-      <button class="btn btn-danger" onclick="handlePreskoci()">PRESKOČI</button>
+      <button class="btn btn-skip" onclick="handlePreskoci()">PRESKOČI</button>
       <button class="btn btn-ok" onclick="handlePogodjeno()">POGOĐENO</button>
     </div>
   </div>
@@ -352,10 +335,11 @@
   <div id="screen-bonus" class="screen">
     <div class="bonus-box">
       <h3>Bonus pitanje 🎯</h3>
-      <p>Imenujte emociju koja može izazvati ovu reakciju</p>
+      <div class="bonus-term" id="bonus-term"></div>
+      <p>Imenujte emociju koja može izazvati ovu reakciju.<br>Sude protivnici ili odrasla osoba.</p>
     </div>
     <div class="action-row">
-      <button class="btn btn-danger" onclick="handleBonus(false)">NE</button>
+      <button class="btn btn-skip" onclick="handleBonus(false)">NE</button>
       <button class="btn btn-ok" onclick="handleBonus(true)">TOČNO (+1 korak)</button>
     </div>
   </div>
@@ -364,15 +348,16 @@
   <div id="screen-kraj" class="screen">
     <div class="winner-banner" id="winner-banner"></div>
     <div class="rank-list" id="rank-list"></div>
-    <button class="btn" onclick="goScreen('statistika')">PRIKAŽI STATISTIKU TESTA</button>
+    <button class="btn btn-wide" onclick="goScreen('statistika')">PRIKAŽI STATISTIKU TESTA</button>
+    <button class="btn btn-outline btn-small" id="undo-btn-kraj" onclick="undoLastMove()" style="display:none;">↺ Poništi zadnji potez</button>
   </div>
 
   <!-- 7. STATISTIKA -->
   <div id="screen-statistika" class="screen">
-    <h2>Statistika testa</h2>
-    <div id="stat-content"></div>
+    <div class="top-bar"><h2>Statistika testa</h2></div>
+    <div id="stat-content" style="display:flex; flex-direction:column; gap:12px;"></div>
     <button class="btn btn-wide" onclick="copyCsv()">KOPIRAJ CSV</button>
-    <button class="btn btn-outline btn-wide" onclick="goScreen('naslovna')">NOVA IGRA</button>
+    <button class="btn btn-outline btn-wide" onclick="startNewGame()">NOVA IGRA</button>
   </div>
 
 </div>
@@ -459,54 +444,99 @@ const DECK_COLOR = { EMOCIJE: 'var(--emocije)', TJELESNE: 'var(--tjelesne)', PON
 
 /* ═══════════════════════════ STAZA ═══════════════════════════ */
 const PATTERN = ['O','P','C','S','P','O','C','P','O','W'];
-const FIELDS = PATTERN.concat(PATTERN).concat(PATTERN); // 30 polja
 const FIELD_META = {
-  O: { label: 'OPIŠI',     icon: 'O',  channel: 'O' },
-  P: { label: 'ODGLUMI',   icon: 'P',  channel: 'P' },
-  C: { label: 'NACRTAJ',   icon: 'C',  channel: 'C' },
-  S: { label: 'SITUACIJA', icon: '?!', channel: null },
-  W: { label: 'TVOJ IZBOR', icon: '★', channel: null },
+  O: { label: 'OPIŠI',      icon: 'O',  channel: 'O' },
+  P: { label: 'ODGLUMI',    icon: 'P',  channel: 'P' },
+  C: { label: 'NACRTAJ',    icon: 'C',  channel: 'C' },
+  S: { label: 'SITUACIJA',  icon: '?!', channel: null },
+  W: { label: 'TVOJ IZBOR', icon: '★',  channel: null },
+};
+const FIELD_HINT = {
+  O: 'Opisuj riječima — bez izgovaranja samog pojma.',
+  P: 'Odglumi pantomimom — bez riječi i bez zvukova.',
+  C: 'Nacrtaj na papiru — bez slova i brojki.',
+  S: 'Izrazi emociju iz situacije — opisom ili glumom.',
+  W: 'Tim je sam odabrao kanal.',
 };
 const CHANNEL_LABEL = { O: 'OPIŠI', C: 'NACRTAJ', P: 'ODGLUMI' };
 const TEAM_COLORS = ['#F2E93B', '#FF6B6B', '#4FD1C5', '#A78BFA'];
 
+// Staza se gradi ponavljanjem uzorka do tražene duljine (uzorak je dug 10 polja).
+function buildFields(len) {
+  const out = [];
+  while (out.length < len) out.push(...PATTERN);
+  return out.slice(0, len);
+}
+let FIELDS = buildFields(30);
+
+const TRACK_OPTIONS = [
+  { key: 'kratka',  len: 10, label: 'Kratka — 10 polja', sub: '≈20–40 min · za najmlađe i kratku pažnju' },
+  { key: 'srednja', len: 15, label: 'Srednja — 15 polja', sub: '≈35–65 min · uobičajena obiteljska partija' },
+  { key: 'puna',    len: 30, label: 'Puna staza — 30 polja', sub: '≈70 min–2 h · duga partija, starija djeca' },
+];
+
+const AGE_FILTERS = [
+  { key: 'mladji', label: 'Mlađa djeca (samo ★)',  sub: '1 korak po pogotku — staza se prelazi sporo',       tiers: [1],       defaultTrack: 'kratka' },
+  { key: 'obitelj', label: 'Obitelj (★ i ★★)',      sub: 'Preporučeno za mješovite dobne skupine',            tiers: [1, 2],    defaultTrack: 'srednja' },
+  { key: 'svi',     label: 'Svi (★–★★★)',           sub: 'Puni raspon težina, uključuje apstraktne pojmove',  tiers: [1, 2, 3], defaultTrack: 'srednja' },
+];
+
+/* ═══════════════════════════ SESIJA (preživljava više igara) ═══════════════════════════ */
+// Log se skuplja kroz cijelu sesiju testiranja da se podaci ne izgube između partija.
+let session = {
+  log: [],
+  games: 0,
+  lastNames: ['Tim 1', 'Tim 2', 'Tim 3', 'Tim 4'],
+  lastNumTeams: 2,
+  lastAge: 'obitelj',
+  lastTrack: 'srednja',
+  soundEnabled: true,
+};
+
 /* ═══════════════════════════ STANJE ═══════════════════════════ */
 let state = null;
+let drawCounter = 0;   // jedinstvena oznaka svakog izvlačenja
 
 function freshState() {
   return {
     screen: 'naslovna',
-    numTeams: 2,
-    teamNames: ['Tim 1', 'Tim 2', 'Tim 3', 'Tim 4'],
-    ageFilter: 'obitelj', // mladji | obitelj | svi
-    soundEnabled: true,
+    numTeams: session.lastNumTeams,
+    teamNames: [...session.lastNames],
+    ageFilter: session.lastAge,
+    trackKey: session.lastTrack,
+    trackLen: TRACK_OPTIONS.find(t => t.key === session.lastTrack).len,
+    trackTouched: false,   // je li korisnik ručno mijenjao duljinu staze
     teams: [],
     activeTeamIndex: 0,
     moveNumber: 0,
-    log: [],
+    logStart: session.log.length,
     selectedWeight: null,
     selectedChannel: null,
-    currentDraw: null, // { card, deck, tier, channel, fieldType, isRepeat }
-    revealTime: null,
+    currentDraw: null,
+    deadline: null,
     timerInterval: null,
+    lastBeepAt: null,
+    resolvedDrawId: null,
     lastSnapshot: null,
-    wakeLockRef: null,
+    pendingResult: null,
+    finished: false,
   };
 }
 state = freshState();
 
-const AGE_FILTERS = [
-  { key: 'mladji', label: 'Mlađa djeca (samo ★)', tiers: [1] },
-  { key: 'obitelj', label: 'Obitelj (★ i ★★)', tiers: [1, 2] },
-  { key: 'svi', label: 'Svi (★–★★★)', tiers: [1, 2, 3] },
-];
+function allowedTiers() { return AGE_FILTERS.find(f => f.key === state.ageFilter).tiers; }
+function currentGameLog() { return session.log.slice(state.logStart); }
 
 /* ═══════════════════════════ NAVIGACIJA ═══════════════════════════ */
 function goScreen(name) {
+  if (name !== 'kartica') stopTimer();
   state.screen = name;
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
-  if (name === 'naslovna') { state = freshState(); }
+  window.scrollTo(0, 0);
+  if (name === 'naslovna') {
+    document.getElementById('naslovna-stat-btn').style.display = session.log.length ? 'flex' : 'none';
+  }
   if (name === 'postavke') renderPostavke();
   if (name === 'potez') renderPotez();
   if (name === 'kraj') renderKraj();
@@ -525,12 +555,20 @@ function renderPostavke() {
   const namesWrap = document.getElementById('team-name-inputs');
   namesWrap.innerHTML = '';
   for (let i = 0; i < state.numTeams; i++) {
+    const row = document.createElement('div');
+    row.className = 'team-input-row';
+    const dot = document.createElement('div');
+    dot.className = 'team-dot';
+    dot.style.background = TEAM_COLORS[i % TEAM_COLORS.length];
     const input = document.createElement('input');
     input.className = 'team-name-input';
     input.placeholder = `Tim ${i + 1}`;
+    input.maxLength = 16;
     input.value = state.teamNames[i] || '';
     input.oninput = (e) => { state.teamNames[i] = e.target.value; };
-    namesWrap.appendChild(input);
+    row.appendChild(dot);
+    row.appendChild(input);
+    namesWrap.appendChild(row);
   }
 
   const ageWrap = document.getElementById('age-filter-options');
@@ -538,12 +576,34 @@ function renderPostavke() {
   AGE_FILTERS.forEach(f => {
     const btn = document.createElement('button');
     btn.className = 'option-btn' + (state.ageFilter === f.key ? ' selected' : '');
-    btn.textContent = f.label;
-    btn.onclick = () => { state.ageFilter = f.key; renderPostavke(); };
+    btn.innerHTML = `${f.label}<span class="opt-sub">${f.sub}</span>`;
+    btn.onclick = () => {
+      state.ageFilter = f.key;
+      // Duljinu staze automatski prilagodi dobi dok je korisnik ne promijeni ručno.
+      if (!state.trackTouched) setTrack(f.defaultTrack, false);
+      renderPostavke();
+    };
     ageWrap.appendChild(btn);
   });
 
-  document.getElementById('sound-toggle').classList.toggle('on', state.soundEnabled);
+  const trackWrap = document.getElementById('track-len-options');
+  trackWrap.innerHTML = '';
+  TRACK_OPTIONS.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn' + (state.trackKey === t.key ? ' selected' : '');
+    btn.innerHTML = `${t.label}<span class="opt-sub">${t.sub}</span>`;
+    btn.onclick = () => { setTrack(t.key, true); renderPostavke(); };
+    trackWrap.appendChild(btn);
+  });
+
+  document.getElementById('sound-toggle').classList.toggle('on', session.soundEnabled);
+}
+
+function setTrack(key, manual) {
+  const opt = TRACK_OPTIONS.find(t => t.key === key);
+  state.trackKey = opt.key;
+  state.trackLen = opt.len;
+  if (manual) state.trackTouched = true;
 }
 
 function changeTeamCount(delta) {
@@ -552,7 +612,7 @@ function changeTeamCount(delta) {
 }
 
 function toggleSound() {
-  state.soundEnabled = !state.soundEnabled;
+  session.soundEnabled = !session.soundEnabled;
   renderPostavke();
 }
 
@@ -560,17 +620,37 @@ function goToPotez() {
   state.teams = [];
   for (let i = 0; i < state.numTeams; i++) {
     const name = (state.teamNames[i] || '').trim() || `Tim ${i + 1}`;
-    state.teams.push({ name, position: 0 });
+    state.teams.push({ name, position: 0, color: TEAM_COLORS[i % TEAM_COLORS.length] });
   }
+  FIELDS = buildFields(state.trackLen);
   CARD_DB.forEach(c => { c.discarded = false; c.everUsed = false; });
+
+  session.lastNames = [...state.teamNames];
+  session.lastNumTeams = state.numTeams;
+  session.lastAge = state.ageFilter;
+  session.lastTrack = state.trackKey;
+  session.games += 1;
+
   state.activeTeamIndex = 0;
   state.moveNumber = 0;
-  state.log = [];
+  state.logStart = session.log.length;
   state.lastSnapshot = null;
+  state.finished = false;
   goScreen('potez');
 }
 
 /* ═══════════════════════════ IZVLAČENJE KARTICE ═══════════════════════════ */
+// Fisher-Yates: sort(() => Math.random() - 0.5) NIJE ravnomjeran i mjerljivo
+// je favorizirao pojedine špilove (TJELESNE su izlazile ~19% umjesto ~33%).
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function cardsFor(deck, tier) { return CARD_DB.filter(c => c.deck === deck && c.tier === tier); }
 
 function availableFor(deck, tier, channel) {
@@ -582,6 +662,7 @@ function drawFromDeck(deck, tier, channel) {
   if (allMatching.length === 0) return null;
   let avail = availableFor(deck, tier, channel);
   if (avail.length === 0) {
+    // Špil te težine je iscrpljen — vrati odigrane kartice natrag i promiješaj.
     cardsFor(deck, tier).forEach(c => { c.discarded = false; });
     avail = availableFor(deck, tier, channel);
   }
@@ -593,15 +674,30 @@ function drawFromDeck(deck, tier, channel) {
 }
 
 function pickDeckAndDraw(deckCandidates, tier, channel) {
-  const shuffled = [...deckCandidates].sort(() => Math.random() - 0.5);
-  for (const d of shuffled) {
+  for (const d of shuffle(deckCandidates)) {
     const result = drawFromDeck(d, tier, channel);
     if (result) return { deck: d, ...result };
   }
   return null;
 }
 
-/* ═══════════════════════════ STAZA (render) ═══════════════════════════ */
+/* ═══════════════════════════ STAZA / NAPREDAK (render) ═══════════════════════════ */
+function renderProgress() {
+  const box = document.getElementById('progress-box');
+  box.innerHTML = '';
+  state.teams.forEach((team, i) => {
+    const pct = Math.min(100, (team.position / state.trackLen) * 100);
+    const row = document.createElement('div');
+    row.className = 'tp-row' + (i === state.activeTeamIndex ? ' active' : '');
+    row.innerHTML = `
+      <div class="tp-dot" style="background:${team.color}"></div>
+      <div class="tp-name">${escapeHtml(team.name)}</div>
+      <div class="tp-bar"><div class="tp-fill" style="width:${pct}%; background:${team.color}"></div></div>
+      <div class="tp-pos">${team.position}/${state.trackLen}</div>`;
+    box.appendChild(row);
+  });
+}
+
 function renderTrack() {
   const track = document.getElementById('track');
   track.innerHTML = '';
@@ -624,22 +720,15 @@ function renderTrack() {
   finishCell.textContent = 'CILJ';
   track.appendChild(finishCell);
 
-  // pawns
-  const cells = track.children;
-  state.teams.forEach((team, i) => {
-    const idx = Math.min(team.position, 31);
-    const cell = cells[idx];
-    let pawnHolder = cell.querySelector('.pawns');
-    if (!pawnHolder) {
-      pawnHolder = document.createElement('div');
-      pawnHolder.className = 'pawns';
-      cell.appendChild(pawnHolder);
-    }
-    const pawn = document.createElement('div');
-    pawn.className = 'pawn';
-    pawn.style.background = TEAM_COLORS[i % TEAM_COLORS.length];
-    pawnHolder.appendChild(pawn);
-  });
+  // Označi i centriraj polje aktivnog tima — inače je na mobitelu vidljivo
+  // samo prvih par polja i igrač ne vidi gdje se nalazi.
+  const activePos = Math.min(state.teams[state.activeTeamIndex].position, state.trackLen);
+  const hereCell = track.children[activePos];
+  if (hereCell) {
+    hereCell.classList.add('here');
+    const wrap = document.getElementById('track-wrap');
+    wrap.scrollLeft = hereCell.offsetLeft - wrap.clientWidth / 2 + hereCell.offsetWidth / 2;
+  }
 }
 
 /* ═══════════════════════════ POTEZ ═══════════════════════════ */
@@ -647,28 +736,31 @@ function renderPotez() {
   state.selectedWeight = null;
   state.selectedChannel = null;
 
+  renderProgress();
   renderTrack();
 
   const team = state.teams[state.activeTeamIndex];
-  const fieldIdx = Math.min(team.position, 29);
+  const fieldIdx = Math.min(team.position, state.trackLen - 1);
   const fieldType = FIELDS[fieldIdx];
   const meta = FIELD_META[fieldType];
 
-  document.getElementById('turn-title').textContent = `Na potezu: ${team.name}`;
+  document.getElementById('turn-title').innerHTML =
+    `<span class="tp-dot" style="background:${team.color}"></span> Na potezu: ${escapeHtml(team.name)}`;
   const iconEl = document.getElementById('field-icon');
   iconEl.className = `field-icon type-${fieldType}`;
   iconEl.textContent = meta.icon;
   document.getElementById('field-label-big').textContent = meta.label;
-  document.getElementById('field-sub').textContent = `Polje ${fieldIdx + 1} od 30`;
+  document.getElementById('field-sub').textContent =
+    `Polje ${fieldIdx + 1} od ${state.trackLen} · ${FIELD_HINT[fieldType]}`;
 
-  const allowedTiers = AGE_FILTERS.find(f => f.key === state.ageFilter).tiers;
+  const tiers = allowedTiers();
   const weightRow = document.getElementById('weight-row');
   weightRow.innerHTML = '';
-  allowedTiers.forEach(tier => {
+  tiers.forEach(tier => {
     const btn = document.createElement('button');
     btn.className = 'weight-btn';
     btn.innerHTML = `<div class="stars">${'★'.repeat(tier)}</div><div>${tier} ${tier === 1 ? 'korak' : 'koraka'}</div>`;
-    btn.onclick = () => { state.selectedWeight = tier; renderPotez_updateSelection(); };
+    btn.onclick = () => { state.selectedWeight = tier; updateSelection(); };
     weightRow.appendChild(btn);
   });
 
@@ -681,29 +773,32 @@ function renderPotez() {
       const btn = document.createElement('button');
       btn.className = 'channel-btn';
       btn.innerHTML = `<div class="glyph">${ch}</div><div>${CHANNEL_LABEL[ch]}</div>`;
-      btn.onclick = () => { state.selectedChannel = ch; renderPotez_updateSelection(); };
+      btn.onclick = () => { state.selectedChannel = ch; updateSelection(); };
       channelRow.appendChild(btn);
     });
   } else {
     channelGroup.style.display = 'none';
   }
 
-  document.getElementById('undo-btn').style.display = state.lastSnapshot ? 'block' : 'none';
-  renderPotez_updateSelection();
+  // Ako je odabrana samo jedna težina, odaberi je automatski (mlađa djeca).
+  if (tiers.length === 1) state.selectedWeight = tiers[0];
+
+  document.getElementById('undo-btn').style.display = state.lastSnapshot ? 'flex' : 'none';
+  updateSelection();
 }
 
-function renderPotez_updateSelection() {
-  document.querySelectorAll('.weight-btn').forEach((btn, i) => {
-    const allowedTiers = AGE_FILTERS.find(f => f.key === state.ageFilter).tiers;
-    btn.classList.toggle('selected', allowedTiers[i] === state.selectedWeight);
+function updateSelection() {
+  const tiers = allowedTiers();
+  document.querySelectorAll('#weight-row .weight-btn').forEach((btn, i) => {
+    btn.classList.toggle('selected', tiers[i] === state.selectedWeight);
   });
-  document.querySelectorAll('.channel-btn').forEach((btn, i) => {
-    const chs = ['O', 'C', 'P'];
+  const chs = ['O', 'C', 'P'];
+  document.querySelectorAll('#channel-row .channel-btn').forEach((btn, i) => {
     btn.classList.toggle('selected', chs[i] === state.selectedChannel);
   });
 
   const team = state.teams[state.activeTeamIndex];
-  const fieldType = FIELDS[Math.min(team.position, 29)];
+  const fieldType = FIELDS[Math.min(team.position, state.trackLen - 1)];
   const needsChannel = fieldType === 'W';
   const ready = state.selectedWeight !== null && (!needsChannel || state.selectedChannel !== null);
   document.getElementById('izvuci-btn').disabled = !ready;
@@ -715,7 +810,8 @@ function makeSnapshot() {
     teams: JSON.parse(JSON.stringify(state.teams)),
     activeTeamIndex: state.activeTeamIndex,
     moveNumber: state.moveNumber,
-    log: JSON.parse(JSON.stringify(state.log)),
+    logLength: session.log.length,
+    finished: state.finished,
     cardFlags: CARD_DB.map(c => ({ discarded: c.discarded, everUsed: c.everUsed })),
   };
 }
@@ -726,33 +822,43 @@ function undoLastMove() {
   state.teams = snap.teams;
   state.activeTeamIndex = snap.activeTeamIndex;
   state.moveNumber = snap.moveNumber;
-  state.log = snap.log;
-  CARD_DB.forEach((c, i) => { c.discarded = snap.cardFlags[i].discarded; c.everUsed = snap.cardFlags[i].everUsed; });
+  session.log.length = snap.logLength;
+  state.finished = snap.finished;
+  CARD_DB.forEach((c, i) => {
+    c.discarded = snap.cardFlags[i].discarded;
+    c.everUsed = snap.cardFlags[i].everUsed;
+  });
   state.lastSnapshot = null;
   showToast('Zadnji potez poništen');
   goScreen('potez');
 }
 
+function abortGame() {
+  if (!confirm('Prekinuti igru? Dosad zabilježeni podaci ostaju u statistici.')) return;
+  state.finished = true;
+  goScreen('statistika');
+}
+
 /* ═══════════════════════════ IZVUCI KARTICU → PREDAJA ═══════════════════════════ */
 function handleIzvuciKarticu() {
-  state.lastSnapshot = makeSnapshot();
-
   const team = state.teams[state.activeTeamIndex];
-  const fieldType = FIELDS[Math.min(team.position, 29)];
+  const fieldType = FIELDS[Math.min(team.position, state.trackLen - 1)];
   const meta = FIELD_META[fieldType];
   const tier = state.selectedWeight;
   const channel = fieldType === 'W' ? state.selectedChannel : meta.channel;
   const deckCandidates = fieldType === 'S' ? ['SITUACIJE'] : ['EMOCIJE', 'TJELESNE', 'PONASANJA'];
 
+  const snapshot = makeSnapshot();
   const result = pickDeckAndDraw(deckCandidates, tier, channel);
   if (!result) {
-    showToast('Nema dostupnih kartica za ovaj izbor.');
-    state.lastSnapshot = null;
+    showToast('Nema kartica za ovaj izbor — probaj drugu težinu.');
     return;
   }
 
+  state.lastSnapshot = snapshot;
   state.moveNumber += 1;
   state.currentDraw = {
+    id: ++drawCounter,
     card: result.card,
     deck: result.deck,
     tier,
@@ -762,6 +868,7 @@ function handleIzvuciKarticu() {
   };
 
   document.getElementById('predaja-team-name').textContent = team.name;
+  document.getElementById('predaja-hint').textContent = FIELD_HINT[fieldType];
   goScreen('predaja');
 }
 
@@ -777,42 +884,54 @@ function renderKarticaScreen() {
   const d = state.currentDraw;
   document.getElementById('card-deck-name').textContent = DECK_LABEL[d.deck];
   document.getElementById('card-stars').textContent = '★'.repeat(d.tier);
-  document.getElementById('card-term').textContent = d.card.term.toUpperCase();
   document.getElementById('term-card').style.borderColor = DECK_COLOR[d.deck];
+
+  // Rečenice (situacije) se NE pišu velikim slovima — verzalom se duži tekst
+  // čita osjetno sporije, a djeca koja tek čitaju gube se u njemu.
+  const termEl = document.getElementById('card-term');
+  const isSentence = d.card.term.length > 24;
+  termEl.className = 'term ' + (isSentence ? 'sentence' : 'single');
+  termEl.textContent = isSentence ? d.card.term : d.card.term.toUpperCase();
 
   let note = d.card.note;
   if (d.fieldType === 'S') {
     note = 'Izrazi emociju koju bi osjećao(la) u ovoj situaciji — tim pogađa EMOCIJU, ne situaciju.';
   } else if (d.fieldType === 'W') {
     note = `Kanal: ${CHANNEL_LABEL[d.channel]}`;
+  } else {
+    note = FIELD_HINT[d.fieldType];
   }
   document.getElementById('card-note').textContent = note;
   document.getElementById('card-repeat').style.display = d.isRepeat ? 'inline-block' : 'none';
 }
 
 /* ═══════════════════════════ TIMER ═══════════════════════════ */
+const TURN_SECONDS = 60;
+
 function startTimer() {
   state.revealTime = Date.now();
-  let secondsLeft = 60;
-  const display = document.getElementById('timer-display');
-  display.textContent = secondsLeft;
-  display.classList.remove('warn');
+  state.deadline = state.revealTime + TURN_SECONDS * 1000;
+  state.lastBeepAt = null;
   clearInterval(state.timerInterval);
-  state.timerInterval = setInterval(() => {
-    secondsLeft--;
-    if (secondsLeft <= 0) {
-      display.textContent = '0';
-      display.classList.add('warn');
-      playBeep(true);
-      clearInterval(state.timerInterval);
-      return;
-    }
-    display.textContent = secondsLeft;
-    if (secondsLeft <= 10) {
-      display.classList.add('warn');
-      playBeep(false);
-    }
-  }, 1000);
+  tickTimer();
+  // Odbrojavanje se računa iz vremenskih oznaka, a ne zbrajanjem intervala —
+  // mobilni preglednici uspore setInterval kad je kartica u pozadini.
+  state.timerInterval = setInterval(tickTimer, 250);
+}
+
+function tickTimer() {
+  const remaining = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
+  const display = document.getElementById('timer-display');
+  display.textContent = remaining;
+  display.classList.toggle('warn', remaining <= 10 && remaining > 3);
+  display.classList.toggle('danger', remaining <= 3);
+
+  if (state.lastBeepAt !== remaining) {
+    state.lastBeepAt = remaining;
+    if (remaining === 0) playBeep(true);
+    else if (remaining <= 3) playBeep(false);
+  }
+  if (remaining === 0) clearInterval(state.timerInterval);
 }
 
 function stopTimer() {
@@ -822,9 +941,10 @@ function stopTimer() {
 
 let audioCtx = null;
 function playBeep(long) {
-  if (!state.soundEnabled) return;
+  if (!session.soundEnabled) return;
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.frequency.value = long ? 880 : 660;
@@ -832,17 +952,15 @@ function playBeep(long) {
     gain.connect(audioCtx.destination);
     gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
     osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (long ? 0.6 : 0.15));
-    osc.stop(audioCtx.currentTime + (long ? 0.6 : 0.15));
-  } catch (e) { /* audio not available — ignore */ }
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (long ? 0.7 : 0.12));
+    osc.stop(audioCtx.currentTime + (long ? 0.7 : 0.12));
+  } catch (e) { /* zvuk nedostupan — ignoriraj */ }
 }
 
 async function requestWakeLock() {
   try {
-    if ('wakeLock' in navigator) {
-      state.wakeLockRef = await navigator.wakeLock.request('screen');
-    }
-  } catch (e) { /* not supported / denied — ignore */ }
+    if ('wakeLock' in navigator) state.wakeLockRef = await navigator.wakeLock.request('screen');
+  } catch (e) { /* nije podržano ili odbijeno — ignoriraj */ }
 }
 function releaseWakeLock() {
   if (state.wakeLockRef) {
@@ -850,13 +968,22 @@ function releaseWakeLock() {
     state.wakeLockRef = null;
   }
 }
+// Wake Lock se gubi kad se kartica sakrije — zatraži ga ponovno pri povratku.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state.screen === 'kartica') requestWakeLock();
+});
 
 /* ═══════════════════════════ POGOĐENO / PRESKOČI ═══════════════════════════ */
+function elapsedSeconds() {
+  return Math.max(0, Math.round((Date.now() - state.revealTime) / 1000));
+}
+
 function handlePogodjeno() {
   stopTimer();
-  const seconds = Math.max(0, Math.round((Date.now() - state.revealTime) / 1000));
-  state.pendingResult = { success: true, seconds };
+  const seconds = elapsedSeconds();
+  state.pendingResult = { seconds };
   if (state.currentDraw.deck === 'TJELESNE') {
+    document.getElementById('bonus-term').textContent = state.currentDraw.card.term;
     goScreen('bonus');
   } else {
     finalizeMove(true, seconds, '');
@@ -865,8 +992,7 @@ function handlePogodjeno() {
 
 function handlePreskoci() {
   stopTimer();
-  const seconds = Math.max(0, Math.round((Date.now() - state.revealTime) / 1000));
-  finalizeMove(false, seconds, '');
+  finalizeMove(false, elapsedSeconds(), '');
 }
 
 function handleBonus(correct) {
@@ -875,9 +1001,14 @@ function handleBonus(correct) {
 
 function finalizeMove(success, seconds, bonus) {
   const d = state.currentDraw;
+  // Svaka izvučena kartica smije proizvesti točno jedan ishod. Bez ovoga
+  // dvostruki dodir na POGOĐENO upiše dva retka i pomakne tim dvaput.
+  if (!d || state.resolvedDrawId === d.id) return;
+  state.resolvedDrawId = d.id;
+
   const team = state.teams[state.activeTeamIndex];
 
-  state.log.push({
+  session.log.push({
     pojam: d.card.term,
     spil: d.deck,
     tezina: d.tier,
@@ -891,10 +1022,10 @@ function finalizeMove(success, seconds, bonus) {
   });
 
   if (success) {
-    const steps = d.tier + (bonus === 'da' ? 1 : 0);
-    team.position += steps;
-    if (team.position >= 30) {
-      team.position = 30;
+    team.position += d.tier + (bonus === 'da' ? 1 : 0);
+    if (team.position >= state.trackLen) {
+      team.position = state.trackLen;
+      state.finished = true;
       goScreen('kraj');
       return;
     }
@@ -915,15 +1046,20 @@ function renderKraj() {
   sorted.forEach((team, i) => {
     const row = document.createElement('div');
     row.className = 'rank-row' + (i === 0 ? ' winner' : '');
-    row.innerHTML = `<span>${i + 1}. ${team.name}</span><span>${team.position >= 30 ? 'CILJ 🏁' : team.position + ' / 30'}</span>`;
+    row.innerHTML = `
+      <div class="tp-dot" style="background:${team.color}"></div>
+      <span>${i + 1}. ${escapeHtml(team.name)}</span>
+      <span class="rank-pos">${team.position >= state.trackLen ? 'CILJ 🏁' : team.position + ' / ' + state.trackLen}</span>`;
     rankList.appendChild(row);
   });
+
+  document.getElementById('undo-btn-kraj').style.display = state.lastSnapshot ? 'flex' : 'none';
 }
 
 /* ═══════════════════════════ STATISTIKA ═══════════════════════════ */
 function renderStatistika() {
   const el = document.getElementById('stat-content');
-  const log = state.log;
+  const log = session.log;
 
   if (!log.length) {
     el.innerHTML = '<div class="empty-note">Još nema odigranih kartica.</div>';
@@ -931,61 +1067,101 @@ function renderStatistika() {
   }
 
   const total = log.length;
-  const hits = log.filter(l => l.ishod === 'pogođeno').length;
-  const pct = Math.round((hits / total) * 100);
+  const hitRows = log.filter(l => l.ishod === 'pogođeno');
+  const pct = Math.round((hitRows.length / total) * 100);
+  const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) + 's' : '—';
 
-  const byDeck = {};
-  const byTier = {};
+  // Vrijeme se mjeri SAMO na pogođenim karticama: preskočena kartica troši
+  // pun timer i inače bi umjetno napuhala prosjek svog špila i težine.
+  const group = (keyFn) => {
+    const out = {};
+    log.forEach(l => {
+      const k = keyFn(l);
+      out[k] = out[k] || { n: 0, hits: 0, times: [] };
+      out[k].n++;
+      if (l.ishod === 'pogođeno') { out[k].hits++; out[k].times.push(l.sekunde); }
+    });
+    return out;
+  };
+  const byDeck = group(l => l.spil);
+  const byTier = group(l => l.tezina);
+
+  const sortedHits = [...hitRows].sort((a, b) => a.sekunde - b.sekunde);
+  const fastest = sortedHits.slice(0, 5);
+  const slowest = sortedHits.slice(-5).reverse();
+
+  // Preskočeni pojmovi agregirano — koliko puta je pojam igran i koliko puta pao.
+  const perTerm = {};
   log.forEach(l => {
-    (byDeck[l.spil] = byDeck[l.spil] || []).push(l.sekunde);
-    (byTier[l.tezina] = byTier[l.tezina] || []).push(l.sekunde);
+    perTerm[l.pojam] = perTerm[l.pojam] || { played: 0, skipped: 0, deck: l.spil };
+    perTerm[l.pojam].played++;
+    if (l.ishod === 'preskočeno') perTerm[l.pojam].skipped++;
   });
-  const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1);
+  const skippedTerms = Object.entries(perTerm)
+    .filter(([, v]) => v.skipped > 0)
+    .sort((a, b) => b[1].skipped - a[1].skipped || b[1].played - a[1].played);
 
-  const sortedBySpeed = [...log].sort((a, b) => a.sekunde - b.sekunde);
-  const fastest = sortedBySpeed.slice(0, 5);
-  const slowest = sortedBySpeed.slice(-5).reverse();
-  const skipped = log.filter(l => l.ishod === 'preskočeno');
+  const repeated = log.filter(l => l.ponovljena === 'da').length;
+
+  const rowsHtml = (entries, fmt) => entries.map(fmt).join('');
 
   el.innerHTML = `
     <div class="stat-summary">
-      <div class="stat-card"><div class="val">${total}</div><div class="lbl">ukupno kartica</div></div>
+      <div class="stat-card"><div class="val">${total}</div><div class="lbl">kartica<br>u sesiji</div></div>
       <div class="stat-card"><div class="val">${pct}%</div><div class="lbl">pogođeno</div></div>
+      <div class="stat-card"><div class="val">${session.games}</div><div class="lbl">odigranih<br>partija</div></div>
     </div>
 
     <div class="stat-section">
-      <h4>Prosječno vrijeme po špilu</h4>
+      <h4>Po špilu</h4>
       <div class="stat-list">
-        ${Object.keys(byDeck).map(d => `<div class="row"><span>${DECK_LABEL[d]}</span><span>${avg(byDeck[d])}s</span></div>`).join('')}
+        ${rowsHtml(Object.entries(byDeck).sort((a, b) => b[1].n - a[1].n), ([d, v]) =>
+          `<div class="row"><span class="k">${DECK_LABEL[d]}</span><span class="v">${v.n}× · ${Math.round(v.hits / v.n * 100)}% · ${avg(v.times)}</span></div>`)}
       </div>
+      <div class="stat-note">broj izvlačenja · % pogođenih · prosječno vrijeme pogođenih</div>
     </div>
 
     <div class="stat-section">
-      <h4>Prosječno vrijeme po težini</h4>
+      <h4>Po težini</h4>
       <div class="stat-list">
-        ${Object.keys(byTier).sort().map(t => `<div class="row"><span>${'★'.repeat(t)}</span><span>${avg(byTier[t])}s</span></div>`).join('')}
+        ${rowsHtml(Object.entries(byTier).sort((a, b) => a[0] - b[0]), ([t, v]) =>
+          `<div class="row"><span class="k">${'★'.repeat(t)}</span><span class="v">${v.n}× · ${Math.round(v.hits / v.n * 100)}% · ${avg(v.times)}</span></div>`)}
       </div>
+      <div class="stat-note">Ako je % pogođenih na ★★★ blizu onom na ★, težine su preslabo razdvojene — igračima se uvijek isplati birati najtežu karticu.</div>
     </div>
 
     <div class="stat-section">
       <h4>Top 5 najbržih</h4>
       <div class="stat-list">
-        ${fastest.map(l => `<div class="row"><span>${l.pojam}</span><span>${l.sekunde}s</span></div>`).join('')}
+        ${fastest.length ? rowsHtml(fastest, l => `<div class="row"><span class="k">${escapeHtml(l.pojam)}</span><span class="v">${l.sekunde}s</span></div>`)
+                         : '<div class="empty-note">Nema pogođenih kartica.</div>'}
       </div>
     </div>
 
     <div class="stat-section">
       <h4>Top 5 najsporijih</h4>
       <div class="stat-list">
-        ${slowest.map(l => `<div class="row"><span>${l.pojam}</span><span>${l.sekunde}s</span></div>`).join('')}
+        ${slowest.length ? rowsHtml(slowest, l => `<div class="row"><span class="k">${escapeHtml(l.pojam)}</span><span class="v">${l.sekunde}s</span></div>`)
+                         : '<div class="empty-note">Nema pogođenih kartica.</div>'}
       </div>
     </div>
 
     <div class="stat-section">
-      <h4>Preskočeni pojmovi (${skipped.length}) — kandidati za izbacivanje</h4>
+      <h4>Preskočeni pojmovi (${skippedTerms.length}) — kandidati za izbacivanje</h4>
       <div class="stat-list">
-        ${skipped.length ? skipped.map(l => `<div class="row"><span>${l.pojam}</span><span>${DECK_LABEL[l.spil]}</span></div>`).join('') : '<div class="empty-note">Nijedna kartica nije preskočena 🎉</div>'}
+        ${skippedTerms.length ? rowsHtml(skippedTerms, ([term, v]) =>
+            `<div class="row"><span class="k">${escapeHtml(term)}</span><span class="v">${v.skipped}/${v.played} · ${DECK_LABEL[v.deck]}</span></div>`)
+          : '<div class="empty-note">Nijedna kartica nije preskočena 🎉</div>'}
       </div>
+      <div class="stat-note">preskočeno / ukupno odigrano</div>
+    </div>
+
+    <div class="stat-section">
+      <h4>Ponavljanje kartica</h4>
+      <div class="stat-list">
+        <div class="row"><span class="k">Ponovljena izvlačenja</span><span class="v">${repeated} (${Math.round(repeated / total * 100)}%)</span></div>
+      </div>
+      <div class="stat-note">Visok postotak znači da je špil premalen za odabranu duljinu staze — skrati stazu ili dodaj kartice.</div>
     </div>
   `;
 }
@@ -993,10 +1169,10 @@ function renderStatistika() {
 function copyCsv() {
   const header = ['pojam', 'spil', 'tezina', 'kanal', 'ishod', 'sekunde', 'bonus', 'potez', 'tim', 'ponovljena'];
   const esc = v => `"${String(v).replace(/"/g, '""')}"`;
-  const rows = state.log.map(l => header.map(k => esc(l[k])).join(','));
+  const rows = session.log.map(l => header.map(k => esc(l[k])).join(','));
   const csv = [header.join(','), ...rows].join('\n');
 
-  const done = () => showToast('CSV kopiran u međuspremnik!');
+  const done = () => showToast(`CSV kopiran (${session.log.length} redaka)`);
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(csv).then(done).catch(() => fallbackCopy(csv, done));
   } else {
@@ -1015,7 +1191,12 @@ function fallbackCopy(text, done) {
   document.body.removeChild(ta);
 }
 
-/* ═══════════════════════════ TOAST ═══════════════════════════ */
+/* ═══════════════════════════ POMOĆNO ═══════════════════════════ */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 let toastTimeout = null;
 function showToast(msg) {
   const toast = document.getElementById('toast');
