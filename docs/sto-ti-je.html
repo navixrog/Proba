@@ -174,7 +174,9 @@
   .term-card .stars-line { font-size: 17px; color: #C9820A; letter-spacing: 2px; }
   .term-card .term { font-weight: 800; line-height: 1.15; }
   .term-card .term.single { font-size: clamp(26px, 9vw, 38px); text-transform: uppercase; }
-  .term-card .term.sentence { font-size: clamp(19px, 5.6vw, 25px); line-height: 1.3; text-transform: none; }
+  .term-card .term.medium { font-size: clamp(21px, 6.8vw, 30px); line-height: 1.2; text-transform: uppercase; }
+  .term-card .term.sentence { font-size: clamp(18px, 5.4vw, 24px); line-height: 1.3; text-transform: none; }
+  .term-card .term.sentence.long { font-size: clamp(16px, 4.6vw, 21px); line-height: 1.35; }
   .term-card .card-note { font-size: 13px; opacity: .72; line-height: 1.35; margin-top: 2px; }
   .term-card .repeat-tag { font-size: 11px; background: rgba(0,0,0,0.08); border-radius: 8px; padding: 2px 8px; }
   .action-row { display: flex; gap: 10px; width: 100%; align-items: stretch; }
@@ -371,72 +373,326 @@ function mk(term, deck, tier, channels, note) {
 const ALL3 = ['O','C','P'];
 
 const CARD_DB = [
-  // EMOCIJE tier 1
-  ...['sreća','tuga','ljutnja','strah','iznenađenje','ponos','sram','znatiželja','usamljenost','smirenost']
-    .map(t => mk(t, 'EMOCIJE', 1, ALL3)),
-  // EMOCIJE tier 2
-  ...['ljubomora','zavist','razočaranje','olakšanje','trema','frustracija','zahvalnost','krivnja','nada','inat']
-    .map(t => mk(t, 'EMOCIJE', 2, ALL3)),
-  // EMOCIJE tier 3
-  mk('anksioznost', 'EMOCIJE', 3, ['O','C','P']),
-  mk('ganutost', 'EMOCIJE', 3, ['O','C','P']),
-  mk('samopouzdanje', 'EMOCIJE', 3, ['O','C','P']),
-  mk('zluradost', 'EMOCIJE', 3, ['O']),
-  mk('melankolija', 'EMOCIJE', 3, ['O','C']),
-  mk('nostalgija', 'EMOCIJE', 3, ['O','C']),
-  mk('ranjivost', 'EMOCIJE', 3, ['O','C']),
-  mk('sjeta', 'EMOCIJE', 3, ['O','C']),
-  mk('praznina', 'EMOCIJE', 3, ['O','C']),
-  mk('sreća zbog tuđeg uspjeha', 'EMOCIJE', 3, ['O']),
-
-  // TJELESNE tier 1
-  ...['drhtanje','crvenjenje','znojni dlanovi','ubrzano lupanje srca','naježena koža','suze u očima']
-    .map(t => mk(t, 'TJELESNE', 1, ALL3)),
-  // TJELESNE tier 2
-  ...['knedla u grlu','leptirići u trbuhu','čvor u želucu','stisnute šake','vrućina u licu','grickanje noktiju']
-    .map(t => mk(t, 'TJELESNE', 2, ALL3)),
-  // TJELESNE tier 3
-  mk('plitko i brzo disanje', 'TJELESNE', 3, ['O','C','P']),
-  mk('težina u prsima', 'TJELESNE', 3, ['O','C']),
-  mk('toplina koja se širi prsima', 'TJELESNE', 3, ['O','C']),
-  mk('praznina u želucu', 'TJELESNE', 3, ['O','C']),
-  mk('osjećaj laganosti u tijelu', 'TJELESNE', 3, ['O','P']),
-  mk('napetost u ramenima', 'TJELESNE', 3, ['O','P']),
-
-  // PONASANJA tier 1
-  ...['zagrljaj','tješenje','isprika','dijeljenje','durenje','hvalisanje','čekanje na red','„daj pet"','čestitanje']
-    .map(t => mk(t, 'PONASANJA', 1, ALL3)),
-  // PONASANJA tier 2
-  ...['aktivno slušanje','prevrtanje očima','obrana prijatelja','priznavanje pogreške','davanje komplimenta','čuvanje tajne','prepuštanje zadnjeg komada kolača','zadirkivanje','smirivanje druge osobe']
-    .map(t => mk(t, 'PONASANJA', 2, ALL3)),
-
-  // SITUACIJE tier 1
+  // ── EMOCIJE ★ (36) ──
   ...[
-    'Srušio ti se toranj od kockica koji si gradio cijelo popodne.',
-    'Svi su pozvani na rođendan osim tebe.',
-    'Uspio si nešto što dugo nisi mogao.',
-    'Netko ti je uzeo igračku bez pitanja.',
-    'Pas ti je pojeo zadaću — stvarno.',
-    'Moraš pjevati pred cijelim razredom.'
-  ].map(t => mk(t, 'SITUACIJE', 1, ['O','P'])),
-  // SITUACIJE tier 2
+    "sreća",
+    "tuga",
+    "ljutnja",
+    "strah",
+    "iznenađenje",
+    "gađenje",
+    "radost",
+    "umor",
+    "dosada",
+    "uzbuđenje",
+    "znatiželja",
+    "usamljenost",
+    "sram",
+    "ponos",
+    "ljubav",
+    "briga",
+    "smirenost",
+    "veselje",
+    "zabrinutost",
+    "hrabrost",
+    "sramežljivost",
+    "zbunjenost",
+    "nestrpljivost",
+    "razigranost",
+    "opuštenost",
+    "ugoda",
+    "nježnost",
+    "toplina",
+    "vedrina",
+    "živahnost",
+    "energičnost",
+    "odlučnost",
+    "ugodno iznenađenje",
+    "zaštićenost",
+    "bezbrižnost",
+    "utješenost",
+  ].map(t => mk(t, "EMOCIJE", 1, ALL3)),
+  // ── EMOCIJE ★★ (54) ──
   ...[
-    'Pobijedio si na natjecanju, a najbolji prijatelj je izgubio.',
-    'Prijatelji su se počeli družiti bez tebe.',
-    'Netko plače, a ti ne znaš što reći.',
-    'Zaboravio si tekst na priredbi pred svima.',
-    'Roditelji su ti obećali nešto i odustali.',
-    'Netko ti je pomogao kad to nisi očekivao.'
-  ].map(t => mk(t, 'SITUACIJE', 2, ['O','P'])),
-  // SITUACIJE tier 3
+    "ljubomora",
+    "zavist",
+    "razočaranje",
+    "olakšanje",
+    "trema",
+    "frustracija",
+    "oduševljenje",
+    "zahvalnost",
+    "suosjećanje",
+    "sažaljenje",
+    "povjerenje",
+    "nepovjerenje",
+    "sigurnost",
+    "nesigurnost",
+    "panika",
+    "krivnja",
+    "nada",
+    "čežnja",
+    "bijes",
+    "iritacija",
+    "ravnodušnost",
+    "odbačenost",
+    "pripadnost",
+    "prihvaćenost",
+    "inat",
+    "prkos",
+    "zadovoljstvo",
+    "nezadovoljstvo",
+    "divljenje",
+    "nelagoda",
+    "uznemirenost",
+    "ushićenje",
+    "poniženost",
+    "iščekivanje",
+    "nemir",
+    "optimizam",
+    "zaljubljenost",
+    "simpatija",
+    "privrženost",
+    "bliskost",
+    "povezanost",
+    "očaranost",
+    "motiviranost",
+    "razdraganost",
+    "osjećaj postignuća",
+    "osjećaj dobrodošlice",
+    "polet",
+    "lakoća",
+    "veselo iščekivanje",
+  ].map(t => mk(t, "EMOCIJE", 2, ALL3)),
+  mk("očaj", "EMOCIJE", 2, ["O","C"]),
+  mk("preplavljenost", "EMOCIJE", 2, ["O","C"]),
+  mk("tuga za nekim tko je otišao", "EMOCIJE", 2, ["O","C"]),
+  mk("dostojanstvo", "EMOCIJE", 2, ["O"]),
+  mk("osjećaj krivnje bez razloga", "EMOCIJE", 2, ["O"]),
+  // ── EMOCIJE ★★★ (42) ──
   ...[
-    'Dobio si što si želio i shvatio da te ne veseli.',
-    'Shvatio si da si u svađi zapravo ti bio u krivu.',
-    'Oprostio si nekome, ali odnos više nije isti.',
-    'Netko ti se ispričao poslije mnogo godina.',
-    'Morao si izabrati između dva prijatelja.',
-    'Ponosan si na nekoga više nego na sebe.'
-  ].map(t => mk(t, 'SITUACIJE', 3, ['O','P'])),
+    "anksioznost",
+    "euforija",
+    "prijezir",
+    "ganutost",
+    "dirnutost",
+    "samopouzdanje",
+  ].map(t => mk(t, "EMOCIJE", 3, ALL3)),
+  mk("melankolija", "EMOCIJE", 3, ["O","C"]),
+  mk("nostalgija", "EMOCIJE", 3, ["O","C"]),
+  mk("zanos", "EMOCIJE", 3, ["O","C"]),
+  mk("strahopoštovanje", "EMOCIJE", 3, ["O","C"]),
+  mk("ranjivost", "EMOCIJE", 3, ["O","C"]),
+  mk("otuđenost", "EMOCIJE", 3, ["O","C"]),
+  mk("praznina", "EMOCIJE", 3, ["O","C"]),
+  mk("sjeta", "EMOCIJE", 3, ["O","C"]),
+  mk("sumnja u sebe", "EMOCIJE", 3, ["O","C"]),
+  mk("tjeskoba", "EMOCIJE", 3, ["O","C"]),
+  mk("nadahnuće", "EMOCIJE", 3, ["O","C"]),
+  mk("spokoj", "EMOCIJE", 3, ["O","C"]),
+  mk("blaženstvo", "EMOCIJE", 3, ["O","C"]),
+  mk("zanesenost", "EMOCIJE", 3, ["O","C"]),
+  mk("unutarnji mir", "EMOCIJE", 3, ["O","C"]),
+  mk("osjećaj slobode", "EMOCIJE", 3, ["O","C"]),
+  mk("apatija", "EMOCIJE", 3, ["O","P"]),
+  mk("rezignacija", "EMOCIJE", 3, ["O","P"]),
+  mk("samosažaljenje", "EMOCIJE", 3, ["O","P"]),
+  mk("potpuna uronjenost u ono što radiš", "EMOCIJE", 3, ["O","P"]),
+  mk("ambivalentnost", "EMOCIJE", 3, ["O"]),
+  mk("gorčina", "EMOCIJE", 3, ["O"]),
+  mk("ogorčenost", "EMOCIJE", 3, ["O"]),
+  mk("poniznost", "EMOCIJE", 3, ["O"]),
+  mk("ispunjenost", "EMOCIJE", 3, ["O"]),
+  mk("zluradost", "EMOCIJE", 3, ["O"]),
+  mk("empatija", "EMOCIJE", 3, ["O"]),
+  mk("žal", "EMOCIJE", 3, ["O"]),
+  mk("pomirenost sa sudbinom", "EMOCIJE", 3, ["O"]),
+  mk("zahvalnost pomiješana s tugom", "EMOCIJE", 3, ["O"]),
+  mk("sram zbog tuđeg ponašanja", "EMOCIJE", 3, ["O"]),
+  mk("sreća zbog tuđeg uspjeha", "EMOCIJE", 3, ["O"]),
+  mk("osjećaj smisla", "EMOCIJE", 3, ["O"]),
+  mk("osjećaj da te netko stvarno razumije", "EMOCIJE", 3, ["O"]),
+  mk("predanost", "EMOCIJE", 3, ["O"]),
+  mk("ponos pomiješan s ganućem", "EMOCIJE", 3, ["O"]),
+  // ── TJELESNE REAKCIJE ★ (12) ──
+  ...[
+    "drhtanje",
+    "crvenjenje",
+    "znojni dlanovi",
+    "ubrzano lupanje srca",
+    "naježena koža",
+    "suze u očima",
+    "smijeh koji ne možeš zaustaviti",
+    "klecanje koljena",
+    "otvorena usta od čuda",
+    "uzdah olakšanja",
+    "skakanje na mjestu",
+    "pokrivanje očiju rukama",
+  ].map(t => mk(t, "TJELESNE", 1, ALL3)),
+  // ── TJELESNE REAKCIJE ★★ (12) ──
+  ...[
+    "knedla u grlu",
+    "leptirići u trbuhu",
+    "čvor u želucu",
+    "hladan znoj",
+    "stisnuta čeljust",
+    "stisnute šake",
+    "vrućina u licu",
+    "osjećaj da ti je srce na trenutak stalo",
+    "nemirne noge",
+    "grickanje noktiju",
+    "prevrtanje u krevetu bez sna",
+    "plitko i brzo disanje",
+  ].map(t => mk(t, "TJELESNE", 2, ALL3)),
+  // ── TJELESNE REAKCIJE ★★★ (8) ──
+  mk("težina u prsima", "TJELESNE", 3, ["O","C"]),
+  mk("praznina u želucu", "TJELESNE", 3, ["O","C"]),
+  mk("toplina koja se širi prsima", "TJELESNE", 3, ["O","C"]),
+  mk("napetost u ramenima koje ne primjećuješ dok te netko ne upozori", "TJELESNE", 3, ["O","P"]),
+  mk("osjećaj laganosti u cijelom tijelu", "TJELESNE", 3, ["O","P"]),
+  mk("disanje koje se samo produbi kad se smiriš", "TJELESNE", 3, ["O","P"]),
+  mk("umor koji ne dolazi od napora", "TJELESNE", 3, ["O"]),
+  mk("osjećaj da ti tijelo reagira prije nego što shvatiš zašto", "TJELESNE", 3, ["O"]),
+  // ── PONAŠANJA ★ (34) ──
+  ...[
+    "zagrljaj",
+    "tješenje",
+    "isprika",
+    "dijeljenje",
+    "čekanje na red",
+    "pomaganje",
+    "smijanje",
+    "plakanje",
+    "durenje",
+    "mrštenje",
+    "slijeganje ramenima",
+    "hvalisanje",
+    "prekidanje drugoga",
+    "ignoriranje",
+    "ohrabrivanje",
+    "pozdravljanje",
+    "mirenje nakon svađe",
+    "duboko disanje",
+    "čestitanje",
+    "zahvaljivanje",
+    "darivanje",
+    "pljeskanje",
+    "„daj pet“",
+    "držanje za ruku",
+    "nasmijavanje nekoga",
+    "skakanje od veselja",
+    "ples od sreće",
+    "smijeh do suza",
+    "pjevušenje",
+    "namigivanje",
+    "tapšanje po ramenu",
+    "puštanje drugoga da bude prvi",
+    "posuđivanje stvari",
+    "ustupanje mjesta",
+  ].map(t => mk(t, "PONASANJA", 1, ALL3)),
+  // ── PONAŠANJA ★★ (34) ──
+  ...[
+    "aktivno slušanje",
+    "prevrtanje očima",
+    "zadirkivanje",
+    "ruganje",
+    "obrana prijatelja",
+    "priznavanje pogreške",
+    "traženje pomoći",
+    "odbijanje (reći „ne“)",
+    "pohvala",
+    "kritika",
+    "kompromis",
+    "cmizdrenje",
+    "pravljenje da te nije briga",
+    "glumljenje da je sve u redu",
+    "šutnja iz ljutnje",
+    "pretjerivanje",
+    "okrivljavanje drugoga",
+    "isprika koju ne misliš ozbiljno",
+    "navijanje za nekoga",
+    "smirivanje druge osobe",
+    "uključivanje nekoga tko stoji sa strane",
+    "pripremanje iznenađenja za nekoga",
+    "davanje komplimenta",
+    "primjećivanje da je netko tužan",
+    "pitanje „kako si?“ — i čekanje odgovora",
+    "čuvanje tajne",
+    "držanje obećanja",
+    "strpljivo objašnjavanje",
+    "brisanje suza nekome",
+    "prepuštanje zadnjeg komada kolača",
+    "pospremanje bez da te itko pita",
+    "osmijeh nepoznatoj osobi",
+    "pisanje poruke podrške",
+    "veseljenje tuđem uspjehu",
+  ].map(t => mk(t, "PONASANJA", 2, ALL3)),
+  // ── PONAŠANJA ★★★ (20) ──
+  ...[
+    "traženje pažnje",
+    "izbjegavanje sukoba",
+  ].map(t => mk(t, "PONASANJA", 3, ALL3)),
+  mk("postavljanje granica", "PONASANJA", 3, ["O","P"]),
+  mk("pasivna agresija", "PONASANJA", 3, ["O","P"]),
+  mk("potiskivanje emocija", "PONASANJA", 3, ["O","P"]),
+  mk("pretvaranje tuge u šalu", "PONASANJA", 3, ["O","P"]),
+  mk("slušanje bez davanja savjeta", "PONASANJA", 3, ["O","P"]),
+  mk("prihvaćanje komplimenta", "PONASANJA", 3, ["O","P"]),
+  mk("priznanje da je netko drugi bio u pravu", "PONASANJA", 3, ["O","P"]),
+  mk("javno zauzimanje za nekoga", "PONASANJA", 3, ["O","P"]),
+  mk("provjera kako je netko nakon teškog dana", "PONASANJA", 3, ["O","P"]),
+  mk("davanje prostora nekome kome je previše svega", "PONASANJA", 3, ["O","P"]),
+  mk("manipuliranje osjećajima", "PONASANJA", 3, ["O"]),
+  mk("projiciranje ljutnje na krivu osobu", "PONASANJA", 3, ["O"]),
+  mk("preuzimanje odgovornosti", "PONASANJA", 3, ["O"]),
+  mk("opraštanje", "PONASANJA", 3, ["O"]),
+  mk("traženje tuđeg mišljenja", "PONASANJA", 3, ["O"]),
+  mk("iskrena isprika bez „ali“", "PONASANJA", 3, ["O"]),
+  mk("davanje podrške bez riječi", "PONASANJA", 3, ["P"]),
+  mk("slušanje bez prekidanja", "PONASANJA", 3, ["P"]),
+  // ── SITUACIJE ★ (15) ──
+  mk("Srušio ti se toranj od kockica koji si gradio cijelo popodne.", "SITUACIJE", 1, ["O","P"]),
+  mk("Netko ti je uzeo igračku bez pitanja.", "SITUACIJE", 1, ["O","P"]),
+  mk("Dobio si poklon koji si dugo želio.", "SITUACIJE", 1, ["O","P"]),
+  mk("Pas ti je pojeo zadaću (stvarno).", "SITUACIJE", 1, ["O","P"]),
+  mk("Prvi si dan u novoj školi.", "SITUACIJE", 1, ["O","P"]),
+  mk("Netko se smije tvojoj frizuri.", "SITUACIJE", 1, ["O","P"]),
+  mk("Pronašao si izgubljenu igračku ispod kreveta.", "SITUACIJE", 1, ["O","P"]),
+  mk("Mama i tata te hvale pred gostima.", "SITUACIJE", 1, ["O","P"]),
+  mk("Moraš pjevati pred cijelim razredom.", "SITUACIJE", 1, ["O","P"]),
+  mk("Prijatelj ti je otkrio tajnu koju si mu povjerio.", "SITUACIJE", 1, ["O","P"]),
+  mk("Gubiš u igri treći put zaredom.", "SITUACIJE", 1, ["O","P"]),
+  mk("Netko mlađi te pobijedio u nečemu.", "SITUACIJE", 1, ["O","P"]),
+  mk("Dijeliš sobu i brat/sestra ti dira stvari.", "SITUACIJE", 1, ["O","P"]),
+  mk("Svi su pozvani na rođendan osim tebe.", "SITUACIJE", 1, ["O","P"]),
+  mk("Uspio si nešto što dugo nisi mogao.", "SITUACIJE", 1, ["O","P"]),
+  // ── SITUACIJE ★★ (15) ──
+  mk("Prijatelj se odselio u drugi grad.", "SITUACIJE", 2, ["O","P"]),
+  mk("Pobijedio si na natjecanju, a najbolji prijatelj je izgubio.", "SITUACIJE", 2, ["O","P"]),
+  mk("Zaboravio si tekst na priredbi pred svima.", "SITUACIJE", 2, ["O","P"]),
+  mk("Roditelji su ti obećali nešto i odustali.", "SITUACIJE", 2, ["O","P"]),
+  mk("Netko je proširio neistinu o tebi.", "SITUACIJE", 2, ["O","P"]),
+  mk("Vidiš da netko zadirkuje mlađe dijete.", "SITUACIJE", 2, ["O","P"]),
+  mk("Dobio si lošiju ocjenu od očekivane — a učio si.", "SITUACIJE", 2, ["O","P"]),
+  mk("Prijatelji su se počeli družiti bez tebe.", "SITUACIJE", 2, ["O","P"]),
+  mk("Moraš se ispričati, a misliš da nisi kriv.", "SITUACIJE", 2, ["O","P"]),
+  mk("Netko ti je pomogao kad to nisi očekivao.", "SITUACIJE", 2, ["O","P"]),
+  mk("Stariji brat/sestra odlazi na studij.", "SITUACIJE", 2, ["O","P"]),
+  mk("Priznao si nešto što si skrivao.", "SITUACIJE", 2, ["O","P"]),
+  mk("Netko plače, a ti ne znaš što reći.", "SITUACIJE", 2, ["O","P"]),
+  mk("Uspio je plan u koji nitko nije vjerovao.", "SITUACIJE", 2, ["O","P"]),
+  mk("Roditelji se svađaju, a ti to čuješ iz sobe.", "SITUACIJE", 2, ["O","P"]),
+  // ── SITUACIJE ★★★ (10) ──
+  mk("Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.", "SITUACIJE", 3, ["O","P"]),
+  mk("Dobio si što si želio i shvatio da te ne veseli.", "SITUACIJE", 3, ["O","P"]),
+  mk("Netko ti se ispričao poslije mnogo godina.", "SITUACIJE", 3, ["O","P"]),
+  mk("Morao si izabrati između dva prijatelja.", "SITUACIJE", 3, ["O","P"]),
+  mk("Shvatio si da si u svađi zapravo ti bio u krivu.", "SITUACIJE", 3, ["O","P"]),
+  mk("Netko koga voliš donosi odluku koju smatraš pogrešnom.", "SITUACIJE", 3, ["O","P"]),
+  mk("Vraćaš se na mjesto iz djetinjstva i sve je drugačije.", "SITUACIJE", 3, ["O","P"]),
+  mk("Ponosan si na nekoga više nego na sebe.", "SITUACIJE", 3, ["O","P"]),
+  mk("Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.", "SITUACIJE", 3, ["O","P"]),
+  mk("Oprostio si nekome, ali odnos više nije isti.", "SITUACIJE", 3, ["O","P"]),
 ];
 
 const DECK_LABEL = { EMOCIJE: 'EMOCIJE', TJELESNE: 'TJELESNE REAKCIJE', PONASANJA: 'PONAŠANJA', SITUACIJE: 'SITUACIJE' };
@@ -886,12 +1142,18 @@ function renderKarticaScreen() {
   document.getElementById('card-stars').textContent = '★'.repeat(d.tier);
   document.getElementById('term-card').style.borderColor = DECK_COLOR[d.deck];
 
-  // Rečenice (situacije) se NE pišu velikim slovima — verzalom se duži tekst
-  // čita osjetno sporije, a djeca koja tek čitaju gube se u njemu.
+  // Duži tekst se u verzalu čita osjetno sporije, a djeca koja tek čitaju gube
+  // se u njemu — zato velika slova samo za kratke pojmove. Situacije su uvijek
+  // rečenice, a špilovi sadrže i duge opisne pojmove (do ~65 znakova).
   const termEl = document.getElementById('card-term');
-  const isSentence = d.card.term.length > 24;
-  termEl.className = 'term ' + (isSentence ? 'sentence' : 'single');
-  termEl.textContent = isSentence ? d.card.term : d.card.term.toUpperCase();
+  const term = d.card.term;
+  const len = term.length;
+  let cls;
+  if (d.deck === 'SITUACIJE' || len > 34) cls = len > 50 ? 'sentence long' : 'sentence';
+  else if (len > 18) cls = 'medium';
+  else cls = 'single';
+  termEl.className = 'term ' + cls;
+  termEl.textContent = cls.startsWith('sentence') ? term : term.toUpperCase();
 
   let note = d.card.note;
   if (d.fieldType === 'S') {
@@ -1103,6 +1365,17 @@ function renderStatistika() {
 
   const repeated = log.filter(l => l.ponovljena === 'da').length;
 
+  // Pokrivenost špila: koje kartice još nisu bile na stolu. Špil ima 292 kartice,
+  // pa je bez ovoga nemoguće znati što je preostalo za testiranje.
+  const tested = new Set(log.map(l => l.pojam));
+  const coverage = {};
+  CARD_DB.forEach(c => {
+    coverage[c.deck] = coverage[c.deck] || { total: 0, tested: 0 };
+    coverage[c.deck].total++;
+    if (tested.has(c.term)) coverage[c.deck].tested++;
+  });
+  const covPct = Math.round(tested.size / CARD_DB.length * 100);
+
   const rowsHtml = (entries, fmt) => entries.map(fmt).join('');
 
   el.innerHTML = `
@@ -1110,6 +1383,15 @@ function renderStatistika() {
       <div class="stat-card"><div class="val">${total}</div><div class="lbl">kartica<br>u sesiji</div></div>
       <div class="stat-card"><div class="val">${pct}%</div><div class="lbl">pogođeno</div></div>
       <div class="stat-card"><div class="val">${session.games}</div><div class="lbl">odigranih<br>partija</div></div>
+    </div>
+
+    <div class="stat-section">
+      <h4>Pokrivenost špila — ${tested.size}/${CARD_DB.length} kartica (${covPct}%)</h4>
+      <div class="stat-list">
+        ${rowsHtml(Object.entries(coverage).sort((a, b) => b[1].total - a[1].total), ([d, v]) =>
+          `<div class="row"><span class="k">${DECK_LABEL[d]}</span><span class="v">${v.tested}/${v.total} · ${Math.round(v.tested / v.total * 100)}%</span></div>`)}
+      </div>
+      <div class="stat-note">Koliko je različitih kartica uopće bilo na stolu u ovoj sesiji — ostatak još čeka test.</div>
     </div>
 
     <div class="stat-section">
