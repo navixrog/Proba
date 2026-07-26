@@ -276,7 +276,7 @@
     <div class="tagline">Pogodi što mi je — prije nego što ti kažem.</div>
     <div class="record-line" id="naslovna-rekord" style="display:none;"></div>
     <button class="btn" onclick="startNewGame()">NOVA IGRA</button>
-    <button class="btn btn-outline btn-small" id="naslovna-stat-btn" style="display:none;" onclick="goScreen('statistika')">Statistika sesije</button>
+    <button class="btn btn-outline btn-small" id="naslovna-stat-btn" style="display:none;" onclick="goScreen('statistika')">Statistika igranja</button>
   </div>
 
   <!-- 2. POSTAVKE -->
@@ -317,7 +317,7 @@
     </div>
 
     <div class="toggle-row">
-      <span style="font-size:15px; font-weight:700;">Teške teme<span class="opt-sub">Rastava, isključivanje, izdaja povjerenja. Uključuje odrasla osoba.</span></span>
+      <span style="font-size:15px; font-weight:700;">Teške teme<span class="opt-sub">Svađe roditelja, isključivanje, izdaja povjerenja. Uključuje odrasla osoba.</span></span>
       <div class="switch" id="teske-toggle" onclick="toggleTeskeTeme()"></div>
     </div>
 
@@ -419,15 +419,16 @@
       <div class="syn-line" id="krada-syn" style="display:none;"></div>
     </div>
     <div class="judge-pair" style="width:100%;">
-      <button class="btn btn-ok" onclick="resolveKrada(true)">TOČNO — bod im ide</button>
+      <button class="btn btn-ok" onclick="resolveKrada(true)">TOČNO — krađa uspijeva</button>
       <button class="btn btn-miss" onclick="resolveKrada(false)">NETOČNO</button>
     </div>
+    <div class="judge-hint">Ukradeni bod vrijedi 1 — ili pola, ako tim koji krade već vodi.</div>
   </div>
 
   <!-- 5d. OBAVEZNI REDAK NAKON TEŠKE KARTICE -->
   <div id="screen-teska" class="screen">
     <div class="pick-title">Ovakve stvari su teške.</div>
-    <div class="pick-sub" style="font-size:16px;">Kome se možeš javiti kad ti se dogodi?</div>
+    <div class="pick-sub" style="font-size:16px;">Kome se možeš javiti kad ti se tako nešto dogodi?</div>
     <div class="pick-sub">Nema točnog odgovora — dovoljno je da svatko kaže jedno ime.</div>
     <button class="btn" onclick="commitCard()">DALJE</button>
   </div>
@@ -442,15 +443,15 @@
         <div class="revans-count" id="revans-count">0</div>
         <button class="revans-plus" onclick="changeRevans(1)" aria-label="Više">+</button>
       </div>
-      <div class="revans-sub">Podignite ruku — brojač bilježi koliko vas.</div>
+      <div class="revans-sub">Podignite ruku — brojač bilježi koliko vas je.</div>
     </div>
     <button class="btn btn-wide" onclick="nextRoundOrFinish()" id="rezultat-btn">JOŠ JEDNOM</button>
-    <button class="btn btn-outline btn-wide btn-small" onclick="goScreen('statistika')">Statistika testa</button>
+    <button class="btn btn-outline btn-wide btn-small" onclick="goScreen('statistika')">Statistika igranja</button>
   </div>
 
   <!-- 7. STATISTIKA -->
   <div id="screen-statistika" class="screen">
-    <div class="top-bar"><h2>Statistika testa</h2></div>
+    <div class="top-bar"><h2>Statistika igranja</h2></div>
     <div id="stat-content" style="display:flex; flex-direction:column; gap:12px;"></div>
     <button class="btn btn-wide" onclick="copyCsv()">KOPIRAJ CSV</button>
     <button class="btn btn-outline btn-wide" onclick="startNewGame()">NOVA IGRA</button>
@@ -737,7 +738,7 @@ const CARD_DB = [
   mk("provjera kako je netko nakon teškog dana", "PONASANJA", 3, ["O","P"]),
   mk("davanje prostora", "PONASANJA", 3, ["O","P"]),
   mk("manipuliranje osjećajima", "PONASANJA", 3, ["O"]),
-  mk("projiciranje ljutnje na krivu osobu", "PONASANJA", 3, ["O"]),
+  mk("iskaljivanje ljutnje na krivoj osobi", "PONASANJA", 3, ["O"]),
   mk("preuzimanje odgovornosti", "PONASANJA", 3, ["O"]),
   mk("opraštanje", "PONASANJA", 3, ["O"]),
   mk("traženje tuđeg mišljenja", "PONASANJA", 3, ["O"]),
@@ -745,48 +746,48 @@ const CARD_DB = [
   mk("davanje podrške bez riječi", "PONASANJA", 3, ["P"]),
   mk("slušanje bez prekidanja", "PONASANJA", 3, ["P"]),
   // ── SITUACIJE ★ (15) ──
-  mk("Srušio ti se toranj od kockica koji si gradio cijelo popodne.", "SITUACIJE", 1, ["O","P"]),
+  mk("Srušio ti se toranj od kockica koji gradiš cijelo popodne.", "SITUACIJE", 1, ["O","P"]),
   mk("Netko ti je uzeo igračku bez pitanja.", "SITUACIJE", 1, ["O","P"]),
-  mk("Dobio si poklon koji si dugo želio.", "SITUACIJE", 1, ["O","P"]),
+  mk("Dobivaš poklon koji dugo želiš.", "SITUACIJE", 1, ["O","P"]),
   mk("Pas ti je pojeo zadaću (stvarno).", "SITUACIJE", 1, ["O","P"]),
-  mk("Prvi si dan u novoj školi.", "SITUACIJE", 1, ["O","P"]),
+  mk("Prvi ti je dan u novoj školi.", "SITUACIJE", 1, ["O","P"]),
   mk("Netko se smije tvojoj frizuri.", "SITUACIJE", 1, ["O","P"]),
-  mk("Pronašao si izgubljenu igračku ispod kreveta.", "SITUACIJE", 1, ["O","P"]),
+  mk("Pronalaziš izgubljenu igračku ispod kreveta.", "SITUACIJE", 1, ["O","P"]),
   mk("Mama i tata te hvale pred gostima.", "SITUACIJE", 1, ["O","P"]),
   mk("Moraš pjevati pred cijelim razredom.", "SITUACIJE", 1, ["O","P"]),
-  mk("Prijatelj ti je otkrio tajnu koju si mu povjerio.", "SITUACIJE", 1, ["O","P"]),
+  mk("Prijatelj svima priča tajnu koju čuvaš samo za njega.", "SITUACIJE", 1, ["O","P"]),
   mk("Gubiš u igri treći put zaredom.", "SITUACIJE", 1, ["O","P"]),
   mk("Netko mlađi te pobijedio u nečemu.", "SITUACIJE", 1, ["O","P"]),
   mk("Dijeliš sobu i brat/sestra ti dira stvari.", "SITUACIJE", 1, ["O","P"]),
   mk("Svi su pozvani na rođendan osim tebe.", "SITUACIJE", 1, ["O","P"]),
-  mk("Uspio si nešto što dugo nisi mogao.", "SITUACIJE", 1, ["O","P"]),
+  mk("Uspijeva ti nešto što dugo nije išlo.", "SITUACIJE", 1, ["O","P"]),
   // ── SITUACIJE ★★ (15) ──
   mk("Prijatelj se odselio u drugi grad.", "SITUACIJE", 2, ["O","P"]),
-  mk("Pobijedio si na natjecanju, a najbolji prijatelj je izgubio.", "SITUACIJE", 2, ["O","P"]),
-  mk("Zaboravio si tekst na priredbi pred svima.", "SITUACIJE", 2, ["O","P"]),
+  mk("Pobjeđuješ na natjecanju, a najbolji prijatelj gubi.", "SITUACIJE", 2, ["O","P"]),
+  mk("Usred priredbe zaboraviš tekst — pred svima.", "SITUACIJE", 2, ["O","P"]),
   mk("Roditelji su ti obećali nešto i odustali.", "SITUACIJE", 2, ["O","P"]),
   mk("Netko je proširio neistinu o tebi.", "SITUACIJE", 2, ["O","P"]),
   mk("Vidiš da netko zadirkuje mlađe dijete.", "SITUACIJE", 2, ["O","P"]),
-  mk("Dobio si lošiju ocjenu od očekivane — a učio si.", "SITUACIJE", 2, ["O","P"]),
+  mk("Učiš za test i svejedno dobivaš lošu ocjenu.", "SITUACIJE", 2, ["O","P"]),
   mk("Prijatelji su se počeli družiti bez tebe.", "SITUACIJE", 2, ["O","P"]),
   mk("Moraš se ispričati, a misliš da nisi kriv.", "SITUACIJE", 2, ["O","P"]),
-  mk("Netko ti je pomogao kad to nisi očekivao.", "SITUACIJE", 2, ["O","P"]),
+  mk("Netko ti pomaže kad to najmanje očekuješ.", "SITUACIJE", 2, ["O","P"]),
   mk("Stariji brat/sestra odlazi na studij.", "SITUACIJE", 2, ["O","P"]),
-  mk("Priznao si nešto što si skrivao.", "SITUACIJE", 2, ["O","P"]),
+  mk("Priznaš tajnu koju već dugo skrivaš.", "SITUACIJE", 2, ["O","P"]),
   mk("Netko plače, a ti ne znaš što reći.", "SITUACIJE", 2, ["O","P"]),
   mk("Uspio je plan u koji nitko nije vjerovao.", "SITUACIJE", 2, ["O","P"]),
   mk("Roditelji se svađaju, a ti to čuješ iz sobe.", "SITUACIJE", 2, ["O","P"]),
   // ── SITUACIJE ★★★ (10) ──
   mk("Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.", "SITUACIJE", 3, ["O","P"]),
-  mk("Dobio si što si želio i shvatio da te ne veseli.", "SITUACIJE", 3, ["O","P"]),
+  mk("Dobivaš što želiš — i shvaćaš da te ne veseli.", "SITUACIJE", 3, ["O","P"]),
   mk("Netko ti se ispričao poslije mnogo godina.", "SITUACIJE", 3, ["O","P"]),
-  mk("Morao si izabrati između dva prijatelja.", "SITUACIJE", 3, ["O","P"]),
-  mk("Shvatio si da si u svađi zapravo ti bio u krivu.", "SITUACIJE", 3, ["O","P"]),
+  mk("Moraš izabrati između dva prijatelja.", "SITUACIJE", 3, ["O","P"]),
+  mk("Shvaćaš da si u svađi zapravo ti u krivu.", "SITUACIJE", 3, ["O","P"]),
   mk("Netko koga voliš donosi odluku koju smatraš pogrešnom.", "SITUACIJE", 3, ["O","P"]),
   mk("Vraćaš se na mjesto iz djetinjstva i sve je drugačije.", "SITUACIJE", 3, ["O","P"]),
-  mk("Ponosan si na nekoga više nego na sebe.", "SITUACIJE", 3, ["O","P"]),
-  mk("Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.", "SITUACIJE", 3, ["O","P"]),
-  mk("Oprostio si nekome, ali odnos više nije isti.", "SITUACIJE", 3, ["O","P"]),
+  mk("Više se ponosiš nekim drugim nego sobom.", "SITUACIJE", 3, ["O","P"]),
+  mk("Hvale te za ono što ti je lako, a nitko ne vidi ono što ti je teško.", "SITUACIJE", 3, ["O","P"]),
+  mk("Opraštaš nekome, ali odnos više nije isti.", "SITUACIJE", 3, ["O","P"]),
 ];
 
 // Pojašnjenje se prikazuje kad tim preskoči karticu — trenutak kad nitko nije znao pojam
@@ -1046,7 +1047,7 @@ const POJASNJENJA = {
   "provjera kako je netko nakon teškog dana": "Kad se sjetiš pitati kako je nekome prošao težak dan.",
   "davanje prostora": "Kad shvatiš da netko treba mir pa ga pustiš.",
   "manipuliranje osjećajima": "Kad tuđe osjećaje koristiš da dobiješ što želiš.",
-  "projiciranje ljutnje na krivu osobu": "Kad se iskališ na nekome tko nije kriv.",
+  "iskaljivanje ljutnje na krivoj osobi": "Kad se iskališ na nekome tko nije kriv.",
   "preuzimanje odgovornosti": "Kad kažeš „to je moja odgovornost“ i to i napraviš.",
   "opraštanje": "Kad odlučiš pustiti ljutnju prema nekome tko te povrijedio.",
   "traženje tuđeg mišljenja": "Kad pitaš druge što misle prije nego što odlučiš.",
@@ -1054,48 +1055,48 @@ const POJASNJENJA = {
   "davanje podrške bez riječi": "Kad si samo tu, bez govora. Npr. sjedneš pored i držiš za ruku.",
   "slušanje bez prekidanja": "Kad pustiš osobu da završi misao.",
   // ── SITUACIJE ★ ──
-  "Srušio ti se toranj od kockica koji si gradio cijelo popodne.": "Razočaranje, ljutnja, tuga. Trud je nestao u trenutku.",
+  "Srušio ti se toranj od kockica koji gradiš cijelo popodne.": "Razočaranje, ljutnja, tuga. Trud je nestao u trenutku.",
   "Netko ti je uzeo igračku bez pitanja.": "Ljutnja, osjećaj nepravde, bespomoćnost.",
-  "Dobio si poklon koji si dugo želio.": "Radost, uzbuđenje, zahvalnost.",
+  "Dobivaš poklon koji dugo želiš.": "Radost, uzbuđenje, zahvalnost.",
   "Pas ti je pojeo zadaću (stvarno).": "Zbunjenost, panika pred školu, ali i smijeh jer zvuči nevjerojatno.",
-  "Prvi si dan u novoj školi.": "Trema, nesigurnost, znatiželja — sve odjednom.",
+  "Prvi ti je dan u novoj školi.": "Trema, nesigurnost, znatiželja — sve odjednom.",
   "Netko se smije tvojoj frizuri.": "Sram, ljutnja, povrijeđenost.",
-  "Pronašao si izgubljenu igračku ispod kreveta.": "Olakšanje i radost.",
+  "Pronalaziš izgubljenu igračku ispod kreveta.": "Olakšanje i radost.",
   "Mama i tata te hvale pred gostima.": "Ponos, ali kod mnogih i nelagoda što su svi pogledi na njima.",
   "Moraš pjevati pred cijelim razredom.": "Trema, strah, kod nekih i uzbuđenje.",
-  "Prijatelj ti je otkrio tajnu koju si mu povjerio.": "Osjećaj izdaje, ljutnja, tuga, gubitak povjerenja.",
+  "Prijatelj svima priča tajnu koju čuvaš samo za njega.": "Osjećaj izdaje, ljutnja, tuga, gubitak povjerenja.",
   "Gubiš u igri treći put zaredom.": "Frustracija, ljutnja na sebe, želja da odustaneš.",
   "Netko mlađi te pobijedio u nečemu.": "Iznenađenje, sram, ali i divljenje.",
   "Dijeliš sobu i brat/sestra ti dira stvari.": "Iritacija, ljutnja, potreba za vlastitim prostorom.",
   "Svi su pozvani na rođendan osim tebe.": "Odbačenost, tuga, usamljenost.",
-  "Uspio si nešto što dugo nisi mogao.": "Ponos, olakšanje, osjećaj postignuća.",
+  "Uspijeva ti nešto što dugo nije išlo.": "Ponos, olakšanje, osjećaj postignuća.",
   // ── SITUACIJE ★★ ──
   "Prijatelj se odselio u drugi grad.": "Tuga, čežnja, praznina.",
-  "Pobijedio si na natjecanju, a najbolji prijatelj je izgubio.": "Pomiješano: radost zbog sebe i krivnja zbog njega.",
-  "Zaboravio si tekst na priredbi pred svima.": "Panika, sram, želja da nestaneš.",
+  "Pobjeđuješ na natjecanju, a najbolji prijatelj gubi.": "Pomiješano: radost zbog sebe i krivnja zbog njega.",
+  "Usred priredbe zaboraviš tekst — pred svima.": "Panika, sram, želja da nestaneš.",
   "Roditelji su ti obećali nešto i odustali.": "Razočaranje i gubitak povjerenja.",
   "Netko je proširio neistinu o tebi.": "Bijes, nemoć, osjećaj nepravde.",
   "Vidiš da netko zadirkuje mlađe dijete.": "Ljutnja, suosjećanje, dvojba trebaš li reagirati.",
-  "Dobio si lošiju ocjenu od očekivane — a učio si.": "Razočaranje, osjećaj nepravde, sumnja u sebe.",
+  "Učiš za test i svejedno dobivaš lošu ocjenu.": "Razočaranje, osjećaj nepravde, sumnja u sebe.",
   "Prijatelji su se počeli družiti bez tebe.": "Odbačenost, usamljenost, ljubomora.",
   "Moraš se ispričati, a misliš da nisi kriv.": "Inat, poniženost, nelagoda.",
-  "Netko ti je pomogao kad to nisi očekivao.": "Ganutost, zahvalnost, ugodno iznenađenje.",
+  "Netko ti pomaže kad to najmanje očekuješ.": "Ganutost, zahvalnost, ugodno iznenađenje.",
   "Stariji brat/sestra odlazi na studij.": "Tuga, ponos, strah od promjene.",
-  "Priznao si nešto što si skrivao.": "Olakšanje pomiješano sa strahom od reakcije.",
+  "Priznaš tajnu koju već dugo skrivaš.": "Olakšanje pomiješano sa strahom od reakcije.",
   "Netko plače, a ti ne znaš što reći.": "Bespomoćnost, nelagoda, želja da pomogneš.",
   "Uspio je plan u koji nitko nije vjerovao.": "Ushićenje, ponos, zadovoljstvo.",
   "Roditelji se svađaju, a ti to čuješ iz sobe.": "Strah, nesigurnost, želja da to prestane.",
   // ── SITUACIJE ★★★ ──
   "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.": "Osjećaj iskorištenosti, gorčina, tuga zbog nejednakog prijateljstva.",
-  "Dobio si što si želio i shvatio da te ne veseli.": "Praznina, razočaranje u sebe, zbunjenost.",
+  "Dobivaš što želiš — i shvaćaš da te ne veseli.": "Praznina, razočaranje u sebe, zbunjenost.",
   "Netko ti se ispričao poslije mnogo godina.": "Ganutost, olakšanje, ali i gorčina što je trebalo toliko dugo.",
-  "Morao si izabrati između dva prijatelja.": "Krivnja bez obzira na izbor, rastrganost.",
-  "Shvatio si da si u svađi zapravo ti bio u krivu.": "Sram, krivnja, potreba da se ispričaš.",
+  "Moraš izabrati između dva prijatelja.": "Krivnja bez obzira na izbor, rastrganost.",
+  "Shvaćaš da si u svađi zapravo ti u krivu.": "Sram, krivnja, potreba da se ispričaš.",
   "Netko koga voliš donosi odluku koju smatraš pogrešnom.": "Briga, nemoć, poštovanje tuđeg izbora.",
   "Vraćaš se na mjesto iz djetinjstva i sve je drugačije.": "Nostalgija, sjeta, osjećaj da je vrijeme prošlo.",
-  "Ponosan si na nekoga više nego na sebe.": "Ganuti ponos, nesebična radost.",
-  "Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.": "Usamljenost u trudu, osjećaj neprimjećenosti.",
-  "Oprostio si nekome, ali odnos više nije isti.": "Pomirenost s gubitkom, tiha tuga.",
+  "Više se ponosiš nekim drugim nego sobom.": "Ganuti ponos, nesebična radost.",
+  "Hvale te za ono što ti je lako, a nitko ne vidi ono što ti je teško.": "Usamljenost u trudu, osjećaj neprimjećenosti.",
+  "Opraštaš nekome, ali odnos više nije isti.": "Pomirenost s gubitkom, tiha tuga.",
 };
 
 const DECK_LABEL = { EMOCIJE: 'EMOCIJE', TJELESNE: 'TJELESNE REAKCIJE', PONASANJA: 'PONAŠANJA', SITUACIJE: 'SITUACIJE' };
@@ -1110,9 +1111,11 @@ const FAZA_1 = new Set([
   "strah", "iznenađenje", "gađenje",
   "umor", "dosada", "uzbuđenje",
   "znatiželja", "ljubav", "nježnost",
-  "smirenost", "razigranost", "nestrpljivost",
-  "zbunjenost", "ugoda", "toplina",
-  "drhtanje", "crvenjenje", "znojni dlanovi",
+  "razigranost", "nestrpljivost", "zbunjenost",
+  // "smirenost", "ugoda", "znojni dlanovi" → faza 2, "toplina" → faza 3:
+  // nisko pobuđena stanja bez vidljivog izraza i metaforička toplina traže
+  // rječnik koji dijete od 4–6 još nema (Widen & Russell 2008).
+  "drhtanje", "crvenjenje", "prevrtanje u krevetu bez sna",
   "ubrzano lupanje srca", "naježena koža", "suze u očima",
   "klecanje koljena", "otvorena usta od čuda", "uzdah olakšanja",
   "pokrivanje očiju rukama", "stisnute šake", "vrućina u licu",
@@ -1125,9 +1128,9 @@ const FAZA_1 = new Set([
   "nasmijavanje nekoga", "skakanje od veselja", "ples od sreće",
   "smijeh do suza", "pjevušenje", "namigivanje",
   "tapšanje po ramenu", "posuđivanje stvari", "ustupanje mjesta",
-  "prevrtanje očima", "cmizdrenje", "Srušio ti se toranj od kockica koji si gradio cijelo popodne.",
-  "Netko ti je uzeo igračku bez pitanja.", "Dobio si poklon koji si dugo želio.", "Pronašao si izgubljenu igračku ispod kreveta.",
-  "Moraš pjevati pred cijelim razredom.", "Uspio si nešto što dugo nisi mogao.", "Netko se smije tvojoj frizuri.",
+  "prevrtanje očima", "cmizdrenje", "Srušio ti se toranj od kockica koji gradiš cijelo popodne.",
+  "Netko ti je uzeo igračku bez pitanja.", "Dobivaš poklon koji dugo želiš.", "Pronalaziš izgubljenu igračku ispod kreveta.",
+  "Moraš pjevati pred cijelim razredom.", "Uspijeva ti nešto što dugo nije išlo.", "Netko se smije tvojoj frizuri.",
   "Gubiš u igri treći put zaredom.",
 ]);
 
@@ -1149,14 +1152,19 @@ const FAZA_3 = new Set([
   "napetost u ramenima", "osjećaj laganosti u tijelu", "umor koji ne dolazi od napora",
   "postavljanje granica", "pasivna agresija", "potiskivanje emocija",
   "pretvaranje tuge u šalu", "slušanje bez davanja savjeta", "prihvaćanje komplimenta",
-  "manipuliranje osjećajima", "projiciranje ljutnje na krivu osobu", "preuzimanje odgovornosti",
+  "manipuliranje osjećajima", "iskaljivanje ljutnje na krivoj osobi", "preuzimanje odgovornosti",
   "opraštanje", "traženje tuđeg mišljenja", "iskrena isprika bez „ali“",
   "davanje podrške bez riječi", "davanje prostora", "isprika koju ne misliš ozbiljno",
   "okrivljavanje drugoga", "kompromis", "kritika",
-  "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.", "Dobio si što si želio i shvatio da te ne veseli.", "Netko ti se ispričao poslije mnogo godina.",
-  "Morao si izabrati između dva prijatelja.", "Shvatio si da si u svađi zapravo ti bio u krivu.", "Netko koga voliš donosi odluku koju smatraš pogrešnom.",
-  "Vraćaš se na mjesto iz djetinjstva i sve je drugačije.", "Ponosan si na nekoga više nego na sebe.", "Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.",
-  "Oprostio si nekome, ali odnos više nije isti.", "Pobijedio si na natjecanju, a najbolji prijatelj je izgubio.", "Moraš se ispričati, a misliš da nisi kriv.",
+  "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.", "Dobivaš što želiš — i shvaćaš da te ne veseli.", "Netko ti se ispričao poslije mnogo godina.",
+  "Moraš izabrati između dva prijatelja.", "Shvaćaš da si u svađi zapravo ti u krivu.", "Netko koga voliš donosi odluku koju smatraš pogrešnom.",
+  "Vraćaš se na mjesto iz djetinjstva i sve je drugačije.", "Više se ponosiš nekim drugim nego sobom.", "Hvale te za ono što ti je lako, a nitko ne vidi ono što ti je teško.",
+  "Opraštaš nekome, ali odnos više nije isti.", "Pobjeđuješ na natjecanju, a najbolji prijatelj gubi.", "Moraš se ispričati, a misliš da nisi kriv.",
+  // Preseljeno iz faze 2. "toplina" je psiholoska metafora (~8+); "rezignacija",
+  // "polet" i "ocaranost" su leksemi odraslog registra; obje situacije nose
+  // istovremene suprotne osjecaje, sto je ~10-11 (Harter & Buddin 1987).
+  "toplina", "rezignacija", "polet",
+  "očaranost", "Stariji brat/sestra odlazi na studij.", "Priznaš tajnu koju već dugo skrivaš.",
 ]);
 
 /* ═══════════════════════════ TEMPO ═══════════════════════════ */
@@ -1195,11 +1203,17 @@ const TEMPO_DUBOKO = new Set([
   "toplina koja se širi prsima", "umor koji ne dolazi od napora", "napetost u ramenima",
   "postavljanje granica", "potiskivanje emocija", "pretvaranje tuge u šalu",
   "slušanje bez davanja savjeta", "prihvaćanje komplimenta", "manipuliranje osjećajima",
-  "projiciranje ljutnje na krivu osobu", "preuzimanje odgovornosti", "opraštanje",
+  "iskaljivanje ljutnje na krivoj osobi", "preuzimanje odgovornosti", "opraštanje",
   "iskrena isprika bez „ali“", "davanje podrške bez riječi", "davanje prostora",
-  "pasivna agresija", "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.", "Dobio si što si želio i shvatio da te ne veseli.",
-  "Netko ti se ispričao poslije mnogo godina.", "Morao si izabrati između dva prijatelja.", "Vraćaš se na mjesto iz djetinjstva i sve je drugačije.",
-  "Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.", "Oprostio si nekome, ali odnos više nije isti.",
+  "pasivna agresija", "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.", "Dobivaš što želiš — i shvaćaš da te ne veseli.",
+  "Netko ti se ispričao poslije mnogo godina.", "Moraš izabrati između dva prijatelja.", "Vraćaš se na mjesto iz djetinjstva i sve je drugačije.",
+  "Hvale te za ono što ti je lako, a nitko ne vidi ono što ti je teško.", "Opraštaš nekome, ali odnos više nije isti.",
+  // Duboke kartice faze 2. Bez njih dob 6-8 nema nijednu, pa RITAM tamo pada
+  // na fallback i dizajnirana izmjena smijeha i tisine ne postoji.
+  "suosjećanje", "čežnja", "odbačenost",
+  "pripadnost", "mirenje nakon svađe", "primjećivanje da je netko tužan",
+  "pitanje „kako si?“ — i čekanje odgovora", "brisanje suza nekome", "pisanje poruke podrške",
+  "Netko plače, a ti ne znaš što reći.",
 ]);
 
 /* ═══════════════════════════ SINONIMNI DVOJNICI ═══════════════════════════ */
@@ -1272,6 +1286,20 @@ const SINONIMI = {
   "ustupanje mjesta": ["puštanje drugoga da bude prvi"],
   "sigurnost": ["zaštićenost"],
   "duboko disanje": ["disanje koje se samo produbi kad se smiriš"],
+
+  // ── Djecji registar ──────────────────────────────────────────────────────
+  // Razumijevanje emocije i proizvodnja njezine hrvatske etikete su dvije
+  // razlicite sposobnosti, a druga kasni godinama za prvom. Dijete od cetiri
+  // godine savrseno odglumi gadjenje i savrseno ga prepozna — ali kaze "fuj",
+  // ne "gadjenje". Bez ovog retka sudac takav odgovor broji kao promasaj.
+  "gađenje": ["fuj", "bljak"],
+  "ubrzano lupanje srca": ["srce lupa", "srce brzo kuca"],
+  "naježena koža": ["ježim se", "koža se naježila"],
+  "otvorena usta od čuda": ["zinuti od čuda"],
+  "klecanje koljena": ["noge klecaju", "noge k'o od pudinga"],
+  "vrućina u licu": ["gori mi lice"],
+  "uzdah olakšanja": ["uf!"],
+  "nemirne noge": ["noge ne miruju"],
 };
 
 CARD_DB.forEach(c => { c.sinonimi = SINONIMI[c.term] || []; });
@@ -1283,12 +1311,12 @@ const TESKE_TEME = new Set([
   "Roditelji se svađaju, a ti to čuješ iz sobe.",
   "Svi su pozvani na rođendan osim tebe.",
   "Prijatelji su se počeli družiti bez tebe.",
-  "Prijatelj ti je otkrio tajnu koju si mu povjerio.",
+  "Prijatelj svima priča tajnu koju čuvaš samo za njega.",
   "Netko je proširio neistinu o tebi.",
   "Prijatelj se odselio u drugi grad.",
   "Netko se smije tvojoj frizuri.",
   "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.",
-  "Oprostio si nekome, ali odnos više nije isti.",
+  "Opraštaš nekome, ali odnos više nije isti.",
   "Netko koga voliš donosi odluku koju smatraš pogrešnom.",
 ]);
 
@@ -1304,19 +1332,27 @@ CARD_DB.forEach(c => {
 // je istovremeno izvor smijeha i način učenja nijanse, pa se zabava i cilj
 // ovdje ne bore nego pojačavaju. Kanal mora odgovarati onome što kartica
 // podržava, inače bi dijete dobilo zadatak koji se ne može izvesti.
+// `min` je najniza dob koja ovo ogranicenje smije dobiti (indeks u
+// DOBNI_FILTERI). Preslikavanje emocije u drugu domenu — prognoza, zivotinja,
+// boja — je metafora, a njezina proizvodnja dolazi tek oko osme godine. Bez
+// ovog filtra dijete od pet godina dobiva pred publikom zadatak na kojem ce
+// zapeti, sto je tocno ono od cega ga ostatak igre cuva.
 const OGRANICENJA = [
-  { t: 'Opiši ovaj pojam kao vremensku prognozu.', ch: 'O' },
-  { t: 'Opiši ga kao životinju.', ch: 'O' },
-  { t: 'Opiši ga kao boju i zvuk.', ch: 'O' },
-  { t: 'Opiši ga bez riječi „osjećaj“, „kad“ i „kao“.', ch: 'O' },
-  { t: 'Opiši ga kao da javljaš vijest na televiziji.', ch: 'O' },
-  { t: 'Opiši ga kroz nešto što se dogodilo danas.', ch: 'O' },
-  { t: 'Odglumi ga u usporenom snimku.', ch: 'P' },
-  { t: 'Odglumi ga kao da imaš 90 godina.', ch: 'P' },
-  { t: 'Odglumi ga bez ruku.', ch: 'P' },
-  { t: 'Odglumi ga kao da si u knjižnici i moraš biti tih.', ch: 'P' },
-  { t: 'Nacrtaj ga samo krugovima.', ch: 'C' },
-  { t: 'Nacrtaj ga lijevom rukom (ako si ljevak — desnom).', ch: 'C' },
+  { t: 'Opiši ovaj pojam kao vremensku prognozu.', ch: 'O', min: 2 },
+  { t: 'Opiši ga kao životinju.', ch: 'O', min: 2 },
+  { t: 'Opiši ga kao boju i zvuk.', ch: 'O', min: 2 },
+  { t: 'Opiši ga bez riječi „osjećaj“, „kad“ i „kao“.', ch: 'O', min: 2 },
+  { t: 'Opiši ga kao da javljaš vijest na televiziji.', ch: 'O', min: 2 },
+  { t: 'Opiši ga kroz nešto što se dogodilo danas.', ch: 'O', min: 0 },
+  { t: 'Opiši ga šapćući.', ch: 'O', min: 0 },
+  { t: 'Opiši ga vrlo polako, riječ po riječ.', ch: 'O', min: 0 },
+  { t: 'Opiši ga bez pokazivanja rukama.', ch: 'O', min: 0 },
+  { t: 'Odglumi ga u usporenom snimku.', ch: 'P', min: 0 },
+  { t: 'Odglumi ga kao da imaš 90 godina.', ch: 'P', min: 0 },
+  { t: 'Odglumi ga bez ruku.', ch: 'P', min: 0 },
+  { t: 'Odglumi ga kao da si u knjižnici i moraš biti tih.', ch: 'P', min: 0 },
+  { t: 'Nacrtaj ga samo krugovima.', ch: 'C', min: 0 },
+  { t: 'Nacrtaj ga lijevom rukom (ako si ljevak — desnom).', ch: 'C', min: 0 },
 ];
 
 /* ═══════════════════════════ SIGURNOST KARTICA ═══════════════════════════ */
@@ -1344,7 +1380,7 @@ const NESIGURNO = new Set([
   'cmizdrenje','pravljenje da te nije briga','glumljenje da je sve u redu','šutnja iz ljutnje',
   'pretjerivanje','okrivljavanje drugoga','isprika koju ne misliš ozbiljno',
   'traženje pažnje','izbjegavanje sukoba','pasivna agresija','potiskivanje emocija',
-  'manipuliranje osjećajima','projiciranje ljutnje na krivu osobu','pretvaranje tuge u šalu',
+  'manipuliranje osjećajima','iskaljivanje ljutnje na krivoj osobi','pretvaranje tuge u šalu',
 ]);
 
 // SITUACIJE su bez iznimke isključene: one opisuju nešto što se nekome dogodilo.
@@ -1716,8 +1752,12 @@ function revealCard() {
   requestWakeLock();
 }
 
+function dobRank() { return DOBNI_FILTERI.findIndex(f => f.key === state.dob); }
+
 function pickOgranicenje(card, channel, exclude) {
-  const mogu = OGRANICENJA.filter(o => o.ch === channel && o.t !== (exclude && exclude.t));
+  const rank = dobRank();
+  const mogu = OGRANICENJA.filter(o =>
+    o.ch === channel && o.min <= rank && o.t !== (exclude && exclude.t));
   if (!mogu.length) return null;
   return shuffle(mogu)[0];
 }
@@ -2017,9 +2057,11 @@ function showTkoTitula(actor) {
   document.getElementById('tko-phase-title').style.display = 'flex';
   // "stručnjak za X" bi tražio akuzativ, a pojmovi su zapisani u nominativu i
   // ne mogu se pouzdano deklinirati — zato formulacija kojoj nominativ odgovara.
+  // Titula kao natpis, ne kao predikat: "X je strucnjak" trazi rodnu
+  // sroconost, pa uz djevojcicino ime zvuci sluzbenije nego sto ekran zeli.
   document.getElementById('tko-titula').innerHTML =
-    `<span class="who">${escapeHtml(actor.name)}</span> je obiteljski stručnjak.<br>` +
-    `<span style="font-size:.8em; opacity:.85;">Specijalnost:</span><br>${escapeHtml(state.currentDraw.card.term)}`;
+    `<span class="who">${escapeHtml(actor.name)}</span> ima novu titulu:<br>` +
+    `<span style="font-size:.8em; opacity:.85;">OBITELJSKI STRUČNJAK ZA</span><br>${escapeHtml(state.currentDraw.card.term)}`;
   state.pendingResult.tkoOdigrano = true;
 }
 
@@ -2078,7 +2120,15 @@ function resolveKrada(tocno) {
   if (state.pendingResult.kradaRijesena) return;   // zastita od dvostrukog dodira
   state.pendingResult.kradaRijesena = true;
   state.pendingResult.krada = tocno ? protivnik().name : null;
-  if (tocno) protivnik().score += 1;   // ukradeni bod ide protivniku
+  if (tocno) {
+    // Poravnata krada: puni bod samo ako kradljivac ne vodi. Slabiji tim
+    // cesce promasi (vise prilika jacem) i jaci tocnije pretpostavi (vise
+    // realizacije) — oba faktora guraju isti smjer, pa puna krada udvostrucuje
+    // konacnu razliku nejednakih timova umjesto da odrzava napetost.
+    const kradljivac = protivnik();
+    const izvodac = state.actors[state.performerIndex];
+    kradljivac.score += kradljivac.score > izvodac.score ? 0.5 : 1;
+  }
   showExplanation();
 }
 
@@ -2132,7 +2182,10 @@ function fmtScore(n) {
 }
 
 function ljestvica(score) {
-  if (score >= 12) return 'Zabrinjavajuće dobro se poznajete.';
+  // 11.5, ne 12: BLIZU postoji da sinonimni odgovor ne bude kaznjen, a prag na
+  // punih 12 kaznjavao ga je dvostrukom stepenicom (11 pogodaka + blizu palo
+  // je na istu poruku kao 9 pogodaka).
+  if (score >= 11.5) return 'Zabrinjavajuće dobro se poznajete.';
   if (score >= 9)  return 'Čitate se.';
   if (score >= 6)  return 'Dobro se poznajete.';
   return 'Zagrijavanje.';
@@ -2234,7 +2287,11 @@ function nextRoundOrFinish() {
     state.snop = shuffle(state.snop);
     state.results = [];
     state.cardIndex = 0;
-    state.performerIndex = state.roundIndex % state.actors.length;   // druga strana kreće
+    // Dvoboj: 12 kartica na 2 tima je 6:6 po rundi kako god, pa druga strana
+    // smije krenuti. Eskalacija: resetiranje bi rotaciju vratilo na pocetak i
+    // kod 6-8 igraca dalo nekome dvostruko vise izvedbi nego drugome — a
+    // ljestvica na kraju rangira ukupne bodove. Zato rotacija tece dalje.
+    if (isTimski()) state.performerIndex = state.roundIndex % state.actors.length;
     state.lastSnapshot = null;
     goScreen('predaja');
     return;
