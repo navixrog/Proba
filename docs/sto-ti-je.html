@@ -155,6 +155,11 @@
   .exp-divider { width: 44px; height: 3px; border-radius: 2px; background: rgba(0,0,0,0.12); margin: 4px 0 2px; }
   .exp-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; opacity: .55; }
   .exp-text { font-size: clamp(15px, 4.4vw, 18px); line-height: 1.45; font-weight: 600; }
+  .syn-line { font-size: 13px; line-height: 1.4; font-weight: 700; opacity: .75; }
+  .syn-line .syn-lead { font-weight: 600; opacity: .7; }
+  .syn-review { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 5px; }
+  .syn-review .row { font-size: 13px; line-height: 1.35; color: var(--text-dim); }
+  .syn-review .row b { color: var(--text); }
 
   /* ── Ogranicenje izvedbe ── */
   .constraint-box {
@@ -175,6 +180,8 @@
   .ritual .shout { color: var(--accent); display: block; font-size: clamp(24px, 8vw, 32px); margin-top: 4px; }
 
   /* ── Zeton / Tko je ovo ── */
+  #screen-krada { align-items: center; justify-content: center; text-align: center; gap: 14px; }
+  #krada-card { flex: 0 0 auto; max-height: none; gap: 6px; }
   #screen-teska { align-items: center; justify-content: center; text-align: center; gap: 14px; }
   #screen-zeton, #screen-tkojeovo { align-items: center; justify-content: center; text-align: center; gap: 16px; }
   .pick-title { font-size: clamp(19px, 5.6vw, 24px); font-weight: 800; max-width: 320px; line-height: 1.3; }
@@ -330,6 +337,7 @@
       <div class="stars-line" id="card-stars"></div>
       <div class="term" id="card-term"></div>
       <div class="card-note" id="card-note"></div>
+      <div class="syn-line" id="card-syn" style="display:none;"></div>
       <div class="constraint-box" id="constraint-box" style="display:none;">
         <div class="constraint-label">KAKO IZVODIŠ</div>
         <div class="constraint-text" id="constraint-text"></div>
@@ -357,6 +365,7 @@
       <div class="exp-divider"></div>
       <div class="exp-label" id="exp-label"></div>
       <div class="exp-text" id="exp-text"></div>
+      <div class="syn-line" id="exp-syn" style="display:none;"></div>
     </div>
     <button class="btn btn-wide" onclick="closeExplanation()">DALJE</button>
   </div>
@@ -386,6 +395,21 @@
       <button class="btn" onclick="commitCard()">DALJE</button>
     </div>
     <button class="btn btn-outline btn-wide btn-small" id="tko-skip" onclick="skipTkoJeOvo()">PRESKAČEMO</button>
+  </div>
+
+  <!-- 5e. DVOBOJ: TIHA PRETPOSTAVKA PROTIVNIKA -->
+  <div id="screen-krada" class="screen">
+    <div class="pick-title">Krađa boda</div>
+    <div class="pick-sub" id="krada-tko"></div>
+    <div class="term-card" id="krada-card">
+      <div class="deck-name" id="krada-deck"></div>
+      <div class="term" id="krada-term"></div>
+      <div class="syn-line" id="krada-syn" style="display:none;"></div>
+    </div>
+    <div class="judge-pair" style="width:100%;">
+      <button class="btn btn-ok" onclick="resolveKrada(true)">TOČNO — bod im ide</button>
+      <button class="btn btn-miss" onclick="resolveKrada(false)">NETOČNO</button>
+    </div>
   </div>
 
   <!-- 5d. OBAVEZNI REDAK NAKON TEŠKE KARTICE -->
@@ -1186,6 +1210,51 @@ const IZBACENE = new Set([
   "osjećaj da ti tijelo reagira prije nego što shvatiš zašto",
 ]);
 
+/* ═══════════════════════════ SINONIMNE SKUPINE ═══════════════════════════ */
+// Bliskoznacnice se ne izvlace kao zasebne kartice — inace tim izgovori jednu,
+// a na kartici pise druga. Umjesto toga vise pri svakom prikazu pojasnjenja uz
+// osnovni pojam, da se srodne rijeci uce usporedno umjesto da nestanu iz igre.
+const SINONIMI = {
+  "sreća": ["radost", "veselje", "vedrina"],
+  "zabrinutost": ["briga"],
+  "inat": ["prkos"],
+  "tjeskoba": ["anksioznost"],
+  "gorčina": ["ogorčenost"],
+  "ganutost": ["dirnutost"],
+  "spokoj": ["unutarnji mir"],
+  "zanos": ["zanesenost", "potpuna uronjenost u ono što radiš"],
+  "iščekivanje": ["veselo iščekivanje"],
+  "nemir": ["uznemirenost"],
+  "iznenađenje": ["ugodno iznenađenje"],
+  "pripadnost": ["prihvaćenost", "povezanost", "osjećaj dobrodošlice"],
+  "razigranost": ["živahnost", "energičnost"],
+  "smirenost": ["opuštenost", "bezbrižnost"],
+  "oduševljenje": ["ushićenje", "razdraganost"],
+  "aktivno slušanje": ["slušanje bez prekidanja"],
+  "čestitanje": ["pohvala"],
+  "smijanje": ["smijeh koji ne možeš zaustaviti"],
+  "skakanje od veselja": ["skakanje na mjestu"],
+  "sjeta": ["žal"],
+  "sreća zbog tuđeg uspjeha": ["veseljenje tuđem uspjehu"],
+  "suosjećanje": ["empatija"],
+  "nada": ["optimizam"],
+  "bliskost": ["privrženost"],
+  "polet": ["motiviranost"],
+  "osjećaj laganosti u tijelu": ["lakoća"],
+  "glumljenje da je sve u redu": ["pravljenje da te nije briga"],
+  "apatija": ["ravnodušnost"],
+  "tješenje": ["smirivanje druge osobe"],
+  "ohrabrivanje": ["navijanje za nekoga"],
+  "obrana prijatelja": ["javno zauzimanje za nekoga"],
+  "priznavanje pogreške": ["priznanje da je netko drugi bio u pravu"],
+  "pitanje „kako si?“ — i čekanje odgovora": ["provjera kako je netko nakon teškog dana"],
+  "ustupanje mjesta": ["puštanje drugoga da bude prvi"],
+  "sigurnost": ["zaštićenost"],
+  "duboko disanje": ["disanje koje se samo produbi kad se smiriš"],
+};
+
+CARD_DB.forEach(c => { c.sinonimi = SINONIMI[c.term] || []; });
+
 /* ═══════════════════════════ TESKE TEME ═══════════════════════════ */
 // Iza prekidaca u postavkama, po zadanom iskljuceno. Djetetu koje ovo
 // trenutno prozivljava kartica nije igra nego okidac.
@@ -1271,10 +1340,13 @@ const ACTOR_COLORS = ['#F2E93B', '#FF6B6B', '#4FD1C5', '#A78BFA', '#F79E5C', '#7
 const MODES = [
   { key: 'coop', label: 'Zajedno protiv snopa',
     sub: '12 kartica · svi pogađaju naglas istovremeno · nitko ne čeka red',
-    cards: 12, min: 2, max: 8, unit: 'Tko igra' },
-  { key: 'eskalacija', label: 'Eskalacija (natjecateljski)',
-    sub: '10 istih kartica kroz 3 runde — svaki put uži kanal',
-    cards: 10, min: 2, max: 4, unit: 'Timovi' },
+    cards: 12, min: 2, max: 8, unit: 'Tko igra', timski: false, runde: 1 },
+  { key: 'eskalacija', label: 'Eskalacija',
+    sub: '10 istih kartica kroz 3 runde — svaki put uži kanal · svatko za sebe',
+    cards: 10, min: 2, max: 8, unit: 'Tko igra', timski: false, runde: 3 },
+  { key: 'dvoboj', label: 'Dvoboj (tim protiv tima)',
+    sub: '12 kartica kroz 3 runde · dok jedan tim izvodi, drugi tiho piše pretpostavku i može ukrasti bod',
+    cards: 12, min: 2, max: 2, unit: 'Timovi', timski: true, runde: 3 },
 ];
 
 // Isti snop prolazi kroz tri runde, svaki put s užim kanalom. Druga i treća
@@ -1316,7 +1388,7 @@ function writeRecord(rec) {
 let session = {
   log: [],
   games: 0,
-  lastNames: ['Igrač 1', 'Igrač 2', 'Igrač 3', 'Igrač 4', 'Igrač 5', 'Igrač 6', 'Igrač 7', 'Igrač 8'],
+  lastNames: ['', '', '', '', '', '', '', ''],   // prazno = rezervni naziv prema modu
   lastCount: 3,
   lastMode: 'coop',
   lastDob: '6-8',
@@ -1359,8 +1431,12 @@ state = freshState();
 
 function modeDef() { return MODES.find(m => m.key === state.mod); }
 function allowedFaze() { return DOBNI_FILTERI.find(f => f.key === state.dob).faze; }
-function isEsk() { return state.mod === 'eskalacija'; }
+function imaRunde() { return modeDef().runde > 1; }   // eskalacija i dvoboj
+function isTimski() { return modeDef().timski; }      // samo dvoboj
+function isEsk() { return imaRunde(); }               // kanal po rundi, snop O+P
 function roundDef() { return RUNDE[state.roundIndex]; }
+// U dvoboju je uvijek tocno dva tima, pa je protivnik onaj drugi.
+function protivnik() { return state.actors[(state.performerIndex + 1) % state.actors.length]; }
 
 /* ═══════════════════════════ NAVIGACIJA ═══════════════════════════ */
 function goScreen(name) {
@@ -1434,7 +1510,7 @@ function renderPostavke() {
     dot.style.background = ACTOR_COLORS[i % ACTOR_COLORS.length];
     const input = document.createElement('input');
     input.className = 'team-name-input';
-    input.placeholder = isEsk() ? `Tim ${i + 1}` : `Igrač ${i + 1}`;
+    input.placeholder = isTimski() ? `Tim ${i + 1}` : `Igrač ${i + 1}`;
     input.maxLength = 16;
     input.value = state.names[i] || '';
     input.oninput = (e) => { state.names[i] = e.target.value; };
@@ -1519,7 +1595,7 @@ function startSnop() {
   const def = modeDef();
   state.actors = [];
   for (let i = 0; i < state.count; i++) {
-    const fallback = isEsk() ? `Tim ${i + 1}` : `Igrač ${i + 1}`;
+    const fallback = isTimski() ? `Tim ${i + 1}` : `Igrač ${i + 1}`;
     state.actors.push({
       name: (state.names[i] || '').trim() || fallback,
       color: ACTOR_COLORS[i % ACTOR_COLORS.length],
@@ -1568,9 +1644,11 @@ function renderPredaja() {
   }
 
   document.getElementById('predaja-name').textContent = performer.name;
-  document.getElementById('predaja-hint').textContent = isEsk()
-    ? roundDef().hint
-    : 'Svi ostali pogađaju naglas — nema čekanja reda.';
+  document.getElementById('predaja-hint').textContent = isTimski()
+    ? `${roundDef().hint} · ${protivnik().name} tiho zapisuje svoju pretpostavku.`
+    : imaRunde()
+      ? roundDef().hint
+      : 'Svi ostali pogađaju naglas — nema čekanja reda.';
   document.getElementById('undo-btn').style.display = state.lastSnapshot ? 'flex' : 'none';
 
   // Ritual: gumb se otkljucava tek nakon 1,5 s, taman da grupa stigne viknuti
@@ -1640,6 +1718,19 @@ function renderConstraint() {
   document.getElementById('reroll-btn').disabled = state.actors[state.performerIndex].rerollUsed;
 }
 
+// "sreća, ili: radost, veselje, vedrina" — srodne rijeci stoje uz osnovni pojam.
+function synText(card) {
+  if (!card.sinonimi || !card.sinonimi.length) return '';
+  return `<span class="syn-lead">${escapeHtml(card.term)}, ili:</span> ${card.sinonimi.map(escapeHtml).join(', ')}`;
+}
+
+function renderSynLine(id, card) {
+  const el = document.getElementById(id);
+  const html = synText(card);
+  el.innerHTML = html;
+  el.style.display = html ? 'block' : 'none';
+}
+
 function renderKarticaScreen() {
   const d = state.currentDraw;
   document.getElementById('card-deck-name').textContent = DECK_LABEL[d.deck];
@@ -1662,6 +1753,8 @@ function renderKarticaScreen() {
     ? 'Izrazi emociju koju bi osjećao(la) u ovoj situaciji — tim pogađa EMOCIJU, ne situaciju.'
     : (isEsk() ? roundDef().hint : CHANNEL_HINT[d.channel]);
   document.getElementById('card-repeat').style.display = d.isRepeat ? 'inline-block' : 'none';
+  // Izvodac presuduje BLIZU, pa mora vidjeti koje se rijeci priznaju kao ista stvar.
+  renderSynLine('card-syn', d.card);
   // Pravo na izlaz bez kazne, dostupno svima i bez objasnjenja.
   document.getElementById('safety-skip').style.display = d.card.teska ? 'flex' : 'none';
   renderConstraint();
@@ -1772,9 +1865,13 @@ function safetySkip() {
 
 function judge(outcome) {
   stopTimer();
-  state.pendingResult = { outcome, seconds: elapsedSeconds(), zeton: null, tkoOdigrano: false };
-  if (outcome === 'nismo') showExplanation();
-  else afterCard();
+  state.pendingResult = { outcome, seconds: elapsedSeconds(), zeton: null,
+                          tkoOdigrano: false, krada: null, kradaRijesena: false };
+  if (outcome !== 'nismo') { afterCard(); return; }
+  // Dvoboj: tiha pretpostavka protivnika provjerava se PRIJE pojasnjenja. Da
+  // pojasnjenje ide prvo, protivnik bi vidio odgovor pa tvrdio da ga je imao.
+  if (isTimski()) showKrada();
+  else showExplanation();
 }
 
 /* ═══════════════════════════ POSLIJE KARTICE ═══════════════════════════ */
@@ -1786,7 +1883,7 @@ function afterCard() {
   // Teska kartica uvijek zavrsava pitanjem kome se dijete moze javiti —
   // i nikad ne ide u zeton ni u "Tko je ovo od nas?".
   if (state.currentDraw.card.teska) { goScreen('teska'); return; }
-  if (isEsk()) { commitCard(); return; }
+  if (imaRunde()) { commitCard(); return; }
   const { outcome } = state.pendingResult;
   if (outcome === 'pogodili' && state.currentDraw.card.sigurno && session.tkoJeOvoOn) {
     startTkoJeOvo();
@@ -1897,11 +1994,39 @@ function showExplanation() {
   document.getElementById('exp-label').textContent = isSituacija ? 'MOGUĆE EMOCIJE' : 'ŠTO TO ZNAČI';
   document.getElementById('exp-text').textContent =
     POJASNJENJA[d.card.term] || 'Za ovaj pojam još nema pojašnjenja.';
+  renderSynLine('exp-syn', d.card);
 
   goScreen('pojasnjenje');
 }
 
 function closeExplanation() { afterCard(); }
+
+/* ═══════════════════════════ DVOBOJ: KRAĐA BODA ═══════════════════════════ */
+function showKrada() {
+  const d = state.currentDraw;
+  const drugi = protivnik();
+  document.getElementById('krada-tko').textContent =
+    `${drugi.name}, recite naglas što ste zapisali.`;
+  document.getElementById('krada-deck').textContent = DECK_LABEL[d.deck];
+  document.getElementById('krada-card').style.borderColor = DECK_COLOR[d.deck];
+
+  const termEl = document.getElementById('krada-term');
+  const len = d.card.term.length;
+  const sentence = d.deck === 'SITUACIJE' || len > 34;
+  termEl.className = 'term ' + (sentence ? (len > 50 ? 'sentence long' : 'sentence') : (len > 18 ? 'medium' : 'single'));
+  termEl.textContent = sentence ? d.card.term : d.card.term.toUpperCase();
+  renderSynLine('krada-syn', d.card);
+
+  goScreen('krada');
+}
+
+function resolveKrada(tocno) {
+  if (state.pendingResult.kradaRijesena) return;   // zastita od dvostrukog dodira
+  state.pendingResult.kradaRijesena = true;
+  state.pendingResult.krada = tocno ? protivnik().name : null;
+  if (tocno) protivnik().score += 1;   // ukradeni bod ide protivniku
+  showExplanation();
+}
 
 function commitCard() {
   const d = state.currentDraw;
@@ -1920,7 +2045,9 @@ function commitCard() {
     spil: d.deck,
     tezina: d.tier,
     kanal: d.channel,
-    ishod: outcome === 'pogodili' ? 'pogođeno' : outcome === 'blizu' ? 'blizu' : 'promašeno',
+    ishod: outcome === 'pogodili' ? 'pogođeno'
+         : outcome === 'blizu' ? 'blizu'
+         : state.pendingResult.krada ? 'ukradeno' : 'promašeno',
     sekunde: seconds,
     bonus: '',
     potez: state.cardIndex + 1,
@@ -1969,12 +2096,23 @@ function zetonLine() {
   return `<div class="record-line">🎭 Najviše promašaja vrijednih žetona: ${winners.join(', ')} (${max})</div>`;
 }
 
+// Treci prikaz srodnih rijeci: pregled na kraju runde, da se skupina vidi i
+// kad je kartica pogodena pa pojasnjenje nije ni otvoreno.
+function synReview() {
+  const sa = state.snop.filter(e => e.card.sinonimi && e.card.sinonimi.length);
+  if (!sa.length) return '';
+  return `<div class="stat-section syn-review">
+    <h4>Srodne riječi iz ovog snopa</h4>
+    ${sa.map(e => `<div class="row"><b>${escapeHtml(e.card.term)}</b> — ${e.card.sinonimi.map(escapeHtml).join(', ')}</div>`).join('')}
+  </div>`;
+}
+
 function renderRezultat() {
   const el = document.getElementById('rezultat-body');
   const btn = document.getElementById('rezultat-btn');
   const def = modeDef();
 
-  if (!isEsk()) {
+  if (!imaRunde()) {
     const score = roundScore();
     const rec = readRecord();
     const isNew = !rec || score > rec.score;
@@ -1989,7 +2127,8 @@ function renderRezultat() {
           ? '🏅 Novi obiteljski rekord!'
           : `Obiteljski rekord: ${fmtScore(rec.score)} / ${rec.of}`
       }</div>` : ''}
-      ${zetonLine()}`;
+      ${zetonLine()}
+      ${synReview()}`;
     btn.textContent = 'JOŠ JEDNOM';
     return;
   }
@@ -2009,7 +2148,8 @@ function renderRezultat() {
           <span class="ts-val">${fmtScore(a.score)}</span>
         </div>`).join('')}
     </div>
-    ${zadnja ? `<div class="ladder">🏆 ${escapeHtml(sorted[0].name)}</div>` : ''}`;
+    ${zadnja ? `<div class="ladder">🏆 ${escapeHtml(sorted[0].name)}</div>` : ''}
+    ${synReview()}`;
   btn.textContent = zadnja ? 'JOŠ JEDNOM' : `SLJEDEĆA RUNDA: ${RUNDE[state.roundIndex + 1].label}`;
 }
 
@@ -2020,6 +2160,7 @@ function nextRoundOrFinish() {
     state.snop = shuffle(state.snop);
     state.results = [];
     state.cardIndex = 0;
+    state.performerIndex = state.roundIndex % state.actors.length;   // druga strana kreće
     state.lastSnapshot = null;
     goScreen('predaja');
     return;
