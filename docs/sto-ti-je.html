@@ -9,8 +9,6 @@
 <meta name="theme-color" content="#1D2FA3">
 <link rel="manifest" href="sto-ti-je-manifest.json">
 <title>ŠTO TI JE?!</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap">
 <style>
   :root {
     --bg: #1D2FA3;
@@ -29,7 +27,9 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
   html, body { height: 100%; }
   body {
-    font-family: 'Baloo 2', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    /* Bez vanjskih fontova — igra mora raditi offline. 'Baloo 2' se koristi
+       samo ako je slucajno instaliran lokalno; inace ide sistemski niz. */
+    font-family: 'Baloo 2', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100dvh;
@@ -152,6 +152,36 @@
   .exp-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; opacity: .55; }
   .exp-text { font-size: clamp(15px, 4.4vw, 18px); line-height: 1.45; font-weight: 600; }
 
+  /* ── Sudenje (3 gumba) ── */
+  .judge-col { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .judge-col .btn-ok { min-height: 68px; font-size: 20px; }
+  .judge-pair { display: flex; gap: 8px; }
+  .judge-pair .btn { flex: 1; min-height: 56px; font-size: 15px; }
+  .btn-close { background: #E8A33D; color: #3A2400; }
+  .btn-miss { background: transparent; border: 2px solid rgba(255,133,162,0.85); color: #FF9DB5; box-shadow: none; }
+  .judge-hint { font-size: 11px; color: var(--text-dim); text-align: center; line-height: 1.35; }
+
+  /* ── Predaja / napredak snopa ── */
+  .snop-progress { display: flex; align-items: center; gap: 4px; justify-content: center; flex-wrap: wrap; max-width: 300px; }
+  .snop-pip { width: 13px; height: 13px; border-radius: 50%; background: rgba(255,255,255,0.18); }
+  .snop-pip.hit { background: #22A971; }
+  .snop-pip.close { background: #E8A33D; }
+  .snop-pip.miss { background: rgba(255,133,162,0.5); }
+  .snop-pip.now { box-shadow: 0 0 0 3px rgba(255,255,255,0.35); }
+  .round-badge { background: var(--accent); color: var(--accent-text); border-radius: 20px; padding: 5px 14px; font-size: 13px; font-weight: 800; }
+
+  /* ── Rezultat ── */
+  #screen-rezultat { align-items: center; justify-content: center; text-align: center; gap: 14px; }
+  .score-big { font-size: clamp(52px, 18vw, 76px); font-weight: 800; color: var(--accent); line-height: 1; }
+  .score-of { font-size: 15px; color: var(--text-dim); font-weight: 700; }
+  .ladder { font-size: clamp(19px, 6vw, 26px); font-weight: 800; max-width: 320px; line-height: 1.25; }
+  .record-line { font-size: 14px; font-weight: 700; color: var(--text-dim); }
+  .record-line.new { color: var(--accent); }
+  .team-score-list { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+  .team-score-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.08); border-radius: 12px; padding: 11px 14px; font-weight: 700; font-size: 14px; }
+  .team-score-row.top { background: rgba(242,233,59,0.2); border: 2px solid var(--accent); }
+  .team-score-row .ts-val { margin-left: auto; font-variant-numeric: tabular-nums; }
+
   /* ── Statistika ── */
   #screen-statistika { gap: 12px; }
   .stat-summary { display: flex; gap: 8px; }
@@ -188,6 +218,7 @@
       <div class="qm">?!</div>
     </div>
     <div class="tagline">Pogodi što mi je — prije nego što ti kažem.</div>
+    <div class="record-line" id="naslovna-rekord" style="display:none;"></div>
     <button class="btn" onclick="startNewGame()">NOVA IGRA</button>
     <button class="btn btn-outline btn-small" id="naslovna-stat-btn" style="display:none;" onclick="goScreen('statistika')">Statistika sesije</button>
   </div>
@@ -197,17 +228,21 @@
     <h2>Postavke igre</h2>
 
     <div class="field-group">
-      <div class="field-label">Broj timova</div>
+      <div class="field-label">Način igre</div>
+      <div class="option-row" id="mode-options"></div>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label" id="players-label">Tko igra</div>
       <div class="stepper">
-        <button onclick="changeTeamCount(-1)" aria-label="Manje timova">−</button>
-        <div class="count" id="team-count-display">2</div>
-        <button onclick="changeTeamCount(1)" aria-label="Više timova">+</button>
+        <button onclick="changeCount(-1)" aria-label="Manje">−</button>
+        <div class="count" id="count-display">3</div>
+        <button onclick="changeCount(1)" aria-label="Više">+</button>
       </div>
     </div>
 
     <div class="field-group">
-      <div class="field-label">Imena timova</div>
-      <div id="team-name-inputs" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div id="name-inputs" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
 
     <div class="toggle-row">
@@ -215,33 +250,26 @@
       <div class="switch" id="sound-toggle" onclick="toggleSound()"></div>
     </div>
 
-    <button class="btn btn-wide" onclick="goToPotez()">KRENI</button>
+    <button class="btn btn-wide" onclick="startSnop()">KRENI</button>
   </div>
 
-  <!-- 3. POTEZ -->
-  <div id="screen-potez" class="screen">
+  <!-- 3. PREDAJA UREĐAJA -->
+  <div id="screen-predaja" class="screen">
     <div class="top-bar">
-      <h2>Na potezu</h2>
+      <h2 id="predaja-round"></h2>
       <button class="btn btn-outline btn-small" id="undo-btn" onclick="undoLastMove()" style="display:none;">↺ Poništi</button>
       <button class="btn btn-outline btn-small" onclick="abortGame()">Prekini</button>
     </div>
-
-    <div class="card-panel">
-      <div class="turn-title" id="turn-title"></div>
-      <div class="turn-sub" id="turn-sub"></div>
-      <button class="btn btn-wide" id="izvuci-btn" onclick="handleIzvuciKarticu()">IZVUCI KARTICU</button>
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; text-align:center;">
+      <div class="snop-progress" id="snop-progress"></div>
+      <div class="handoff-icon">📱</div>
+      <p>Na redu je<br><span class="team-chip" id="predaja-name"></span></p>
+      <div class="handoff-hint" id="predaja-hint"></div>
+      <button class="btn" onclick="revealCard()">OTKRIJ POJAM</button>
     </div>
   </div>
 
-  <!-- 4. PREDAJA UREĐAJA -->
-  <div id="screen-predaja" class="screen">
-    <div class="handoff-icon">📱</div>
-    <p>Dodaj uređaj izvođaču iz tima <span class="team-chip" id="predaja-team-name"></span> — zatim pritisni OTKRIJ POJAM</p>
-    <div class="handoff-hint" id="predaja-hint"></div>
-    <button class="btn" onclick="revealCard()">OTKRIJ POJAM</button>
-  </div>
-
-  <!-- 5. KARTICA + TIMER -->
+  <!-- 4. KARTICA + TIMER -->
   <div id="screen-kartica" class="screen">
     <div class="timer-display" id="timer-display">60</div>
     <div class="term-card" id="term-card">
@@ -251,13 +279,17 @@
       <div class="card-note" id="card-note"></div>
       <div class="repeat-tag" id="card-repeat" style="display:none;">↺ ponovljena kartica</div>
     </div>
-    <div class="action-row">
-      <button class="btn btn-skip" onclick="handlePreskoci()">PRESKOČI</button>
-      <button class="btn btn-ok" onclick="handlePogodjeno()">POGOĐENO</button>
+    <div class="judge-col">
+      <button class="btn btn-ok" onclick="judge('pogodili')">POGODILI</button>
+      <div class="judge-pair">
+        <button class="btn btn-close" onclick="judge('blizu')">BLIZU</button>
+        <button class="btn btn-miss" onclick="judge('nismo')">NISMO</button>
+      </div>
+      <div class="judge-hint">Ti presuđuješ. BLIZU je za odgovor koji je pogodio osjećaj, ali ne baš tu riječ.</div>
     </div>
   </div>
 
-  <!-- POJAŠNJENJE (nakon preskakanja) -->
+  <!-- 5. POJAŠNJENJE (nakon promašaja) -->
   <div id="screen-pojasnjenje" class="screen">
     <div class="skip-badge">Nitko nije pogodio — evo što je bilo</div>
     <div class="term-card" id="exp-card">
@@ -268,6 +300,13 @@
       <div class="exp-text" id="exp-text"></div>
     </div>
     <button class="btn btn-wide" onclick="closeExplanation()">DALJE</button>
+  </div>
+
+  <!-- 6. REZULTAT SNOPA -->
+  <div id="screen-rezultat" class="screen">
+    <div id="rezultat-body" style="display:flex; flex-direction:column; align-items:center; gap:14px; width:100%;"></div>
+    <button class="btn btn-wide" onclick="nextRoundOrFinish()" id="rezultat-btn">JOŠ JEDNOM</button>
+    <button class="btn btn-outline btn-wide btn-small" onclick="goScreen('statistika')">Statistika testa</button>
   </div>
 
   <!-- 7. STATISTIKA -->
@@ -922,7 +961,6 @@ const POJASNJENJA = {
 
 const DECK_LABEL = { EMOCIJE: 'EMOCIJE', TJELESNE: 'TJELESNE REAKCIJE', PONASANJA: 'PONAŠANJA', SITUACIJE: 'SITUACIJE' };
 const DECK_COLOR = { EMOCIJE: 'var(--emocije)', TJELESNE: 'var(--tjelesne)', PONASANJA: 'var(--ponasanja)', SITUACIJE: 'var(--situacije)' };
-const DECKS = ['EMOCIJE', 'TJELESNE', 'PONASANJA', 'SITUACIJE'];
 
 const CHANNEL_LABEL = { O: 'OPIŠI', C: 'NACRTAJ', P: 'ODGLUMI' };
 const CHANNEL_HINT = {
@@ -930,31 +968,66 @@ const CHANNEL_HINT = {
   C: 'Nacrtaj na papiru — bez slova i brojki.',
   P: 'Odglumi pantomimom — bez riječi i bez zvukova.',
 };
-const TEAM_COLORS = ['#F2E93B', '#FF6B6B', '#4FD1C5', '#A78BFA'];
+const ACTOR_COLORS = ['#F2E93B', '#FF6B6B', '#4FD1C5', '#A78BFA', '#F79E5C', '#7CC6FF', '#B6E36B', '#FF9DD2'];
 
-/* ═══════════════════════════ SESIJA (preživljava više igara) ═══════════════════════════ */
-// Log se skuplja kroz cijelu sesiju testiranja da se podaci ne izgube između partija.
+const MODES = [
+  { key: 'coop', label: 'Zajedno protiv snopa',
+    sub: '12 kartica · svi pogađaju naglas istovremeno · nitko ne čeka red',
+    cards: 12, min: 2, max: 8, unit: 'Tko igra' },
+  { key: 'eskalacija', label: 'Eskalacija (natjecateljski)',
+    sub: '10 istih kartica kroz 3 runde — svaki put uži kanal',
+    cards: 10, min: 2, max: 4, unit: 'Timovi' },
+];
+
+// Isti snop prolazi kroz tri runde, svaki put s užim kanalom. Druga i treća
+// runda idu brže jer svi pamte kartice iz prve — to je izvor ponovljivosti.
+const RUNDE = [
+  { label: 'OPIŠI',            hint: 'Opisuj riječima — bez izgovaranja samog pojma.', channel: 'O' },
+  { label: 'SAMO JEDNA RIJEČ', hint: 'Smiješ izgovoriti točno jednu riječ. Ni glasa više.', channel: 'O' },
+  { label: 'ODGLUMI',          hint: 'Bez riječi i bez zvukova — samo pantomima.', channel: 'P' },
+];
+
+const BODOVI = { pogodili: 1, blizu: 0.5, nismo: 0 };
+
+/* ═══════════════════════════ OBITELJSKI REKORD ═══════════════════════════ */
+// localStorage je neobavezan: ako je blokiran, igra radi bez rekorda.
+const REKORD_KEY = '@sto_ti_je_rekord';
+
+function readRecord() {
+  try { const v = localStorage.getItem(REKORD_KEY); return v ? JSON.parse(v) : null; }
+  catch (e) { return null; }
+}
+function writeRecord(rec) {
+  try { localStorage.setItem(REKORD_KEY, JSON.stringify(rec)); return true; }
+  catch (e) { return false; }
+}
+
+/* ═══════════════════════════ SESIJA ═══════════════════════════ */
 let session = {
   log: [],
   games: 0,
-  lastNames: ['Tim 1', 'Tim 2', 'Tim 3', 'Tim 4'],
-  lastNumTeams: 2,
+  lastNames: ['Igrač 1', 'Igrač 2', 'Igrač 3', 'Igrač 4', 'Igrač 5', 'Igrač 6', 'Igrač 7', 'Igrač 8'],
+  lastCount: 3,
+  lastMode: 'coop',
   soundEnabled: true,
 };
 
 /* ═══════════════════════════ STANJE ═══════════════════════════ */
 let state = null;
-let drawCounter = 0;   // jedinstvena oznaka svakog izvlačenja
+let drawCounter = 0;
 
 function freshState() {
   return {
     screen: 'naslovna',
-    numTeams: session.lastNumTeams,
-    teamNames: [...session.lastNames],
-    teams: [],
-    activeTeamIndex: 0,
-    moveNumber: 0,
-    logStart: session.log.length,
+    mod: session.lastMode,
+    count: session.lastCount,
+    names: [...session.lastNames],
+    actors: [],          // igrači (coop) ili timovi (eskalacija)
+    snop: [],            // kartice ove partije
+    results: [],         // ishod po kartici u tekućoj rundi
+    cardIndex: 0,
+    roundIndex: 0,
+    performerIndex: 0,
     currentDraw: null,
     revealTime: null,
     deadline: null,
@@ -963,11 +1036,15 @@ function freshState() {
     resolvedDrawId: null,
     lastSnapshot: null,
     pendingResult: null,
-    finished: false,
+    logStart: session.log.length,
     wakeLockRef: null,
   };
 }
 state = freshState();
+
+function modeDef() { return MODES.find(m => m.key === state.mod); }
+function isEsk() { return state.mod === 'eskalacija'; }
+function roundDef() { return RUNDE[state.roundIndex]; }
 
 /* ═══════════════════════════ NAVIGACIJA ═══════════════════════════ */
 function goScreen(name) {
@@ -976,12 +1053,23 @@ function goScreen(name) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   window.scrollTo(0, 0);
-  if (name === 'naslovna') {
-    document.getElementById('naslovna-stat-btn').style.display = session.log.length ? 'flex' : 'none';
-  }
+  if (name === 'naslovna') renderNaslovna();
   if (name === 'postavke') renderPostavke();
-  if (name === 'potez') renderPotez();
+  if (name === 'predaja') renderPredaja();
+  if (name === 'rezultat') renderRezultat();
   if (name === 'statistika') renderStatistika();
+}
+
+function renderNaslovna() {
+  document.getElementById('naslovna-stat-btn').style.display = session.log.length ? 'flex' : 'none';
+  const rec = readRecord();
+  const el = document.getElementById('naslovna-rekord');
+  if (rec && rec.score != null) {
+    el.textContent = `Obiteljski rekord: ${fmtScore(rec.score)} / ${rec.of}`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 function startNewGame() {
@@ -991,32 +1079,50 @@ function startNewGame() {
 
 /* ═══════════════════════════ POSTAVKE ═══════════════════════════ */
 function renderPostavke() {
-  document.getElementById('team-count-display').textContent = state.numTeams;
+  const modeWrap = document.getElementById('mode-options');
+  modeWrap.innerHTML = '';
+  MODES.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn' + (state.mod === m.key ? ' selected' : '');
+    btn.innerHTML = `${m.label}<span class="opt-sub">${m.sub}</span>`;
+    btn.onclick = () => {
+      state.mod = m.key;
+      const d = MODES.find(x => x.key === m.key);
+      state.count = Math.min(d.max, Math.max(d.min, state.count));
+      renderPostavke();
+    };
+    modeWrap.appendChild(btn);
+  });
 
-  const namesWrap = document.getElementById('team-name-inputs');
-  namesWrap.innerHTML = '';
-  for (let i = 0; i < state.numTeams; i++) {
+  const def = modeDef();
+  document.getElementById('players-label').textContent = def.unit;
+  document.getElementById('count-display').textContent = state.count;
+
+  const wrap = document.getElementById('name-inputs');
+  wrap.innerHTML = '';
+  for (let i = 0; i < state.count; i++) {
     const row = document.createElement('div');
     row.className = 'team-input-row';
     const dot = document.createElement('div');
     dot.className = 'team-dot';
-    dot.style.background = TEAM_COLORS[i % TEAM_COLORS.length];
+    dot.style.background = ACTOR_COLORS[i % ACTOR_COLORS.length];
     const input = document.createElement('input');
     input.className = 'team-name-input';
-    input.placeholder = `Tim ${i + 1}`;
+    input.placeholder = isEsk() ? `Tim ${i + 1}` : `Igrač ${i + 1}`;
     input.maxLength = 16;
-    input.value = state.teamNames[i] || '';
-    input.oninput = (e) => { state.teamNames[i] = e.target.value; };
+    input.value = state.names[i] || '';
+    input.oninput = (e) => { state.names[i] = e.target.value; };
     row.appendChild(dot);
     row.appendChild(input);
-    namesWrap.appendChild(row);
+    wrap.appendChild(row);
   }
 
   document.getElementById('sound-toggle').classList.toggle('on', session.soundEnabled);
 }
 
-function changeTeamCount(delta) {
-  state.numTeams = Math.min(4, Math.max(2, state.numTeams + delta));
+function changeCount(delta) {
+  const def = modeDef();
+  state.count = Math.min(def.max, Math.max(def.min, state.count + delta));
   renderPostavke();
 }
 
@@ -1025,29 +1131,7 @@ function toggleSound() {
   renderPostavke();
 }
 
-function goToPotez() {
-  state.teams = [];
-  for (let i = 0; i < state.numTeams; i++) {
-    const name = (state.teamNames[i] || '').trim() || `Tim ${i + 1}`;
-    state.teams.push({ name, color: TEAM_COLORS[i % TEAM_COLORS.length] });
-  }
-  CARD_DB.forEach(c => { c.discarded = false; c.everUsed = false; });
-
-  session.lastNames = [...state.teamNames];
-  session.lastNumTeams = state.numTeams;
-  session.games += 1;
-
-  state.activeTeamIndex = 0;
-  state.moveNumber = 0;
-  state.logStart = session.log.length;
-  state.lastSnapshot = null;
-  state.finished = false;
-  goScreen('potez');
-}
-
-/* ═══════════════════════════ IZVLAČENJE KARTICE ═══════════════════════════ */
-// Fisher-Yates: sort(() => Math.random() - 0.5) NIJE ravnomjeran i mjerljivo
-// je favorizirao pojedine špilove (TJELESNE su izlazile ~19% umjesto ~33%).
+/* ═══════════════════════════ SNOP ═══════════════════════════ */
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -1057,102 +1141,101 @@ function shuffle(arr) {
   return a;
 }
 
-function cardsFor(deck) { return CARD_DB.filter(c => c.deck === deck); }
-
-function drawFromDeck(deck) {
-  const all = cardsFor(deck);
-  if (!all.length) return null;
-  let avail = all.filter(c => !c.discarded);
-  if (!avail.length) {
-    // Špil je iscrpljen — vrati odigrane kartice natrag i promiješaj.
-    all.forEach(c => { c.discarded = false; });
-    avail = all;
-  }
-  const card = avail[Math.floor(Math.random() * avail.length)];
-  const isRepeat = card.everUsed;
-  card.discarded = true;
-  card.everUsed = true;
-  return { card, isRepeat };
-}
-
-function drawCard() {
-  for (const deck of shuffle(DECKS)) {
-    const r = drawFromDeck(deck);
-    if (r) return { deck, ...r };
-  }
-  return null;
-}
-
-/* ═══════════════════════════ POTEZ ═══════════════════════════ */
-function renderPotez() {
-  const team = state.teams[state.activeTeamIndex];
-  document.getElementById('turn-title').innerHTML =
-    `<span class="team-dot" style="background:${team.color}"></span> ${escapeHtml(team.name)}`;
-  document.getElementById('turn-sub').textContent = `Odigranih kartica: ${state.moveNumber}`;
-  document.getElementById('undo-btn').style.display = state.lastSnapshot ? 'flex' : 'none';
-}
-
-/* ═══════════════════════════ UNDO ═══════════════════════════ */
-function makeSnapshot() {
-  return {
-    activeTeamIndex: state.activeTeamIndex,
-    moveNumber: state.moveNumber,
-    logLength: session.log.length,
-    cardFlags: CARD_DB.map(c => ({ discarded: c.discarded, everUsed: c.everUsed })),
-  };
-}
-
-function undoLastMove() {
-  if (!state.lastSnapshot) return;
-  const snap = state.lastSnapshot;
-  state.activeTeamIndex = snap.activeTeamIndex;
-  state.moveNumber = snap.moveNumber;
-  session.log.length = snap.logLength;
-  CARD_DB.forEach((c, i) => {
-    c.discarded = snap.cardFlags[i].discarded;
-    c.everUsed = snap.cardFlags[i].everUsed;
+function buildSnop(n) {
+  // U eskalaciji isti pojam mora izdržati i opis i pantomimu, pa u snop
+  // ulaze samo kartice koje podržavaju oba kanala.
+  const pool = isEsk()
+    ? CARD_DB.filter(c => c.channels.includes('O') && c.channels.includes('P'))
+    : CARD_DB.slice();
+  const fresh = pool.filter(c => !c.everUsed);
+  const chosen = fresh.length >= n
+    ? shuffle(fresh).slice(0, n)
+    : shuffle(pool).slice(0, n);   // špil potrošen u sesiji — dopusti ponavljanje
+  return chosen.map(c => {
+    const isRepeat = c.everUsed;
+    c.everUsed = true;
+    return { card: c, isRepeat };
   });
+}
+
+function startSnop() {
+  const def = modeDef();
+  state.actors = [];
+  for (let i = 0; i < state.count; i++) {
+    const fallback = isEsk() ? `Tim ${i + 1}` : `Igrač ${i + 1}`;
+    state.actors.push({
+      name: (state.names[i] || '').trim() || fallback,
+      color: ACTOR_COLORS[i % ACTOR_COLORS.length],
+      score: 0,
+      roundScores: [],
+    });
+  }
+
+  state.snop = buildSnop(def.cards);
+  state.results = [];
+  state.cardIndex = 0;
+  state.roundIndex = 0;
+  state.performerIndex = 0;
   state.lastSnapshot = null;
-  showToast('Zadnji potez poništen');
-  goScreen('potez');
+  state.logStart = session.log.length;
+
+  session.lastNames = [...state.names];
+  session.lastCount = state.count;
+  session.lastMode = state.mod;
+  session.games += 1;
+
+  goScreen('predaja');
+}
+
+/* ═══════════════════════════ PREDAJA ═══════════════════════════ */
+function renderPredaja() {
+  const def = modeDef();
+  const performer = state.actors[state.performerIndex];
+
+  document.getElementById('predaja-round').textContent = isEsk()
+    ? `Runda ${state.roundIndex + 1}/3 · ${roundDef().label}`
+    : `Kartica ${state.cardIndex + 1}/${def.cards}`;
+
+  const prog = document.getElementById('snop-progress');
+  prog.innerHTML = '';
+  for (let i = 0; i < def.cards; i++) {
+    const pip = document.createElement('div');
+    const r = state.results[i];
+    pip.className = 'snop-pip'
+      + (r === 'pogodili' ? ' hit' : r === 'blizu' ? ' close' : r === 'nismo' ? ' miss' : '')
+      + (i === state.cardIndex ? ' now' : '');
+    prog.appendChild(pip);
+  }
+
+  document.getElementById('predaja-name').textContent = performer.name;
+  document.getElementById('predaja-hint').textContent = isEsk()
+    ? roundDef().hint
+    : 'Svi ostali pogađaju naglas — nema čekanja reda.';
+  document.getElementById('undo-btn').style.display = state.lastSnapshot ? 'flex' : 'none';
 }
 
 function abortGame() {
   if (!confirm('Prekinuti igru? Dosad zabilježeni podaci ostaju u statistici.')) return;
-  state.finished = true;
   goScreen('statistika');
 }
 
-/* ═══════════════════════════ IZVUCI KARTICU → PREDAJA ═══════════════════════════ */
-function handleIzvuciKarticu() {
-  const team = state.teams[state.activeTeamIndex];
-  const snapshot = makeSnapshot();
+/* ═══════════════════════════ KARTICA ═══════════════════════════ */
+function revealCard() {
+  const entry = state.snop[state.cardIndex];
+  const channel = isEsk()
+    ? roundDef().channel
+    : shuffle(entry.card.channels)[0];
 
-  const result = drawCard();
-  if (!result) { showToast('Nema dostupnih kartica.'); return; }
-
-  // Kanal se bira iz onih koje kartica podržava — nema više polja na stazi
-  // koje bi ga nametnulo.
-  const channel = shuffle(result.card.channels)[0];
-
-  state.lastSnapshot = snapshot;
-  state.moveNumber += 1;
   state.currentDraw = {
     id: ++drawCounter,
-    card: result.card,
-    deck: result.deck,
-    tier: result.card.tier,
+    card: entry.card,
+    deck: entry.card.deck,
+    tier: entry.card.tier,
     channel,
-    isRepeat: result.isRepeat,
+    isRepeat: entry.isRepeat || (isEsk() && state.roundIndex > 0),
   };
+  state.lastSnapshot = makeSnapshot();
 
-  document.getElementById('predaja-team-name').textContent = team.name;
-  document.getElementById('predaja-hint').textContent = CHANNEL_HINT[channel];
-  goScreen('predaja');
-}
-
-/* ═══════════════════════════ PREDAJA → KARTICA ═══════════════════════════ */
-function revealCard() {
   goScreen('kartica');
   renderKarticaScreen();
   startTimer();
@@ -1162,7 +1245,7 @@ function revealCard() {
 function renderKarticaScreen() {
   const d = state.currentDraw;
   document.getElementById('card-deck-name').textContent = DECK_LABEL[d.deck];
-  document.getElementById('card-stars').textContent = CHANNEL_LABEL[d.channel];
+  document.getElementById('card-stars').textContent = isEsk() ? roundDef().label : CHANNEL_LABEL[d.channel];
   document.getElementById('term-card').style.borderColor = DECK_COLOR[d.deck];
 
   // Duži tekst se u verzalu čita osjetno sporije, a djeca koja tek čitaju gube
@@ -1179,7 +1262,7 @@ function renderKarticaScreen() {
 
   document.getElementById('card-note').textContent = d.deck === 'SITUACIJE'
     ? 'Izrazi emociju koju bi osjećao(la) u ovoj situaciji — tim pogađa EMOCIJU, ne situaciju.'
-    : CHANNEL_HINT[d.channel];
+    : (isEsk() ? roundDef().hint : CHANNEL_HINT[d.channel]);
   document.getElementById('card-repeat').style.display = d.isRepeat ? 'inline-block' : 'none';
 }
 
@@ -1246,27 +1329,23 @@ function releaseWakeLock() {
     state.wakeLockRef = null;
   }
 }
-// Wake Lock se gubi kad se kartica sakrije — zatraži ga ponovno pri povratku.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && state.screen === 'kartica') requestWakeLock();
 });
 
-/* ═══════════════════════════ POGOĐENO / PRESKOČI ═══════════════════════════ */
+/* ═══════════════════════════ SUĐENJE ═══════════════════════════ */
+// Izvođač presuđuje, ne kartica. BLIZU postoji jer je špil pun bliskoznačnica
+// (94 sinonimna sudara) — dijete koje je prepoznalo osjećaj ne smije ostati
+// bez ičega samo zato što je izgovorilo drugu riječ za istu stvar.
 function elapsedSeconds() {
   return Math.max(0, Math.round((Date.now() - state.revealTime) / 1000));
 }
 
-function handlePogodjeno() {
+function judge(outcome) {
   stopTimer();
-  finalizeMove(true, elapsedSeconds());
-}
-
-function handlePreskoci() {
-  stopTimer();
-  // Vrijeme se hvata odmah, prije ekrana s pojašnjenjem — čitanje pojašnjenja
-  // ne smije ući u izmjereno trajanje kartice.
-  state.pendingResult = { seconds: elapsedSeconds() };
-  showExplanation();
+  state.pendingResult = { outcome, seconds: elapsedSeconds() };
+  if (outcome === 'nismo') showExplanation();
+  else commitCard();
 }
 
 /* ═══════════════════════════ POJAŠNJENJE POJMA ═══════════════════════════ */
@@ -1290,34 +1369,144 @@ function showExplanation() {
   goScreen('pojasnjenje');
 }
 
-function closeExplanation() {
-  finalizeMove(false, state.pendingResult.seconds);
-}
+function closeExplanation() { commitCard(); }
 
-function finalizeMove(success, seconds) {
+function commitCard() {
   const d = state.currentDraw;
-  // Svaka izvučena kartica smije proizvesti točno jedan ishod. Bez ovoga
-  // dvostruki dodir na POGOĐENO upiše dva retka.
+  // Svaka kartica smije proizvesti točno jedan ishod, pa dvostruki dodir
+  // ne upisuje dva retka niti dvaput pomiče snop.
   if (!d || state.resolvedDrawId === d.id) return;
   state.resolvedDrawId = d.id;
 
-  const team = state.teams[state.activeTeamIndex];
+  const { outcome, seconds } = state.pendingResult;
+  const performer = state.actors[state.performerIndex];
 
   session.log.push({
     pojam: d.card.term,
     spil: d.deck,
     tezina: d.tier,
     kanal: d.channel,
-    ishod: success ? 'pogođeno' : 'preskočeno',
+    ishod: outcome === 'pogodili' ? 'pogođeno' : outcome === 'blizu' ? 'blizu' : 'promašeno',
     sekunde: seconds,
     bonus: '',
-    potez: state.moveNumber,
-    tim: team.name,
+    potez: state.cardIndex + 1,
+    tim: performer.name,
     ponovljena: d.isRepeat ? 'da' : 'ne',
   });
 
-  state.activeTeamIndex = (state.activeTeamIndex + 1) % state.teams.length;
-  goScreen('potez');
+  state.results[state.cardIndex] = outcome;
+  performer.score += BODOVI[outcome];
+
+  state.cardIndex += 1;
+  state.performerIndex = (state.performerIndex + 1) % state.actors.length;
+
+  if (state.cardIndex >= state.snop.length) endRound();
+  else goScreen('predaja');
+}
+
+/* ═══════════════════════════ KRAJ RUNDE / SNOPA ═══════════════════════════ */
+function roundScore() {
+  return state.results.reduce((sum, r) => sum + (BODOVI[r] || 0), 0);
+}
+
+function endRound() {
+  if (isEsk()) {
+    state.actors.forEach(a => a.roundScores[state.roundIndex] = a.score - a.roundScores.reduce((x, y) => x + y, 0));
+  }
+  goScreen('rezultat');
+}
+
+function fmtScore(n) {
+  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ',');
+}
+
+function ljestvica(score) {
+  if (score >= 12) return 'Zabrinjavajuće dobro se poznajete.';
+  if (score >= 9)  return 'Čitate se.';
+  if (score >= 6)  return 'Dobro se poznajete.';
+  return 'Zagrijavanje.';
+}
+
+function renderRezultat() {
+  const el = document.getElementById('rezultat-body');
+  const btn = document.getElementById('rezultat-btn');
+  const def = modeDef();
+
+  if (!isEsk()) {
+    const score = roundScore();
+    const rec = readRecord();
+    const isNew = !rec || score > rec.score;
+    if (isNew && score > 0) writeRecord({ score, of: def.cards, date: new Date().toISOString() });
+
+    el.innerHTML = `
+      <div class="score-big">${fmtScore(score)}</div>
+      <div class="score-of">od ${def.cards} kartica</div>
+      <div class="ladder">${ljestvica(score)}</div>
+      ${rec || score > 0 ? `<div class="record-line${isNew && score > 0 ? ' new' : ''}">${
+        isNew && score > 0
+          ? '🏅 Novi obiteljski rekord!'
+          : `Obiteljski rekord: ${fmtScore(rec.score)} / ${rec.of}`
+      }</div>` : ''}`;
+    btn.textContent = 'JOŠ JEDNOM';
+    return;
+  }
+
+  // ── Eskalacija ──
+  const zadnja = state.roundIndex >= RUNDE.length - 1;
+  const sorted = [...state.actors].sort((a, b) => b.score - a.score);
+  el.innerHTML = `
+    <div class="round-badge">Runda ${state.roundIndex + 1}/3 · ${roundDef().label}</div>
+    <div class="score-big">${fmtScore(roundScore())}</div>
+    <div class="score-of">od ${def.cards} u ovoj rundi</div>
+    <div class="team-score-list">
+      ${sorted.map((a, i) => `
+        <div class="team-score-row${zadnja && i === 0 ? ' top' : ''}">
+          <div class="team-dot" style="background:${a.color}"></div>
+          <span>${escapeHtml(a.name)}</span>
+          <span class="ts-val">${fmtScore(a.score)}</span>
+        </div>`).join('')}
+    </div>
+    ${zadnja ? `<div class="ladder">🏆 ${escapeHtml(sorted[0].name)}</div>` : ''}`;
+  btn.textContent = zadnja ? 'JOŠ JEDNOM' : `SLJEDEĆA RUNDA: ${RUNDE[state.roundIndex + 1].label}`;
+}
+
+function nextRoundOrFinish() {
+  if (isEsk() && state.roundIndex < RUNDE.length - 1) {
+    // Isti snop, promiješan, sljedeći uži kanal.
+    state.roundIndex += 1;
+    state.snop = shuffle(state.snop);
+    state.results = [];
+    state.cardIndex = 0;
+    state.lastSnapshot = null;
+    goScreen('predaja');
+    return;
+  }
+  startNewGame();
+}
+
+/* ═══════════════════════════ UNDO ═══════════════════════════ */
+function makeSnapshot() {
+  return {
+    cardIndex: state.cardIndex,
+    performerIndex: state.performerIndex,
+    results: [...state.results],
+    scores: state.actors.map(a => a.score),
+    logLength: session.log.length,
+  };
+}
+
+function undoLastMove() {
+  const snap = state.lastSnapshot;
+  if (!snap) return;
+  state.cardIndex = snap.cardIndex;
+  state.performerIndex = snap.performerIndex;
+  state.results = [...snap.results];
+  state.actors.forEach((a, i) => a.score = snap.scores[i]);
+  session.log.length = snap.logLength;
+  state.lastSnapshot = null;
+  state.resolvedDrawId = null;
+  showToast('Zadnja kartica poništena');
+  goScreen('predaja');
 }
 
 /* ═══════════════════════════ STATISTIKA ═══════════════════════════ */
@@ -1330,27 +1519,34 @@ function renderStatistika() {
     return;
   }
 
+  // BLIZU vrijedi pola boda: osjećaj je prepoznat, samo je izgovorena druga
+  // riječ za istu stvar. U postotku uspjeha zato ulazi kao pola pogotka.
   const total = log.length;
   const hitRows = log.filter(l => l.ishod === 'pogođeno');
-  const pct = Math.round((hitRows.length / total) * 100);
+  const closeRows = log.filter(l => l.ishod === 'blizu');
+  const missRows = log.filter(l => l.ishod === 'promašeno' || l.ishod === 'preskočeno');
+  const pct = Math.round(((hitRows.length + closeRows.length * 0.5) / total) * 100);
   const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) + 's' : '—';
 
-  // Vrijeme se mjeri SAMO na pogođenim karticama: preskočena kartica troši
-  // pun timer i inače bi umjetno napuhala prosjek svog špila i težine.
+  // Vrijeme se mjeri samo ondje gdje je grupa dala odgovor (pogođeno ili blizu):
+  // promašena kartica potroši pun timer i inače bi napuhala prosjek.
+  const solved = l => l.ishod === 'pogođeno' || l.ishod === 'blizu';
   const group = (keyFn) => {
     const out = {};
     log.forEach(l => {
       const k = keyFn(l);
-      out[k] = out[k] || { n: 0, hits: 0, times: [] };
+      out[k] = out[k] || { n: 0, hits: 0, close: 0, times: [] };
       out[k].n++;
-      if (l.ishod === 'pogođeno') { out[k].hits++; out[k].times.push(l.sekunde); }
+      if (l.ishod === 'pogođeno') out[k].hits++;
+      if (l.ishod === 'blizu') out[k].close++;
+      if (solved(l)) out[k].times.push(l.sekunde);
     });
     return out;
   };
   const byDeck = group(l => l.spil);
   const byTier = group(l => l.tezina);
 
-  const sortedHits = [...hitRows].sort((a, b) => a.sekunde - b.sekunde);
+  const sortedHits = log.filter(solved).sort((a, b) => a.sekunde - b.sekunde);
   const fastest = sortedHits.slice(0, 5);
   const slowest = sortedHits.slice(-5).reverse();
 
@@ -1359,7 +1555,7 @@ function renderStatistika() {
   log.forEach(l => {
     perTerm[l.pojam] = perTerm[l.pojam] || { played: 0, skipped: 0, deck: l.spil };
     perTerm[l.pojam].played++;
-    if (l.ishod === 'preskočeno') perTerm[l.pojam].skipped++;
+    if (l.ishod === 'promašeno' || l.ishod === 'preskočeno') perTerm[l.pojam].skipped++;
   });
   const skippedTerms = Object.entries(perTerm)
     .filter(([, v]) => v.skipped > 0)
@@ -1383,7 +1579,8 @@ function renderStatistika() {
   el.innerHTML = `
     <div class="stat-summary">
       <div class="stat-card"><div class="val">${total}</div><div class="lbl">kartica<br>u sesiji</div></div>
-      <div class="stat-card"><div class="val">${pct}%</div><div class="lbl">pogođeno</div></div>
+      <div class="stat-card"><div class="val">${pct}%</div><div class="lbl">uspjesnost<br>(blizu = 1/2)</div></div>
+      <div class="stat-card"><div class="val">${closeRows.length}</div><div class="lbl">puta<br>„blizu“</div></div>
       <div class="stat-card"><div class="val">${session.games}</div><div class="lbl">odigranih<br>partija</div></div>
     </div>
 
@@ -1400,7 +1597,7 @@ function renderStatistika() {
       <h4>Po špilu</h4>
       <div class="stat-list">
         ${rowsHtml(Object.entries(byDeck).sort((a, b) => b[1].n - a[1].n), ([d, v]) =>
-          `<div class="row"><span class="k">${DECK_LABEL[d]}</span><span class="v">${v.n}× · ${Math.round(v.hits / v.n * 100)}% · ${avg(v.times)}</span></div>`)}
+          `<div class="row"><span class="k">${DECK_LABEL[d]}</span><span class="v">${v.n}× · ${Math.round((v.hits + v.close * 0.5) / v.n * 100)}% · ${avg(v.times)}</span></div>`)}
       </div>
       <div class="stat-note">broj izvlačenja · % pogođenih · prosječno vrijeme pogođenih</div>
     </div>
@@ -1409,7 +1606,7 @@ function renderStatistika() {
       <h4>Po težini</h4>
       <div class="stat-list">
         ${rowsHtml(Object.entries(byTier).sort((a, b) => a[0] - b[0]), ([t, v]) =>
-          `<div class="row"><span class="k">${'★'.repeat(t)}</span><span class="v">${v.n}× · ${Math.round(v.hits / v.n * 100)}% · ${avg(v.times)}</span></div>`)}
+          `<div class="row"><span class="k">${'★'.repeat(t)}</span><span class="v">${v.n}× · ${Math.round((v.hits + v.close * 0.5) / v.n * 100)}% · ${avg(v.times)}</span></div>`)}
       </div>
       <div class="stat-note">Ako je % pogođenih na ★★★ blizu onom na ★, težine su preslabo razdvojene — igračima se uvijek isplati birati najtežu karticu.</div>
     </div>
@@ -1431,13 +1628,13 @@ function renderStatistika() {
     </div>
 
     <div class="stat-section">
-      <h4>Preskočeni pojmovi (${skippedTerms.length}) — kandidati za izbacivanje</h4>
+      <h4>Promašeni pojmovi (${skippedTerms.length}) — kandidati za izbacivanje</h4>
       <div class="stat-list">
         ${skippedTerms.length ? rowsHtml(skippedTerms, ([term, v]) =>
             `<div class="row"><span class="k">${escapeHtml(term)}</span><span class="v">${v.skipped}/${v.played} · ${DECK_LABEL[v.deck]}</span></div>`)
-          : '<div class="empty-note">Nijedna kartica nije preskočena 🎉</div>'}
+          : '<div class="empty-note">Nijedna kartica nije promašena 🎉</div>'}
       </div>
-      <div class="stat-note">preskočeno / ukupno odigrano</div>
+      <div class="stat-note">promašeno / ukupno odigrano</div>
     </div>
 
     <div class="stat-section">
@@ -1489,6 +1686,11 @@ function showToast(msg) {
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => toast.classList.remove('show'), 2200);
 }
+
+/* ═══════════════════════════ START ═══════════════════════════ */
+// Naslovni ekran je u HTML-u već aktivan, pa ga goScreen() nikad ne dotakne pri
+// prvom učitavanju — bez ovoga se obiteljski rekord ne bi prikazao.
+renderNaslovna();
 </script>
 </body>
 </html>
