@@ -99,7 +99,11 @@
   .option-btn.selected { border-color: var(--accent); background: rgba(242,233,59,0.15); }
   .option-btn .opt-sub { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-top: 2px; }
   .option-btn.selected .opt-sub { color: #EDE9B0; }
-  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 2px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 6px 2px; }
+  .toggle-row > span { flex: 1; min-width: 0; }
+  /* .opt-sub je inace stiliziran samo unutar .option-btn — bez ovoga se
+     podnaslov zalijepi uz naslov prekidaca. */
+  .toggle-row .opt-sub { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-top: 3px; line-height: 1.35; }
   .switch { width: 50px; height: 28px; border-radius: 20px; background: rgba(255,255,255,0.2); position: relative; flex-shrink: 0; }
   .switch.on { background: var(--accent); }
   .switch .knob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .15s; }
@@ -171,6 +175,7 @@
   .ritual .shout { color: var(--accent); display: block; font-size: clamp(24px, 8vw, 32px); margin-top: 4px; }
 
   /* ── Zeton / Tko je ovo ── */
+  #screen-teska { align-items: center; justify-content: center; text-align: center; gap: 14px; }
   #screen-zeton, #screen-tkojeovo { align-items: center; justify-content: center; text-align: center; gap: 16px; }
   .pick-title { font-size: clamp(19px, 5.6vw, 24px); font-weight: 800; max-width: 320px; line-height: 1.3; }
   .pick-sub { font-size: 13px; color: var(--text-dim); max-width: 300px; line-height: 1.4; }
@@ -265,6 +270,11 @@
     </div>
 
     <div class="field-group">
+      <div class="field-label">Dob igrača</div>
+      <div class="option-row" id="dob-options"></div>
+    </div>
+
+    <div class="field-group">
       <div class="field-label" id="players-label">Tko igra</div>
       <div class="stepper">
         <button onclick="changeCount(-1)" aria-label="Manje">−</button>
@@ -285,6 +295,11 @@
     <div class="toggle-row">
       <span style="font-size:15px; font-weight:700;">„Tko je ovo od nas?“<span class="opt-sub">Nakon pogotka svi pokažu prstom. Nikad na teškim pojmovima.</span></span>
       <div class="switch" id="tko-toggle" onclick="toggleTkoJeOvo()"></div>
+    </div>
+
+    <div class="toggle-row">
+      <span style="font-size:15px; font-weight:700;">Teške teme<span class="opt-sub">Rastava, isključivanje, izdaja povjerenja. Uključuje odrasla osoba.</span></span>
+      <div class="switch" id="teske-toggle" onclick="toggleTeskeTeme()"></div>
     </div>
 
     <button class="btn btn-wide" onclick="startSnop()">KRENI</button>
@@ -328,6 +343,7 @@
         <button class="btn btn-close" onclick="judge('blizu')">BLIZU</button>
         <button class="btn btn-miss" onclick="judge('nismo')">NISMO</button>
       </div>
+      <button class="btn btn-outline btn-small" id="safety-skip" style="display:none;" onclick="safetySkip()">PRESKAČEM OVU KARTICU</button>
       <div class="judge-hint">Ti presuđuješ. BLIZU je za odgovor koji je pogodio osjećaj, ali ne baš tu riječ.</div>
     </div>
   </div>
@@ -370,6 +386,14 @@
       <button class="btn" onclick="commitCard()">DALJE</button>
     </div>
     <button class="btn btn-outline btn-wide btn-small" id="tko-skip" onclick="skipTkoJeOvo()">PRESKAČEMO</button>
+  </div>
+
+  <!-- 5d. OBAVEZNI REDAK NAKON TEŠKE KARTICE -->
+  <div id="screen-teska" class="screen">
+    <div class="pick-title">Ovakve stvari su teške.</div>
+    <div class="pick-sub" style="font-size:16px;">Kome se možeš javiti kad ti se dogodi?</div>
+    <div class="pick-sub">Nema točnog odgovora — dovoljno je da svatko kaže jedno ime.</div>
+    <button class="btn" onclick="commitCard()">DALJE</button>
   </div>
 
   <!-- 6. REZULTAT SNOPA -->
@@ -573,8 +597,8 @@ const CARD_DB = [
   mk("težina u prsima", "TJELESNE", 3, ["O","C"]),
   mk("praznina u želucu", "TJELESNE", 3, ["O","C"]),
   mk("toplina koja se širi prsima", "TJELESNE", 3, ["O","C"]),
-  mk("napetost u ramenima koje ne primjećuješ dok te netko ne upozori", "TJELESNE", 3, ["O","P"]),
-  mk("osjećaj laganosti u cijelom tijelu", "TJELESNE", 3, ["O","P"]),
+  mk("napetost u ramenima", "TJELESNE", 3, ["O","P"]),
+  mk("osjećaj laganosti u tijelu", "TJELESNE", 3, ["O","P"]),
   mk("disanje koje se samo produbi kad se smiriš", "TJELESNE", 3, ["O","P"]),
   mk("umor koji ne dolazi od napora", "TJELESNE", 3, ["O"]),
   mk("osjećaj da ti tijelo reagira prije nego što shvatiš zašto", "TJELESNE", 3, ["O"]),
@@ -666,7 +690,7 @@ const CARD_DB = [
   mk("priznanje da je netko drugi bio u pravu", "PONASANJA", 3, ["O","P"]),
   mk("javno zauzimanje za nekoga", "PONASANJA", 3, ["O","P"]),
   mk("provjera kako je netko nakon teškog dana", "PONASANJA", 3, ["O","P"]),
-  mk("davanje prostora nekome kome je previše svega", "PONASANJA", 3, ["O","P"]),
+  mk("davanje prostora", "PONASANJA", 3, ["O","P"]),
   mk("manipuliranje osjećajima", "PONASANJA", 3, ["O"]),
   mk("projiciranje ljutnje na krivu osobu", "PONASANJA", 3, ["O"]),
   mk("preuzimanje odgovornosti", "PONASANJA", 3, ["O"]),
@@ -888,8 +912,8 @@ const POJASNJENJA = {
   "težina u prsima": "Osjećaj pritiska u prsima, kao da nešto pritišće. Od tuge ili brige.",
   "praznina u želucu": "Osjećaj šupljine u trbuhu. Od straha ili loše vijesti.",
   "toplina koja se širi prsima": "Ugodan topao osjećaj u prsima. Od ljubavi, ganuća ili ponosa.",
-  "napetost u ramenima koje ne primjećuješ dok te netko ne upozori": "Ramena se sama dignu i stegnu od stresa, a ti to ne osjetiš dok ti netko ne kaže.",
-  "osjećaj laganosti u cijelom tijelu": "Kad ti je tijelo lako, kao da lebdiš. Nakon olakšanja ili velike sreće.",
+  "napetost u ramenima": "Ramena se sama dignu i stegnu od stresa, a ti to ne osjetiš dok ti netko ne kaže.",
+  "osjećaj laganosti u tijelu": "Kad ti je tijelo lako, kao da lebdiš. Nakon olakšanja ili velike sreće.",
   "disanje koje se samo produbi kad se smiriš": "Kad se opustiš, dah postane dublji i sporiji bez da to namjerno radiš.",
   "umor koji ne dolazi od napora": "Iscrpljenost iako se nisi fizički trudio. Dolazi od briga i osjećaja.",
   "osjećaj da ti tijelo reagira prije nego što shvatiš zašto": "Kad ti srce ubrza ili se stegneš, a tek poslije shvatiš što te uznemirilo.",
@@ -975,7 +999,7 @@ const POJASNJENJA = {
   "priznanje da je netko drugi bio u pravu": "Kad kažeš „imao si pravo“, iako je neugodno.",
   "javno zauzimanje za nekoga": "Kad pred svima staneš u nečiju obranu.",
   "provjera kako je netko nakon teškog dana": "Kad se sjetiš pitati kako je nekome prošao težak dan.",
-  "davanje prostora nekome kome je previše svega": "Kad shvatiš da netko treba mir pa ga pustiš.",
+  "davanje prostora": "Kad shvatiš da netko treba mir pa ga pustiš.",
   "manipuliranje osjećajima": "Kad tuđe osjećaje koristiš da dobiješ što želiš.",
   "projiciranje ljutnje na krivu osobu": "Kad se iskališ na nekome tko nije kriv.",
   "preuzimanje odgovornosti": "Kad kažeš „to je moja odgovornost“ i to i napraviš.",
@@ -1032,6 +1056,159 @@ const POJASNJENJA = {
 const DECK_LABEL = { EMOCIJE: 'EMOCIJE', TJELESNE: 'TJELESNE REAKCIJE', PONASANJA: 'PONAŠANJA', SITUACIJE: 'SITUACIJE' };
 const DECK_COLOR = { EMOCIJE: 'var(--emocije)', TJELESNE: 'var(--tjelesne)', PONASANJA: 'var(--ponasanja)', SITUACIJE: 'var(--situacije)' };
 
+/* ═══════════════════════════ RAZVOJNE FAZE ═══════════════════════════ */
+// Faza nije skala apstraktnosti rijeci nego razvojna faza razumijevanja
+// emocija po Pons, Harris i de Rosnay (2004) — vidi docs/analiza-psiholoska.md,
+// tocka 5. Faza 1 = vanjska (3-5 g.), 2 = mentalna (5-7 g.), 3 = reflektivna (8-11 g.).
+const FAZA_1 = new Set([
+  "sreća", "tuga", "ljutnja",
+  "strah", "iznenađenje", "gađenje",
+  "umor", "dosada", "uzbuđenje",
+  "znatiželja", "ljubav", "nježnost",
+  "smirenost", "razigranost", "nestrpljivost",
+  "zbunjenost", "ugoda", "toplina",
+  "drhtanje", "crvenjenje", "znojni dlanovi",
+  "ubrzano lupanje srca", "naježena koža", "suze u očima",
+  "klecanje koljena", "otvorena usta od čuda", "uzdah olakšanja",
+  "pokrivanje očiju rukama", "stisnute šake", "vrućina u licu",
+  "nemirne noge", "zagrljaj", "tješenje",
+  "isprika", "dijeljenje", "pomaganje",
+  "smijanje", "plakanje", "durenje",
+  "mrštenje", "slijeganje ramenima", "pozdravljanje",
+  "čestitanje", "zahvaljivanje", "darivanje",
+  "pljeskanje", "„daj pet“", "držanje za ruku",
+  "nasmijavanje nekoga", "skakanje od veselja", "ples od sreće",
+  "smijeh do suza", "pjevušenje", "namigivanje",
+  "tapšanje po ramenu", "posuđivanje stvari", "ustupanje mjesta",
+  "prevrtanje očima", "cmizdrenje", "Srušio ti se toranj od kockica koji si gradio cijelo popodne.",
+  "Netko ti je uzeo igračku bez pitanja.", "Dobio si poklon koji si dugo želio.", "Pronašao si izgubljenu igračku ispod kreveta.",
+  "Moraš pjevati pred cijelim razredom.", "Uspio si nešto što dugo nisi mogao.", "Netko se smije tvojoj frizuri.",
+  "Gubiš u igri treći put zaredom.",
+]);
+
+const FAZA_3 = new Set([
+  "krivnja", "prijezir", "melankolija",
+  "nostalgija", "zanos", "strahopoštovanje",
+  "ranjivost", "otuđenost", "praznina",
+  "sjeta", "sumnja u sebe", "tjeskoba",
+  "nadahnuće", "spokoj", "blaženstvo",
+  "osjećaj slobode", "apatija", "samosažaljenje",
+  "ambivalentnost", "gorčina", "poniznost",
+  "ispunjenost", "zluradost", "pomirenost sa sudbinom",
+  "zahvalnost pomiješana s tugom", "sram zbog tuđeg ponašanja", "sreća zbog tuđeg uspjeha",
+  "osjećaj smisla", "osjećaj da te netko stvarno razumije", "predanost",
+  "ponos pomiješan s ganućem", "samopouzdanje", "ganutost",
+  "euforija", "dostojanstvo", "osjećaj krivnje bez razloga",
+  "očaj", "preplavljenost", "tuga za nekim tko je otišao",
+  "težina u prsima", "praznina u želucu", "toplina koja se širi prsima",
+  "napetost u ramenima", "osjećaj laganosti u tijelu", "umor koji ne dolazi od napora",
+  "postavljanje granica", "pasivna agresija", "potiskivanje emocija",
+  "pretvaranje tuge u šalu", "slušanje bez davanja savjeta", "prihvaćanje komplimenta",
+  "manipuliranje osjećajima", "projiciranje ljutnje na krivu osobu", "preuzimanje odgovornosti",
+  "opraštanje", "traženje tuđeg mišljenja", "iskrena isprika bez „ali“",
+  "davanje podrške bez riječi", "davanje prostora", "isprika koju ne misliš ozbiljno",
+  "okrivljavanje drugoga", "kompromis", "kritika",
+  "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.", "Dobio si što si želio i shvatio da te ne veseli.", "Netko ti se ispričao poslije mnogo godina.",
+  "Morao si izabrati između dva prijatelja.", "Shvatio si da si u svađi zapravo ti bio u krivu.", "Netko koga voliš donosi odluku koju smatraš pogrešnom.",
+  "Vraćaš se na mjesto iz djetinjstva i sve je drugačije.", "Ponosan si na nekoga više nego na sebe.", "Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.",
+  "Oprostio si nekome, ali odnos više nije isti.", "Pobijedio si na natjecanju, a najbolji prijatelj je izgubio.", "Moraš se ispričati, a misliš da nisi kriv.",
+]);
+
+/* ═══════════════════════════ TEMPO ═══════════════════════════ */
+// Snop se slaze po ritmu, ne nasumicno: tri duboke kartice zaredom ubiju partiju.
+const TEMPO_BRZO = new Set([
+  "gađenje", "iznenađenje", "uzbuđenje",
+  "dosada", "umor", "nestrpljivost",
+  "razigranost", "ljutnja", "strah",
+  "sreća", "drhtanje", "crvenjenje",
+  "naježena koža", "klecanje koljena", "otvorena usta od čuda",
+  "pokrivanje očiju rukama", "uzdah olakšanja", "leptirići u trbuhu",
+  "nemirne noge", "grickanje noktiju", "stisnute šake",
+  "ubrzano lupanje srca", "znojni dlanovi", "zagrljaj",
+  "„daj pet“", "pljeskanje", "pozdravljanje",
+  "durenje", "mrštenje", "slijeganje ramenima",
+  "hvalisanje", "prevrtanje očima", "skakanje od veselja",
+  "ples od sreće", "smijeh do suza", "pjevušenje",
+  "namigivanje", "tapšanje po ramenu", "smijanje",
+  "plakanje", "cmizdrenje", "ruganje",
+  "zadirkivanje", "prekidanje drugoga", "ignoriranje",
+  "darivanje", "držanje za ruku", "nasmijavanje nekoga",
+]);
+
+const TEMPO_DUBOKO = new Set([
+  "osjećaj smisla", "pomirenost sa sudbinom", "ranjivost",
+  "ispunjenost", "praznina", "otuđenost",
+  "melankolija", "sjeta", "nostalgija",
+  "ambivalentnost", "zahvalnost pomiješana s tugom", "ponos pomiješan s ganućem",
+  "osjećaj da te netko stvarno razumije", "spokoj", "blaženstvo",
+  "osjećaj slobode", "sumnja u sebe", "samosažaljenje",
+  "gorčina", "tjeskoba", "apatija",
+  "očaj", "preplavljenost", "tuga za nekim tko je otišao",
+  "osjećaj krivnje bez razloga", "dostojanstvo", "poniznost",
+  "predanost", "strahopoštovanje", "nadahnuće",
+  "zanos", "težina u prsima", "praznina u želucu",
+  "toplina koja se širi prsima", "umor koji ne dolazi od napora", "napetost u ramenima",
+  "postavljanje granica", "potiskivanje emocija", "pretvaranje tuge u šalu",
+  "slušanje bez davanja savjeta", "prihvaćanje komplimenta", "manipuliranje osjećajima",
+  "projiciranje ljutnje na krivu osobu", "preuzimanje odgovornosti", "opraštanje",
+  "iskrena isprika bez „ali“", "davanje podrške bez riječi", "davanje prostora",
+  "pasivna agresija", "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.", "Dobio si što si želio i shvatio da te ne veseli.",
+  "Netko ti se ispričao poslije mnogo godina.", "Morao si izabrati između dva prijatelja.", "Vraćaš se na mjesto iz djetinjstva i sve je drugačije.",
+  "Netko te pohvalio za lako, a nitko ne vidi ono što ti je bilo teško.", "Oprostio si nekome, ali odnos više nije isti.",
+]);
+
+/* ═══════════════════════════ SINONIMNI DVOJNICI ═══════════════════════════ */
+// Zadrzan je po jedan pojam iz svake skupine iz analiza-kartica.md. Kartice
+// ostaju u datoteci radi zapisa, ali se vise ne izvlace.
+const IZBACENE = new Set([
+  "radost", "veselje",
+  "vedrina", "briga",
+  "prkos", "anksioznost",
+  "ogorčenost", "dirnutost",
+  "unutarnji mir", "zanesenost",
+  "potpuna uronjenost u ono što radiš", "veselo iščekivanje",
+  "uznemirenost", "ugodno iznenađenje",
+  "prihvaćenost", "povezanost",
+  "osjećaj dobrodošlice", "živahnost",
+  "energičnost", "opuštenost",
+  "bezbrižnost", "ushićenje",
+  "razdraganost", "slušanje bez prekidanja",
+  "pohvala", "smijeh koji ne možeš zaustaviti",
+  "skakanje na mjestu", "žal",
+  "veseljenje tuđem uspjehu", "empatija",
+  "optimizam", "privrženost",
+  "motiviranost", "lakoća",
+  "pravljenje da te nije briga", "ravnodušnost",
+  "smirivanje druge osobe", "navijanje za nekoga",
+  "javno zauzimanje za nekoga", "priznanje da je netko drugi bio u pravu",
+  "provjera kako je netko nakon teškog dana", "puštanje drugoga da bude prvi",
+  "zaštićenost", "disanje koje se samo produbi kad se smiriš",
+  "osjećaj da ti tijelo reagira prije nego što shvatiš zašto",
+]);
+
+/* ═══════════════════════════ TESKE TEME ═══════════════════════════ */
+// Iza prekidaca u postavkama, po zadanom iskljuceno. Djetetu koje ovo
+// trenutno prozivljava kartica nije igra nego okidac.
+const TESKE_TEME = new Set([
+  "Roditelji se svađaju, a ti to čuješ iz sobe.",
+  "Svi su pozvani na rođendan osim tebe.",
+  "Prijatelji su se počeli družiti bez tebe.",
+  "Prijatelj ti je otkrio tajnu koju si mu povjerio.",
+  "Netko je proširio neistinu o tebi.",
+  "Prijatelj se odselio u drugi grad.",
+  "Netko se smije tvojoj frizuri.",
+  "Prijatelj ti stalno otkazuje, ali kad njemu nešto treba — tu si.",
+  "Oprostio si nekome, ali odnos više nije isti.",
+  "Netko koga voliš donosi odluku koju smatraš pogrešnom.",
+]);
+
+CARD_DB.forEach(c => {
+  c.faza = FAZA_3.has(c.term) ? 3 : FAZA_1.has(c.term) ? 1 : 2;
+  c.tempo = TEMPO_BRZO.has(c.term) ? 'brzo' : TEMPO_DUBOKO.has(c.term) ? 'duboko' : 'normalno';
+  c.iskljucena = IZBACENE.has(c.term);
+  c.teska = TESKE_TEME.has(c.term);
+});
+
 /* ═══════════════════════════ OGRANIČENJA IZVEDBE ═══════════════════════════ */
 // Izvođač uz pojam dobiva i način izvedbe. Metafora ("kao vremenska prognoza")
 // je istovremeno izvor smijeha i način učenja nijanse, pa se zabava i cilj
@@ -1070,7 +1247,7 @@ const NESIGURNO = new Set([
   // — tjelesne reakcije koje znače nelagodu —
   'knedla u grlu','čvor u želucu','hladan znoj','stisnuta čeljust','plitko i brzo disanje',
   'težina u prsima','praznina u želucu','prevrtanje u krevetu bez sna',
-  'napetost u ramenima koje ne primjećuješ dok te netko ne upozori',
+  'napetost u ramenima',
   'umor koji ne dolazi od napora','osjećaj da ti tijelo reagira prije nego što shvatiš zašto',
   // — ponašanja koja pripisuju moralnu manu —
   'hvalisanje','prekidanje drugoga','ignoriranje','zadirkivanje','ruganje','kritika',
@@ -1110,6 +1287,18 @@ const RUNDE = [
 
 const BODOVI = { pogodili: 1, blizu: 0.5, nismo: 0 };
 
+// Filter bira razvojnu fazu, ne apstraktnost rijeci.
+const DOBNI_FILTERI = [
+  { key: '4-6', label: '4–6 godina', sub: 'Vanjska faza — izraz i emocija iz situacije', faze: [1] },
+  { key: '6-8', label: '6–8 godina', sub: 'Dodaje mentalnu fazu — želja, uvjerenje, skrivanje osjećaja', faze: [1, 2] },
+  { key: '9+',  label: '9+ godina',  sub: 'Dodaje reflektivnu fazu — miješani i moralni osjećaji', faze: [1, 2, 3] },
+];
+
+// Nasumicno izvlacenje cesto da tri duboke kartice zaredom; ritam je razlika
+// izmedu zabavne i naporne partije.
+const RITAM = ['brzo','brzo','normalno','duboko','brzo','normalno',
+               'brzo','duboko','normalno','brzo','normalno','duboko'];
+
 /* ═══════════════════════════ OBITELJSKI REKORD ═══════════════════════════ */
 // localStorage je neobavezan: ako je blokiran, igra radi bez rekorda.
 const REKORD_KEY = '@sto_ti_je_rekord';
@@ -1130,8 +1319,10 @@ let session = {
   lastNames: ['Igrač 1', 'Igrač 2', 'Igrač 3', 'Igrač 4', 'Igrač 5', 'Igrač 6', 'Igrač 7', 'Igrač 8'],
   lastCount: 3,
   lastMode: 'coop',
+  lastDob: '6-8',
   soundEnabled: true,
   tkoJeOvoOn: true,
+  teskeTemeOn: false,
 };
 
 /* ═══════════════════════════ STANJE ═══════════════════════════ */
@@ -1142,6 +1333,7 @@ function freshState() {
   return {
     screen: 'naslovna',
     mod: session.lastMode,
+    dob: session.lastDob,
     count: session.lastCount,
     names: [...session.lastNames],
     actors: [],          // igrači (coop) ili timovi (eskalacija)
@@ -1166,6 +1358,7 @@ function freshState() {
 state = freshState();
 
 function modeDef() { return MODES.find(m => m.key === state.mod); }
+function allowedFaze() { return DOBNI_FILTERI.find(f => f.key === state.dob).faze; }
 function isEsk() { return state.mod === 'eskalacija'; }
 function roundDef() { return RUNDE[state.roundIndex]; }
 
@@ -1217,6 +1410,16 @@ function renderPostavke() {
     modeWrap.appendChild(btn);
   });
 
+  const dobWrap = document.getElementById('dob-options');
+  dobWrap.innerHTML = '';
+  DOBNI_FILTERI.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn' + (state.dob === f.key ? ' selected' : '');
+    btn.innerHTML = `${f.label}<span class="opt-sub">${f.sub}</span>`;
+    btn.onclick = () => { state.dob = f.key; renderPostavke(); };
+    dobWrap.appendChild(btn);
+  });
+
   const def = modeDef();
   document.getElementById('players-label').textContent = def.unit;
   document.getElementById('count-display').textContent = state.count;
@@ -1242,6 +1445,12 @@ function renderPostavke() {
 
   document.getElementById('sound-toggle').classList.toggle('on', session.soundEnabled);
   document.getElementById('tko-toggle').classList.toggle('on', session.tkoJeOvoOn);
+  document.getElementById('teske-toggle').classList.toggle('on', session.teskeTemeOn);
+}
+
+function toggleTeskeTeme() {
+  session.teskeTemeOn = !session.teskeTemeOn;
+  renderPostavke();
 }
 
 function toggleTkoJeOvo() {
@@ -1270,16 +1479,35 @@ function shuffle(arr) {
   return a;
 }
 
+function snopPool() {
+  const faze = allowedFaze();
+  let pool = CARD_DB.filter(c => !c.iskljucena && faze.includes(c.faza));
+  // Teske teme ulaze u igru tek kad ih odrasla osoba svjesno ukljuci.
+  if (!session.teskeTemeOn) pool = pool.filter(c => !c.teska);
+  // U eskalaciji isti pojam mora izdrzati i opis i pantomimu.
+  if (isEsk()) pool = pool.filter(c => c.channels.includes('O') && c.channels.includes('P'));
+  return pool;
+}
+
 function buildSnop(n) {
-  // U eskalaciji isti pojam mora izdržati i opis i pantomimu, pa u snop
-  // ulaze samo kartice koje podržavaju oba kanala.
-  const pool = isEsk()
-    ? CARD_DB.filter(c => c.channels.includes('O') && c.channels.includes('P'))
-    : CARD_DB.slice();
-  const fresh = pool.filter(c => !c.everUsed);
-  const chosen = fresh.length >= n
-    ? shuffle(fresh).slice(0, n)
-    : shuffle(pool).slice(0, n);   // špil potrošen u sesiji — dopusti ponavljanje
+  const pool = snopPool();
+  const svjeze = pool.filter(c => !c.everUsed);
+  const izvor = svjeze.length >= n ? svjeze : pool;   // spil potrosen u sesiji
+
+  const poTempu = { brzo: [], normalno: [], duboko: [] };
+  shuffle(izvor).forEach(c => poTempu[c.tempo].push(c));
+
+  const uzeto = new Set();
+  const chosen = [];
+  for (let i = 0; i < n; i++) {
+    const zeljeni = RITAM[i % RITAM.length];
+    // Ako trazenog tempa nema (npr. faza 1 nema dubokih kartica), uzmi bilo koju.
+    let card = poTempu[zeljeni].find(c => !uzeto.has(c))
+            || izvor.find(c => !uzeto.has(c));
+    if (!card) break;
+    uzeto.add(card);
+    chosen.push(card);
+  }
   return chosen.map(c => {
     const isRepeat = c.everUsed;
     c.everUsed = true;
@@ -1313,6 +1541,7 @@ function startSnop() {
   session.lastNames = [...state.names];
   session.lastCount = state.count;
   session.lastMode = state.mod;
+  session.lastDob = state.dob;
   session.games += 1;
 
   goScreen('predaja');
@@ -1375,7 +1604,10 @@ function revealCard() {
   };
   // Ogranicenje se dodjeljuje samo u kooperativnom modu; u eskalaciji je
   // kanal runde vec sam po sebi ogranicenje i drugo bi mu proturjecilo.
-  state.ogranicenje = isEsk() ? null : pickOgranicenje(entry.card, channel);
+  // Teske kartice ostaju bez ogranicenja: sala ili "opisi kroz nesto sto se
+  // dogodilo danas" na kartici o iskljucivanju trazi upravo ono od cega
+  // sigurnosni prekidac cuva dijete.
+  state.ogranicenje = (isEsk() || entry.card.teska) ? null : pickOgranicenje(entry.card, channel);
   state.lastSnapshot = makeSnapshot();
 
   goScreen('kartica');
@@ -1430,6 +1662,8 @@ function renderKarticaScreen() {
     ? 'Izrazi emociju koju bi osjećao(la) u ovoj situaciji — tim pogađa EMOCIJU, ne situaciju.'
     : (isEsk() ? roundDef().hint : CHANNEL_HINT[d.channel]);
   document.getElementById('card-repeat').style.display = d.isRepeat ? 'inline-block' : 'none';
+  // Pravo na izlaz bez kazne, dostupno svima i bez objasnjenja.
+  document.getElementById('safety-skip').style.display = d.card.teska ? 'flex' : 'none';
   renderConstraint();
 }
 
@@ -1508,6 +1742,34 @@ function elapsedSeconds() {
   return Math.max(0, Math.round((Date.now() - state.revealTime) / 1000));
 }
 
+// Preskakanje teske kartice ne broji se kao promasaj: kartica se zamjenjuje
+// novom, a isti izvodac nastavlja. U logu ostaje trag radi testiranja sadrzaja.
+function safetySkip() {
+  const d = state.currentDraw;
+  if (!d || state.resolvedDrawId === d.id) return;
+  state.resolvedDrawId = d.id;
+  stopTimer();
+
+  session.log.push({
+    pojam: d.card.term, spil: d.deck, tezina: d.tier, kanal: d.channel,
+    ishod: 'sigurnosno preskočeno', sekunde: elapsedSeconds(), bonus: '',
+    potez: state.cardIndex + 1, tim: state.actors[state.performerIndex].name,
+    ponovljena: d.isRepeat ? 'da' : 'ne',
+  });
+
+  const uzeto = new Set(state.snop.map(e => e.card));
+  const zamjena = shuffle(snopPool()).find(c => !uzeto.has(c) && !c.teska);
+  if (zamjena) {
+    zamjena.everUsed = true;
+    state.snop[state.cardIndex] = { card: zamjena, isRepeat: false };
+  } else {
+    state.snop.splice(state.cardIndex, 1);   // nema zamjene — snop je krati za jednu
+  }
+  state.ogranicenje = null;
+  if (state.cardIndex >= state.snop.length) endRound();
+  else goScreen('predaja');
+}
+
 function judge(outcome) {
   stopTimer();
   state.pendingResult = { outcome, seconds: elapsedSeconds(), zeton: null, tkoOdigrano: false };
@@ -1521,6 +1783,9 @@ function judge(outcome) {
 // U eskalaciji izvodaci su timovi, pa oba ekrana — koji ciljaju na osobu —
 // preskacemo.
 function afterCard() {
+  // Teska kartica uvijek zavrsava pitanjem kome se dijete moze javiti —
+  // i nikad ne ide u zeton ni u "Tko je ovo od nas?".
+  if (state.currentDraw.card.teska) { goScreen('teska'); return; }
   if (isEsk()) { commitCard(); return; }
   const { outcome } = state.pendingResult;
   if (outcome === 'pogodili' && state.currentDraw.card.sigurno && session.tkoJeOvoOn) {
