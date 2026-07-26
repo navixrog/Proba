@@ -261,6 +261,19 @@
   .toast.show { opacity: 1; }
   .top-bar { display: flex; align-items: center; gap: 8px; }
   .top-bar h2 { font-size: 17px; margin-right: auto; }
+  /* ── Pravila ── */
+  .rules-intro {
+    background: rgba(255,255,255,.07); border-radius: 14px; padding: 14px 16px;
+    font-size: 14.5px; line-height: 1.5; color: var(--text-dim);
+  }
+  .rules-intro b { color: var(--text); }
+  .rules-card {
+    background: var(--card-bg); color: var(--card-text); border-radius: 16px;
+    padding: 14px 16px; border-left: 6px solid var(--accent);
+  }
+  .rules-card h3 { font-size: 16px; margin-bottom: 6px; }
+  .rules-card p { font-size: 14px; line-height: 1.5; }
+  .rules-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
 </style>
 </head>
 <body>
@@ -276,7 +289,46 @@
     <div class="tagline">Pogodi što mi je — prije nego što ti kažem.</div>
     <div class="record-line" id="naslovna-rekord" style="display:none;"></div>
     <button class="btn" onclick="startNewGame()">NOVA IGRA</button>
+    <button class="btn btn-outline" onclick="showPravila('naslovna')">KAKO SE IGRA</button>
     <button class="btn btn-outline btn-small" id="naslovna-stat-btn" style="display:none;" onclick="goScreen('statistika')">Statistika igranja</button>
+  </div>
+
+  <!-- 1b. PRAVILA -->
+  <div id="screen-pravila" class="screen">
+    <div class="top-bar"><h2>Kako se igra</h2></div>
+    <div class="rules-scroll">
+      <div class="rules-intro">
+        Jedan uređaj kruži oko stola. <b>Tko ga drži — izvodi; svi ostali pogađaju.</b>
+        Na kraju izvođač presuđuje: <b>POGODILI</b> (bod), <b>BLIZU</b> (pola boda — pogodili
+        ste osjećaj, ali ne baš tu riječ) ili <b>NISMO</b>.
+        Uz pojam ponekad dođe i <b>ograničenje izvedbe</b> — način na koji ga moraš prikazati.
+        Ono je izvor smijeha, ne dodatna kazna, i svaki izvođač ga smije jednom zamijeniti.
+        Kartice su podijeljene po dobi, pa najmlađi ne dobivaju pojmove koje još ne mogu imenovati.
+      </div>
+      <div class="rules-card">
+        <h3>Zajedno protiv snopa</h3>
+        <p>Svi ste jedan tim protiv špila od 12 kartica. Izvođač se mijenja svaku karticu, a
+        svi ostali pogađaju naglas u isto vrijeme — nitko ne čeka red. Bodovi se zbrajaju za
+        cijelu grupu i uspoređuju s obiteljskim rekordom. Povremeno nakon pogotka slijedi
+        „Tko je ovo od nas?“ — svi u isti čas pokažu prstom. Najbolji početak ako igrate prvi put.</p>
+      </div>
+      <div class="rules-card">
+        <h3>Eskalacija</h3>
+        <p>Isti špil od 10 kartica prolazi tri puta, svaki put s užim kanalom: prva runda
+        opisuješ riječima, druga smiješ izgovoriti točno jednu riječ, treća samo pantomima bez
+        glasa. Svatko igra za sebe i skuplja vlastite bodove. Druga i treća runda idu brže jer
+        svi pamte kartice iz prve — u tome je i vic. Pobjeđuje onaj s najviše bodova nakon
+        tri runde.</p>
+      </div>
+      <div class="rules-card">
+        <h3>Dvoboj (tim protiv tima)</h3>
+        <p>Dva tima, 12 kartica, tri runde. Dok jedan tim izvodi i pogađa, drugi tiho zapisuje
+        svoju pretpostavku — bez dobacivanja. Ako tim koji izvodi ne pogodi, protivnik naglas
+        čita što je zapisao i krade bod ako je pogodio. Ukradeni bod vrijedi pola ako tim koji
+        krade već vodi. Zato nitko ne dosađuje dok nije na redu.</p>
+      </div>
+    </div>
+    <button class="btn btn-wide" onclick="closePravila()">NATRAG</button>
   </div>
 
   <!-- 2. POSTAVKE -->
@@ -322,6 +374,7 @@
     </div>
 
     <button class="btn btn-wide" onclick="startSnop()">KRENI</button>
+    <button class="btn btn-outline btn-wide btn-small" onclick="showPravila('postavke')">Kako se igra</button>
   </div>
 
   <!-- 3. PREDAJA UREĐAJA -->
@@ -1482,6 +1535,7 @@ function freshState() {
     pendingResult: null,
     logStart: session.log.length,
     revansRuke: 0,
+    mehBrojac: 0, mehPrag: novRazmak(),        // vidi okidaMehaniku()
     wakeLockRef: null,
   };
 }
@@ -1509,6 +1563,13 @@ function goScreen(name) {
   if (name === 'rezultat') renderRezultat();
   if (name === 'statistika') renderStatistika();
 }
+
+/* ═══════════════════════════ PRAVILA ═══════════════════════════ */
+// Ekran je statican, pa mu ne treba render — pamti se samo odakle se doslo,
+// da NATRAG vrati na naslovnu ili u postavke, ovisno gdje je korisnik stao.
+let pravilaBack = 'naslovna';
+function showPravila(from) { pravilaBack = from || 'naslovna'; goScreen('pravila'); }
+function closePravila() { goScreen(pravilaBack); }
 
 function renderNaslovna() {
   document.getElementById('naslovna-stat-btn').style.display = session.log.length ? 'flex' : 'none';
@@ -1738,12 +1799,18 @@ function revealCard() {
     channel,
     isRepeat: entry.isRepeat || (isEsk() && state.roundIndex > 0),
   };
-  // Ogranicenje se dodjeljuje samo u kooperativnom modu; u eskalaciji je
-  // kanal runde vec sam po sebi ogranicenje i drugo bi mu proturjecilo.
-  // Teske kartice ostaju bez ogranicenja: sala ili "opisi kroz nesto sto se
-  // dogodilo danas" na kartici o iskljucivanju trazi upravo ono od cega
-  // sigurnosni prekidac cuva dijete.
-  state.ogranicenje = (isEsk() || entry.card.teska) ? null : pickOgranicenje(entry.card, channel);
+  // Ogranicenja su prije bila iskljucena iz svih tri-rundnih modova, pa je
+  // eskalacija ostala bez glavnog izvora smijeha. Iskljucenje je bilo potrebno
+  // samo u rundi dva: "samo jedna rijec" ne trpi jos jedno pravilo povrh sebe.
+  // U rundama jedan i tri ogranicenje se bira iz skupine koja odgovara kanalu
+  // te runde (O, pa P).
+  // Teske kartice ostaju bez ogranicenja u svakom modu: sala ili "opisi kroz
+  // nesto sto se dogodilo danas" na kartici o iskljucivanju trazi upravo ono
+  // od cega sigurnosni prekidac cuva dijete.
+  state.ogranicenje = entry.card.teska ? null
+    : imaRunde()
+      ? (state.roundIndex === 1 ? null : pickOgranicenje(entry.card, roundDef().channel))
+      : pickOgranicenje(entry.card, channel);
   state.lastSnapshot = makeSnapshot();
 
   goScreen('kartica');
@@ -1823,11 +1890,22 @@ function renderKarticaScreen() {
 }
 
 /* ═══════════════════════════ TIMER ═══════════════════════════ */
-const TURN_SECONDS = 60;
+const TURN_SECONDS = 60;                     // kooperativni mod — jedna runda
+// U rundi "samo jedna rijec" pojam padne u pet sekundi ili nikad, pa je 60 s
+// znacilo cetrdeset sekundi mrtve tisine. Pantomima treba manje od opisa, ali
+// vise od jedne rijeci.
+const TURN_SECONDS_RUNDA = [60, 25, 45];
+// Mladjoj djeci treba vise vremena i za izvedbu i za pogadjanje.
+const DOB_BONUS_SEKUNDI = 30;
+
+function turnSeconds() {
+  const base = imaRunde() ? TURN_SECONDS_RUNDA[state.roundIndex] : TURN_SECONDS;
+  return base + (state.dob === '4-6' ? DOB_BONUS_SEKUNDI : 0);
+}
 
 function startTimer() {
   state.revealTime = Date.now();
-  state.deadline = state.revealTime + TURN_SECONDS * 1000;
+  state.deadline = state.revealTime + turnSeconds() * 1000;
   state.lastBeepAt = null;
   clearInterval(state.timerInterval);
   tickTimer();
@@ -1973,11 +2051,31 @@ function judge(outcome) {
 // sigurnoj kartici vodi u "Tko je ovo od nas?", sve ostalo u dodjelu zetona.
 // U eskalaciji izvodaci su timovi, pa oba ekrana — koji ciljaju na osobu —
 // preskacemo.
+// Mehanika se okida kad brojac dosegne prag, a prag je 2-4 pa je prosjek
+// svaka treca kartica. Cisti random moze pet puta zaredom ne dati nista ili
+// dati svaki put; ovako je razmak uvijek u tom rasponu, a mehanika ostaje
+// iznenadjenje umjesto administracije.
+function novRazmak() { return 2 + Math.floor(Math.random() * 3); }
+
+function okidaMehaniku(brojacKljuc, pragKljuc) {
+  state[brojacKljuc] += 1;
+  if (state[brojacKljuc] < state[pragKljuc]) return false;
+  state[brojacKljuc] = 0;
+  state[pragKljuc] = novRazmak();
+  return true;
+}
+
 function afterCard() {
   // Teska kartica uvijek zavrsava pitanjem kome se dijete moze javiti —
   // i nikad ne ide u zeton ni u "Tko je ovo od nas?".
   if (state.currentDraw.card.teska) { goScreen('teska'); return; }
   if (imaRunde()) { commitCard(); return; }
+  // Jedan zajednicki brojac za obje mehanike, pa ih ukupno ima otprilike na
+  // svakoj trecoj kartici. Prije se poslije svake kartice otvarao jedan od ova
+  // dva ekrana, sto je uz 12 kartica bilo do cetiri dodira po kartici.
+  if (!okidaMehaniku('mehBrojac', 'mehPrag')) { commitCard(); return; }
+  // Uvjeti koji su i prije vrijedili ostaju netaknuti: "Tko je ovo od nas?"
+  // i dalje ide samo na pogodak, samo na sigurnu karticu i samo uz prekidac.
   const { outcome } = state.pendingResult;
   if (outcome === 'pogodili' && state.currentDraw.card.sigurno && session.tkoJeOvoOn) {
     startTkoJeOvo();
@@ -2069,8 +2167,7 @@ function showTkoTitula(actor) {
 function skipTkoJeOvo() {
   clearInterval(tkoTimer);
   state.pendingResult.tkoOdigrano = false;
-  renderZeton();
-  goScreen('zeton');
+  commitCard();   // "preskacemo" znaci sljedeca kartica, ne drugi ekran
 }
 
 /* ═══════════════════════════ POJAŠNJENJE POJMA ═══════════════════════════ */
