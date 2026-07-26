@@ -152,6 +152,38 @@
   .exp-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; opacity: .55; }
   .exp-text { font-size: clamp(15px, 4.4vw, 18px); line-height: 1.45; font-weight: 600; }
 
+  /* ── Ogranicenje izvedbe ── */
+  .constraint-box {
+    background: rgba(29,47,163,0.07); border: 2px dashed rgba(29,47,163,0.3);
+    border-radius: 14px; padding: 10px 12px; width: 100%;
+    display: flex; flex-direction: column; gap: 6px; align-items: center;
+  }
+  .constraint-label { font-size: 10px; font-weight: 800; letter-spacing: 1px; opacity: .5; }
+  .constraint-text { font-size: clamp(14px, 4.2vw, 17px); font-weight: 700; line-height: 1.3; }
+  .reroll-btn {
+    background: none; border: none; color: var(--bg); opacity: .6;
+    font-size: 12px; font-weight: 700; padding: 4px 8px; text-decoration: underline;
+  }
+  .reroll-btn:disabled { opacity: .25; text-decoration: none; }
+
+  /* ── Ritual naslova ── */
+  .ritual { font-size: clamp(17px, 5.2vw, 21px); font-weight: 800; line-height: 1.3; max-width: 300px; }
+  .ritual .shout { color: var(--accent); display: block; font-size: clamp(24px, 8vw, 32px); margin-top: 4px; }
+
+  /* ── Zeton / Tko je ovo ── */
+  #screen-zeton, #screen-tkojeovo { align-items: center; justify-content: center; text-align: center; gap: 16px; }
+  .pick-title { font-size: clamp(19px, 5.6vw, 24px); font-weight: 800; max-width: 320px; line-height: 1.3; }
+  .pick-sub { font-size: 13px; color: var(--text-dim); max-width: 300px; line-height: 1.4; }
+  .pick-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
+  .pick-btn {
+    flex: 1 1 42%; min-height: 56px; border-radius: 14px; background: rgba(255,255,255,0.1);
+    border: 2px solid transparent; color: var(--text); font-weight: 700; font-size: 15px;
+    display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px;
+  }
+  .countdown { font-size: clamp(60px, 22vw, 96px); font-weight: 800; color: var(--accent); line-height: 1; }
+  .titula { font-size: clamp(18px, 5.4vw, 23px); font-weight: 800; line-height: 1.35; max-width: 320px; }
+  .titula .who { color: var(--accent); }
+
   /* ── Sudenje (3 gumba) ── */
   .judge-col { display: flex; flex-direction: column; gap: 8px; width: 100%; }
   .judge-col .btn-ok { min-height: 68px; font-size: 20px; }
@@ -250,6 +282,11 @@
       <div class="switch" id="sound-toggle" onclick="toggleSound()"></div>
     </div>
 
+    <div class="toggle-row">
+      <span style="font-size:15px; font-weight:700;">„Tko je ovo od nas?“<span class="opt-sub">Nakon pogotka svi pokažu prstom. Nikad na teškim pojmovima.</span></span>
+      <div class="switch" id="tko-toggle" onclick="toggleTkoJeOvo()"></div>
+    </div>
+
     <button class="btn btn-wide" onclick="startSnop()">KRENI</button>
   </div>
 
@@ -265,7 +302,8 @@
       <div class="handoff-icon">📱</div>
       <p>Na redu je<br><span class="team-chip" id="predaja-name"></span></p>
       <div class="handoff-hint" id="predaja-hint"></div>
-      <button class="btn" onclick="revealCard()">OTKRIJ POJAM</button>
+      <div class="ritual">Svi zajedno viknite:<span class="shout">ŠTO TI JE?!</span></div>
+      <button class="btn" id="reveal-btn" onclick="revealCard()">OTKRIJ POJAM</button>
     </div>
   </div>
 
@@ -277,6 +315,11 @@
       <div class="stars-line" id="card-stars"></div>
       <div class="term" id="card-term"></div>
       <div class="card-note" id="card-note"></div>
+      <div class="constraint-box" id="constraint-box" style="display:none;">
+        <div class="constraint-label">KAKO IZVODIŠ</div>
+        <div class="constraint-text" id="constraint-text"></div>
+        <button class="reroll-btn" id="reroll-btn" onclick="rerollConstraint()">↻ DRUGO OGRANIČENJE</button>
+      </div>
       <div class="repeat-tag" id="card-repeat" style="display:none;">↺ ponovljena kartica</div>
     </div>
     <div class="judge-col">
@@ -300,6 +343,33 @@
       <div class="exp-text" id="exp-text"></div>
     </div>
     <button class="btn btn-wide" onclick="closeExplanation()">DALJE</button>
+  </div>
+
+  <!-- 5b. ŽETON ZA NAJSMJEŠNIJI PROMAŠAJ -->
+  <div id="screen-zeton" class="screen">
+    <div class="pick-title">Najsmješniji krivi odgovor?</div>
+    <div class="pick-sub">Izvođač dodjeljuje jedan žeton. Promašaj je ovdje nagrada, ne kazna.</div>
+    <div class="pick-grid" id="zeton-grid"></div>
+    <button class="btn btn-outline btn-wide" onclick="awardZeton(null)">NITKO — DALJE</button>
+  </div>
+
+  <!-- 5c. TKO JE OVO OD NAS? -->
+  <div id="screen-tkojeovo" class="screen">
+    <div id="tko-phase-count" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <div class="pick-title">Tko je ovo od nas?</div>
+      <div class="pick-sub" id="tko-term"></div>
+      <div class="countdown" id="tko-count">3</div>
+      <div class="pick-sub">Na „1“ svi istovremeno pokažite prstom.</div>
+    </div>
+    <div id="tko-phase-pick" style="display:none; flex-direction:column; align-items:center; gap:12px; width:100%;">
+      <div class="pick-title">Tko je dobio najviše prstiju?</div>
+      <div class="pick-grid" id="tko-grid"></div>
+    </div>
+    <div id="tko-phase-title" style="display:none; flex-direction:column; align-items:center; gap:16px;">
+      <div class="titula" id="tko-titula"></div>
+      <button class="btn" onclick="commitCard()">DALJE</button>
+    </div>
+    <button class="btn btn-outline btn-wide btn-small" id="tko-skip" onclick="skipTkoJeOvo()">PRESKAČEMO</button>
   </div>
 
   <!-- 6. REZULTAT SNOPA -->
@@ -962,6 +1032,57 @@ const POJASNJENJA = {
 const DECK_LABEL = { EMOCIJE: 'EMOCIJE', TJELESNE: 'TJELESNE REAKCIJE', PONASANJA: 'PONAŠANJA', SITUACIJE: 'SITUACIJE' };
 const DECK_COLOR = { EMOCIJE: 'var(--emocije)', TJELESNE: 'var(--tjelesne)', PONASANJA: 'var(--ponasanja)', SITUACIJE: 'var(--situacije)' };
 
+/* ═══════════════════════════ OGRANIČENJA IZVEDBE ═══════════════════════════ */
+// Izvođač uz pojam dobiva i način izvedbe. Metafora ("kao vremenska prognoza")
+// je istovremeno izvor smijeha i način učenja nijanse, pa se zabava i cilj
+// ovdje ne bore nego pojačavaju. Kanal mora odgovarati onome što kartica
+// podržava, inače bi dijete dobilo zadatak koji se ne može izvesti.
+const OGRANICENJA = [
+  { t: 'Opiši ovaj pojam kao vremensku prognozu.', ch: 'O' },
+  { t: 'Opiši ga kao životinju.', ch: 'O' },
+  { t: 'Opiši ga kao boju i zvuk.', ch: 'O' },
+  { t: 'Opiši ga bez riječi „osjećaj“, „kad“ i „kao“.', ch: 'O' },
+  { t: 'Opiši ga kao da javljaš vijest na televiziji.', ch: 'O' },
+  { t: 'Opiši ga kroz nešto što se dogodilo danas.', ch: 'O' },
+  { t: 'Odglumi ga u usporenom snimku.', ch: 'P' },
+  { t: 'Odglumi ga kao da imaš 90 godina.', ch: 'P' },
+  { t: 'Odglumi ga bez ruku.', ch: 'P' },
+  { t: 'Odglumi ga kao da si u knjižnici i moraš biti tih.', ch: 'P' },
+  { t: 'Nacrtaj ga samo krugovima.', ch: 'C' },
+  { t: 'Nacrtaj ga lijevom rukom (ako si ljevak — desnom).', ch: 'C' },
+];
+
+/* ═══════════════════════════ SIGURNOST KARTICA ═══════════════════════════ */
+// "Tko je ovo od nas?" uperi prst u stvarnu osobu za stolom. Zato smije ići
+// samo na kartice gdje je titula "obiteljski stručnjak za X" simpatična, a ne
+// uvreda. Isključeno je sve što imenuje patnju, moralnu manu ili tjelesnu
+// nelagodu, i sve SITUACIJE bez iznimke.
+const NESIGURNO = new Set([
+  // — emocije koje imenuju patnju —
+  'tuga','ljutnja','strah','sram','usamljenost','zabrinutost','briga','sramežljivost',
+  'ljubomora','zavist','razočaranje','frustracija','sažaljenje','nepovjerenje','nesigurnost',
+  'panika','krivnja','čežnja','bijes','iritacija','ravnodušnost','odbačenost','inat','prkos',
+  'nezadovoljstvo','nelagoda','uznemirenost','poniženost','nemir','trema',
+  'očaj','preplavljenost','tuga za nekim tko je otišao','osjećaj krivnje bez razloga',
+  'anksioznost','prijezir','melankolija','otuđenost','praznina','sjeta','sumnja u sebe',
+  'tjeskoba','apatija','rezignacija','samosažaljenje','gorčina','ogorčenost','zluradost',
+  'žal','pomirenost sa sudbinom','sram zbog tuđeg ponašanja','ranjivost','ambivalentnost',
+  // — tjelesne reakcije koje znače nelagodu —
+  'knedla u grlu','čvor u želucu','hladan znoj','stisnuta čeljust','plitko i brzo disanje',
+  'težina u prsima','praznina u želucu','prevrtanje u krevetu bez sna',
+  'napetost u ramenima koje ne primjećuješ dok te netko ne upozori',
+  'umor koji ne dolazi od napora','osjećaj da ti tijelo reagira prije nego što shvatiš zašto',
+  // — ponašanja koja pripisuju moralnu manu —
+  'hvalisanje','prekidanje drugoga','ignoriranje','zadirkivanje','ruganje','kritika',
+  'cmizdrenje','pravljenje da te nije briga','glumljenje da je sve u redu','šutnja iz ljutnje',
+  'pretjerivanje','okrivljavanje drugoga','isprika koju ne misliš ozbiljno',
+  'traženje pažnje','izbjegavanje sukoba','pasivna agresija','potiskivanje emocija',
+  'manipuliranje osjećajima','projiciranje ljutnje na krivu osobu','pretvaranje tuge u šalu',
+]);
+
+// SITUACIJE su bez iznimke isključene: one opisuju nešto što se nekome dogodilo.
+CARD_DB.forEach(c => { c.sigurno = c.deck !== 'SITUACIJE' && !NESIGURNO.has(c.term); });
+
 const CHANNEL_LABEL = { O: 'OPIŠI', C: 'NACRTAJ', P: 'ODGLUMI' };
 const CHANNEL_HINT = {
   O: 'Opisuj riječima — bez izgovaranja samog pojma.',
@@ -1010,6 +1131,7 @@ let session = {
   lastCount: 3,
   lastMode: 'coop',
   soundEnabled: true,
+  tkoJeOvoOn: true,
 };
 
 /* ═══════════════════════════ STANJE ═══════════════════════════ */
@@ -1029,6 +1151,7 @@ function freshState() {
     roundIndex: 0,
     performerIndex: 0,
     currentDraw: null,
+    ogranicenje: null,
     revealTime: null,
     deadline: null,
     timerInterval: null,
@@ -1118,6 +1241,12 @@ function renderPostavke() {
   }
 
   document.getElementById('sound-toggle').classList.toggle('on', session.soundEnabled);
+  document.getElementById('tko-toggle').classList.toggle('on', session.tkoJeOvoOn);
+}
+
+function toggleTkoJeOvo() {
+  session.tkoJeOvoOn = !session.tkoJeOvoOn;
+  renderPostavke();
 }
 
 function changeCount(delta) {
@@ -1168,6 +1297,8 @@ function startSnop() {
       color: ACTOR_COLORS[i % ACTOR_COLORS.length],
       score: 0,
       roundScores: [],
+      zetoni: 0,
+      rerollUsed: false,
     });
   }
 
@@ -1212,7 +1343,15 @@ function renderPredaja() {
     ? roundDef().hint
     : 'Svi ostali pogađaju naglas — nema čekanja reda.';
   document.getElementById('undo-btn').style.display = state.lastSnapshot ? 'flex' : 'none';
+
+  // Ritual: gumb se otkljucava tek nakon 1,5 s, taman da grupa stigne viknuti
+  // naslov. Rituali su ono sto djeca pamte i traze ponovno.
+  const rb = document.getElementById('reveal-btn');
+  rb.disabled = true;
+  clearTimeout(ritualTimer);
+  ritualTimer = setTimeout(() => { rb.disabled = false; }, 1500);
 }
+let ritualTimer = null;
 
 function abortGame() {
   if (!confirm('Prekinuti igru? Dosad zabilježeni podaci ostaju u statistici.')) return;
@@ -1234,12 +1373,39 @@ function revealCard() {
     channel,
     isRepeat: entry.isRepeat || (isEsk() && state.roundIndex > 0),
   };
+  // Ogranicenje se dodjeljuje samo u kooperativnom modu; u eskalaciji je
+  // kanal runde vec sam po sebi ogranicenje i drugo bi mu proturjecilo.
+  state.ogranicenje = isEsk() ? null : pickOgranicenje(entry.card, channel);
   state.lastSnapshot = makeSnapshot();
 
   goScreen('kartica');
   renderKarticaScreen();
   startTimer();
   requestWakeLock();
+}
+
+function pickOgranicenje(card, channel, exclude) {
+  const mogu = OGRANICENJA.filter(o => o.ch === channel && o.t !== (exclude && exclude.t));
+  if (!mogu.length) return null;
+  return shuffle(mogu)[0];
+}
+
+function rerollConstraint() {
+  const performer = state.actors[state.performerIndex];
+  if (performer.rerollUsed) return;
+  const novo = pickOgranicenje(state.currentDraw.card, state.currentDraw.channel, state.ogranicenje);
+  if (!novo) return;
+  performer.rerollUsed = true;
+  state.ogranicenje = novo;
+  renderConstraint();
+}
+
+function renderConstraint() {
+  const box = document.getElementById('constraint-box');
+  if (!state.ogranicenje) { box.style.display = 'none'; return; }
+  box.style.display = 'flex';
+  document.getElementById('constraint-text').textContent = state.ogranicenje.t;
+  document.getElementById('reroll-btn').disabled = state.actors[state.performerIndex].rerollUsed;
 }
 
 function renderKarticaScreen() {
@@ -1264,6 +1430,7 @@ function renderKarticaScreen() {
     ? 'Izrazi emociju koju bi osjećao(la) u ovoj situaciji — tim pogađa EMOCIJU, ne situaciju.'
     : (isEsk() ? roundDef().hint : CHANNEL_HINT[d.channel]);
   document.getElementById('card-repeat').style.display = d.isRepeat ? 'inline-block' : 'none';
+  renderConstraint();
 }
 
 /* ═══════════════════════════ TIMER ═══════════════════════════ */
@@ -1343,9 +1510,109 @@ function elapsedSeconds() {
 
 function judge(outcome) {
   stopTimer();
-  state.pendingResult = { outcome, seconds: elapsedSeconds() };
+  state.pendingResult = { outcome, seconds: elapsedSeconds(), zeton: null, tkoOdigrano: false };
   if (outcome === 'nismo') showExplanation();
-  else commitCard();
+  else afterCard();
+}
+
+/* ═══════════════════════════ POSLIJE KARTICE ═══════════════════════════ */
+// Tocno jedan neobavezan ekran po kartici, da tempo ne padne. Pogodak na
+// sigurnoj kartici vodi u "Tko je ovo od nas?", sve ostalo u dodjelu zetona.
+// U eskalaciji izvodaci su timovi, pa oba ekrana — koji ciljaju na osobu —
+// preskacemo.
+function afterCard() {
+  if (isEsk()) { commitCard(); return; }
+  const { outcome } = state.pendingResult;
+  if (outcome === 'pogodili' && state.currentDraw.card.sigurno && session.tkoJeOvoOn) {
+    startTkoJeOvo();
+  } else {
+    renderZeton();
+    goScreen('zeton');
+  }
+}
+
+/* ── Zeton za najsmjesniji promasaj ── */
+function renderZeton() {
+  const grid = document.getElementById('zeton-grid');
+  grid.innerHTML = '';
+  state.actors.forEach((a, i) => {
+    if (i === state.performerIndex) return;   // izvodac ne moze nagraditi sam sebe
+    const btn = document.createElement('button');
+    btn.className = 'pick-btn';
+    btn.innerHTML = `<span class="team-dot" style="background:${a.color}"></span>${escapeHtml(a.name)}`;
+    btn.onclick = () => awardZeton(a.name);
+    grid.appendChild(btn);
+  });
+}
+
+function awardZeton(name) {
+  state.pendingResult.zeton = name;
+  if (name) {
+    const a = state.actors.find(x => x.name === name);
+    if (a) a.zetoni += 1;
+  }
+  commitCard();
+}
+
+/* ── Tko je ovo od nas? ── */
+let tkoTimer = null;
+
+function startTkoJeOvo() {
+  document.getElementById('tko-term').textContent = state.currentDraw.card.term;
+  document.getElementById('tko-phase-count').style.display = 'flex';
+  document.getElementById('tko-phase-pick').style.display = 'none';
+  document.getElementById('tko-phase-title').style.display = 'none';
+  document.getElementById('tko-skip').style.display = 'flex';
+  goScreen('tkojeovo');
+
+  let n = 3;
+  const el = document.getElementById('tko-count');
+  el.textContent = n;
+  clearInterval(tkoTimer);
+  tkoTimer = setInterval(() => {
+    n -= 1;
+    if (n <= 0) {
+      clearInterval(tkoTimer);
+      showTkoPick();
+    } else {
+      el.textContent = n;
+    }
+  }, 1000);
+}
+
+function showTkoPick() {
+  document.getElementById('tko-phase-count').style.display = 'none';
+  document.getElementById('tko-phase-pick').style.display = 'flex';
+  const grid = document.getElementById('tko-grid');
+  grid.innerHTML = '';
+  state.actors.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'pick-btn';
+    btn.innerHTML = `<span class="team-dot" style="background:${a.color}"></span>${escapeHtml(a.name)}`;
+    btn.onclick = () => showTkoTitula(a);
+    grid.appendChild(btn);
+  });
+}
+
+function showTkoTitula(actor) {
+  // Titula, ne poruga — formulacija mora biti afirmativna.
+  document.getElementById('tko-phase-pick').style.display = 'none';
+  document.getElementById('tko-skip').style.display = 'none';
+  document.getElementById('tko-phase-title').style.display = 'flex';
+  // "stručnjak za X" bi tražio akuzativ, a pojmovi su zapisani u nominativu i
+  // ne mogu se pouzdano deklinirati — zato formulacija kojoj nominativ odgovara.
+  document.getElementById('tko-titula').innerHTML =
+    `<span class="who">${escapeHtml(actor.name)}</span> je obiteljski stručnjak.<br>` +
+    `<span style="font-size:.8em; opacity:.85;">Specijalnost:</span><br>${escapeHtml(state.currentDraw.card.term)}`;
+  state.pendingResult.tkoOdigrano = true;
+}
+
+// Bilo tko smije reci "preskacem", bez objasnjenja.
+function skipTkoJeOvo() {
+  clearInterval(tkoTimer);
+  state.pendingResult.tkoOdigrano = false;
+  renderZeton();
+  goScreen('zeton');
 }
 
 /* ═══════════════════════════ POJAŠNJENJE POJMA ═══════════════════════════ */
@@ -1369,7 +1636,7 @@ function showExplanation() {
   goScreen('pojasnjenje');
 }
 
-function closeExplanation() { commitCard(); }
+function closeExplanation() { afterCard(); }
 
 function commitCard() {
   const d = state.currentDraw;
@@ -1377,6 +1644,8 @@ function commitCard() {
   // ne upisuje dva retka niti dvaput pomiče snop.
   if (!d || state.resolvedDrawId === d.id) return;
   state.resolvedDrawId = d.id;
+  clearInterval(tkoTimer);
+  state.ogranicenje = null;
 
   const { outcome, seconds } = state.pendingResult;
   const performer = state.actors[state.performerIndex];
@@ -1427,6 +1696,14 @@ function ljestvica(score) {
   return 'Zagrijavanje.';
 }
 
+// Promašaj je poželjan sadržaj, ne kazna — zato dobiva vlastiti redak na kraju.
+function zetonLine() {
+  const max = Math.max(0, ...state.actors.map(a => a.zetoni));
+  if (!max) return '';
+  const winners = state.actors.filter(a => a.zetoni === max).map(a => escapeHtml(a.name));
+  return `<div class="record-line">🎭 Najviše promašaja vrijednih žetona: ${winners.join(', ')} (${max})</div>`;
+}
+
 function renderRezultat() {
   const el = document.getElementById('rezultat-body');
   const btn = document.getElementById('rezultat-btn');
@@ -1446,7 +1723,8 @@ function renderRezultat() {
         isNew && score > 0
           ? '🏅 Novi obiteljski rekord!'
           : `Obiteljski rekord: ${fmtScore(rec.score)} / ${rec.of}`
-      }</div>` : ''}`;
+      }</div>` : ''}
+      ${zetonLine()}`;
     btn.textContent = 'JOŠ JEDNOM';
     return;
   }
@@ -1491,6 +1769,8 @@ function makeSnapshot() {
     performerIndex: state.performerIndex,
     results: [...state.results],
     scores: state.actors.map(a => a.score),
+    zetoni: state.actors.map(a => a.zetoni),
+    rerolls: state.actors.map(a => a.rerollUsed),
     logLength: session.log.length,
   };
 }
@@ -1501,7 +1781,11 @@ function undoLastMove() {
   state.cardIndex = snap.cardIndex;
   state.performerIndex = snap.performerIndex;
   state.results = [...snap.results];
-  state.actors.forEach((a, i) => a.score = snap.scores[i]);
+  state.actors.forEach((a, i) => {
+    a.score = snap.scores[i];
+    a.zetoni = snap.zetoni[i];
+    a.rerollUsed = snap.rerolls[i];
+  });
   session.log.length = snap.logLength;
   state.lastSnapshot = null;
   state.resolvedDrawId = null;
