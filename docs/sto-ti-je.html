@@ -261,6 +261,19 @@
   .toast.show { opacity: 1; }
   .top-bar { display: flex; align-items: center; gap: 8px; }
   .top-bar h2 { font-size: 17px; margin-right: auto; }
+  /* ── Pravila ── */
+  .rules-intro {
+    background: rgba(255,255,255,.07); border-radius: 14px; padding: 14px 16px;
+    font-size: 14.5px; line-height: 1.5; color: var(--text-dim);
+  }
+  .rules-intro b { color: var(--text); }
+  .rules-card {
+    background: var(--card-bg); color: var(--card-text); border-radius: 16px;
+    padding: 14px 16px; border-left: 6px solid var(--accent);
+  }
+  .rules-card h3 { font-size: 16px; margin-bottom: 6px; }
+  .rules-card p { font-size: 14px; line-height: 1.5; }
+  .rules-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
 </style>
 </head>
 <body>
@@ -276,7 +289,46 @@
     <div class="tagline">Pogodi što mi je — prije nego što ti kažem.</div>
     <div class="record-line" id="naslovna-rekord" style="display:none;"></div>
     <button class="btn" onclick="startNewGame()">NOVA IGRA</button>
+    <button class="btn btn-outline" onclick="showPravila('naslovna')">KAKO SE IGRA</button>
     <button class="btn btn-outline btn-small" id="naslovna-stat-btn" style="display:none;" onclick="goScreen('statistika')">Statistika igranja</button>
+  </div>
+
+  <!-- 1b. PRAVILA -->
+  <div id="screen-pravila" class="screen">
+    <div class="top-bar"><h2>Kako se igra</h2></div>
+    <div class="rules-scroll">
+      <div class="rules-intro">
+        Jedan uređaj kruži oko stola. <b>Tko ga drži — izvodi; svi ostali pogađaju.</b>
+        Na kraju izvođač presuđuje: <b>POGODILI</b> (bod), <b>BLIZU</b> (pola boda — pogodili
+        ste osjećaj, ali ne baš tu riječ) ili <b>NISMO</b>.
+        Uz pojam ponekad dođe i <b>ograničenje izvedbe</b> — način na koji ga moraš prikazati.
+        Ono je izvor smijeha, ne dodatna kazna, i svaki izvođač ga smije jednom zamijeniti.
+        Kartice su podijeljene po dobi, pa najmlađi ne dobivaju pojmove koje još ne mogu imenovati.
+      </div>
+      <div class="rules-card">
+        <h3>Zajedno protiv snopa</h3>
+        <p>Svi ste jedan tim protiv špila od 12 kartica. Izvođač se mijenja svaku karticu, a
+        svi ostali pogađaju naglas u isto vrijeme — nitko ne čeka red. Bodovi se zbrajaju za
+        cijelu grupu i uspoređuju s obiteljskim rekordom. Povremeno nakon pogotka slijedi
+        „Tko je ovo od nas?“ — svi u isti čas pokažu prstom. Najbolji početak ako igrate prvi put.</p>
+      </div>
+      <div class="rules-card">
+        <h3>Eskalacija</h3>
+        <p>Isti špil od 10 kartica prolazi tri puta, svaki put s užim kanalom: prva runda
+        opisuješ riječima, druga smiješ izgovoriti točno jednu riječ, treća samo pantomima bez
+        glasa. Svatko igra za sebe i skuplja vlastite bodove. Druga i treća runda idu brže jer
+        svi pamte kartice iz prve — u tome je i vic. Pobjeđuje onaj s najviše bodova nakon
+        tri runde.</p>
+      </div>
+      <div class="rules-card">
+        <h3>Dvoboj (tim protiv tima)</h3>
+        <p>Dva tima, 12 kartica, tri runde. Dok jedan tim izvodi i pogađa, drugi tiho zapisuje
+        svoju pretpostavku — bez dobacivanja. Ako tim koji izvodi ne pogodi, protivnik naglas
+        čita što je zapisao i krade bod ako je pogodio. Ukradeni bod vrijedi pola ako tim koji
+        krade već vodi. Zato nitko ne dosađuje dok nije na redu.</p>
+      </div>
+    </div>
+    <button class="btn btn-wide" onclick="closePravila()">NATRAG</button>
   </div>
 
   <!-- 2. POSTAVKE -->
@@ -322,6 +374,7 @@
     </div>
 
     <button class="btn btn-wide" onclick="startSnop()">KRENI</button>
+    <button class="btn btn-outline btn-wide btn-small" onclick="showPravila('postavke')">Kako se igra</button>
   </div>
 
   <!-- 3. PREDAJA UREĐAJA -->
@@ -1509,6 +1562,13 @@ function goScreen(name) {
   if (name === 'rezultat') renderRezultat();
   if (name === 'statistika') renderStatistika();
 }
+
+/* ═══════════════════════════ PRAVILA ═══════════════════════════ */
+// Ekran je statican, pa mu ne treba render — pamti se samo odakle se doslo,
+// da NATRAG vrati na naslovnu ili u postavke, ovisno gdje je korisnik stao.
+let pravilaBack = 'naslovna';
+function showPravila(from) { pravilaBack = from || 'naslovna'; goScreen('pravila'); }
+function closePravila() { goScreen(pravilaBack); }
 
 function renderNaslovna() {
   document.getElementById('naslovna-stat-btn').style.display = session.log.length ? 'flex' : 'none';
