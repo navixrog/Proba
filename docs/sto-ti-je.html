@@ -226,6 +226,18 @@
   .team-score-row.top { background: rgba(242,233,59,0.2); border: 2px solid var(--accent); }
   .team-score-row .ts-val { margin-left: auto; font-variant-numeric: tabular-nums; }
 
+  /* ── Revans ── */
+  .revans { background: rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; width: 100%;
+            display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .revans-q { font-size: 17px; font-weight: 800; }
+  .revans-row { display: flex; align-items: center; gap: 16px; }
+  .revans-count { font-size: 34px; font-weight: 800; color: var(--accent); min-width: 40px;
+                  text-align: center; font-variant-numeric: tabular-nums; }
+  .revans-plus, .revans-minus { width: 48px; height: 48px; border-radius: 14px; font-size: 26px;
+                                font-weight: 700; background: rgba(255,255,255,0.14); color: var(--text); }
+  .revans-plus { background: var(--accent); color: var(--accent-text); }
+  .revans-sub { font-size: 12px; color: var(--text-dim); text-align: center; }
+
   /* ── Statistika ── */
   #screen-statistika { gap: 12px; }
   .stat-summary { display: flex; gap: 8px; }
@@ -423,6 +435,15 @@
   <!-- 6. REZULTAT SNOPA -->
   <div id="screen-rezultat" class="screen">
     <div id="rezultat-body" style="display:flex; flex-direction:column; align-items:center; gap:14px; width:100%;"></div>
+    <div class="revans" id="revans-box" style="display:none;">
+      <div class="revans-q">Tko želi opet?</div>
+      <div class="revans-row">
+        <button class="revans-minus" onclick="changeRevans(-1)" aria-label="Manje">−</button>
+        <div class="revans-count" id="revans-count">0</div>
+        <button class="revans-plus" onclick="changeRevans(1)" aria-label="Više">+</button>
+      </div>
+      <div class="revans-sub">Podignite ruku — brojač bilježi koliko vas.</div>
+    </div>
     <button class="btn btn-wide" onclick="nextRoundOrFinish()" id="rezultat-btn">JOŠ JEDNOM</button>
     <button class="btn btn-outline btn-wide btn-small" onclick="goScreen('statistika')">Statistika testa</button>
   </div>
@@ -1424,6 +1445,7 @@ function freshState() {
     lastSnapshot: null,
     pendingResult: null,
     logStart: session.log.length,
+    revansRuke: 0,
     wakeLockRef: null,
   };
 }
@@ -1835,6 +1857,40 @@ function elapsedSeconds() {
   return Math.max(0, Math.round((Date.now() - state.revealTime) / 1000));
 }
 
+/* ═══════════════════════════ ZAPIS ZA MJERENJE ═══════════════════════════ */
+// Stupac "bonus" je maknut: bonus mehanika je uklonjena u fazi 0, pa je taj
+// stupac od tada mogao biti samo prazan.
+const CSV_STUPCI = [
+  'pojam', 'spil', 'tezina', 'faza', 'tempo', 'kanal', 'ogranicenje',
+  'ishod', 'sekunde', 'mod', 'runda', 'potez', 'tim', 'ponovljena',
+  'zeton_promasaja', 'tko_je_ovo_odigrano', 'preskoceno_sigurnosno', 'revans_ruke',
+];
+
+function logRow(d, f) {
+  return {
+    pojam: d.card.term,
+    spil: d.deck,
+    tezina: d.tier,
+    faza: d.card.faza,
+    tempo: d.card.tempo,
+    kanal: d.channel,
+    ogranicenje: f.ogranicenje || '',
+    ishod: f.ishod,
+    sekunde: f.sekunde,
+    mod: state.mod,
+    // Bez runde se u tri-rundnim modovima ista kartica pojavi triput s istim
+    // rednim brojem poteza i redci se ne mogu razlikovati.
+    runda: imaRunde() ? state.roundIndex + 1 : 1,
+    potez: state.cardIndex + 1,
+    tim: state.actors[state.performerIndex].name,
+    ponovljena: d.isRepeat ? 'da' : 'ne',
+    zeton_promasaja: f.zeton ? 'da' : 'ne',
+    tko_je_ovo_odigrano: f.tko ? 'da' : 'ne',
+    preskoceno_sigurnosno: f.sigurnosno ? 'da' : 'ne',
+    revans_ruke: '',   // popunjava se na kraju partije
+  };
+}
+
 // Preskakanje teske kartice ne broji se kao promasaj: kartica se zamjenjuje
 // novom, a isti izvodac nastavlja. U logu ostaje trag radi testiranja sadrzaja.
 function safetySkip() {
@@ -1843,12 +1899,10 @@ function safetySkip() {
   state.resolvedDrawId = d.id;
   stopTimer();
 
-  session.log.push({
-    pojam: d.card.term, spil: d.deck, tezina: d.tier, kanal: d.channel,
-    ishod: 'sigurnosno preskočeno', sekunde: elapsedSeconds(), bonus: '',
-    potez: state.cardIndex + 1, tim: state.actors[state.performerIndex].name,
-    ponovljena: d.isRepeat ? 'da' : 'ne',
-  });
+  session.log.push(logRow(d, {
+    ishod: 'sigurnosno preskočeno', sekunde: elapsedSeconds(),
+    ogranicenje: state.ogranicenje && state.ogranicenje.t, sigurnosno: true,
+  }));
 
   const uzeto = new Set(state.snop.map(e => e.card));
   const zamjena = shuffle(snopPool()).find(c => !uzeto.has(c) && !c.teska);
@@ -2035,25 +2089,21 @@ function commitCard() {
   if (!d || state.resolvedDrawId === d.id) return;
   state.resolvedDrawId = d.id;
   clearInterval(tkoTimer);
+  const ogr = state.ogranicenje;     // procitaj prije brisanja
   state.ogranicenje = null;
 
   const { outcome, seconds } = state.pendingResult;
   const performer = state.actors[state.performerIndex];
 
-  session.log.push({
-    pojam: d.card.term,
-    spil: d.deck,
-    tezina: d.tier,
-    kanal: d.channel,
+  session.log.push(logRow(d, {
     ishod: outcome === 'pogodili' ? 'pogođeno'
          : outcome === 'blizu' ? 'blizu'
          : state.pendingResult.krada ? 'ukradeno' : 'promašeno',
     sekunde: seconds,
-    bonus: '',
-    potez: state.cardIndex + 1,
-    tim: performer.name,
-    ponovljena: d.isRepeat ? 'da' : 'ne',
-  });
+    ogranicenje: ogr && ogr.t,
+    zeton: !!state.pendingResult.zeton,
+    tko: !!state.pendingResult.tkoOdigrano,
+  }));
 
   state.results[state.cardIndex] = outcome;
   performer.score += BODOVI[outcome];
@@ -2099,7 +2149,12 @@ function zetonLine() {
 // Treci prikaz srodnih rijeci: pregled na kraju runde, da se skupina vidi i
 // kad je kartica pogodena pa pojasnjenje nije ni otvoreno.
 function synReview() {
-  const sa = state.snop.filter(e => e.card.sinonimi && e.card.sinonimi.length);
+  const vidjeno = new Set();
+  const sa = state.snop.filter(e => {
+    if (!e.card.sinonimi || !e.card.sinonimi.length || vidjeno.has(e.card.term)) return false;
+    vidjeno.add(e.card.term);
+    return true;
+  });
   if (!sa.length) return '';
   return `<div class="stat-section syn-review">
     <h4>Srodne riječi iz ovog snopa</h4>
@@ -2130,6 +2185,7 @@ function renderRezultat() {
       ${zetonLine()}
       ${synReview()}`;
     btn.textContent = 'JOŠ JEDNOM';
+    renderRevans(true);
     return;
   }
 
@@ -2151,6 +2207,24 @@ function renderRezultat() {
     ${zadnja ? `<div class="ladder">🏆 ${escapeHtml(sorted[0].name)}</div>` : ''}
     ${synReview()}`;
   btn.textContent = zadnja ? 'JOŠ JEDNOM' : `SLJEDEĆA RUNDA: ${RUNDE[state.roundIndex + 1].label}`;
+  renderRevans(zadnja);
+}
+
+// Jedina metrika koja mjeri je li igra zabavna; sve ostalo mjeri je li ispravna.
+// Broj se upisuje u sve retke tekuce partije, pa se iz bilo kojeg retka vidi
+// koliko je ruku bilo na kraju te partije.
+function changeRevans(delta) {
+  state.revansRuke = Math.max(0, Math.min(12, state.revansRuke + delta));
+  document.getElementById('revans-count').textContent = state.revansRuke;
+  for (let i = state.logStart; i < session.log.length; i++) {
+    session.log[i].revans_ruke = state.revansRuke;
+  }
+}
+
+function renderRevans(zadnja) {
+  const box = document.getElementById('revans-box');
+  box.style.display = zadnja ? 'flex' : 'none';
+  if (zadnja) document.getElementById('revans-count').textContent = state.revansRuke;
 }
 
 function nextRoundOrFinish() {
@@ -2338,7 +2412,7 @@ function renderStatistika() {
 }
 
 function copyCsv() {
-  const header = ['pojam', 'spil', 'tezina', 'kanal', 'ishod', 'sekunde', 'bonus', 'potez', 'tim', 'ponovljena'];
+  const header = CSV_STUPCI;
   const esc = v => `"${String(v).replace(/"/g, '""')}"`;
   const rows = session.log.map(l => header.map(k => esc(l[k])).join(','));
   const csv = [header.join(','), ...rows].join('\n');
