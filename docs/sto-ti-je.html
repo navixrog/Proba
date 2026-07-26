@@ -1535,6 +1535,7 @@ function freshState() {
     pendingResult: null,
     logStart: session.log.length,
     revansRuke: 0,
+    mehBrojac: 0, mehPrag: novRazmak(),        // vidi okidaMehaniku()
     wakeLockRef: null,
   };
 }
@@ -2033,11 +2034,31 @@ function judge(outcome) {
 // sigurnoj kartici vodi u "Tko je ovo od nas?", sve ostalo u dodjelu zetona.
 // U eskalaciji izvodaci su timovi, pa oba ekrana — koji ciljaju na osobu —
 // preskacemo.
+// Mehanika se okida kad brojac dosegne prag, a prag je 2-4 pa je prosjek
+// svaka treca kartica. Cisti random moze pet puta zaredom ne dati nista ili
+// dati svaki put; ovako je razmak uvijek u tom rasponu, a mehanika ostaje
+// iznenadjenje umjesto administracije.
+function novRazmak() { return 2 + Math.floor(Math.random() * 3); }
+
+function okidaMehaniku(brojacKljuc, pragKljuc) {
+  state[brojacKljuc] += 1;
+  if (state[brojacKljuc] < state[pragKljuc]) return false;
+  state[brojacKljuc] = 0;
+  state[pragKljuc] = novRazmak();
+  return true;
+}
+
 function afterCard() {
   // Teska kartica uvijek zavrsava pitanjem kome se dijete moze javiti —
   // i nikad ne ide u zeton ni u "Tko je ovo od nas?".
   if (state.currentDraw.card.teska) { goScreen('teska'); return; }
   if (imaRunde()) { commitCard(); return; }
+  // Jedan zajednicki brojac za obje mehanike, pa ih ukupno ima otprilike na
+  // svakoj trecoj kartici. Prije se poslije svake kartice otvarao jedan od ova
+  // dva ekrana, sto je uz 12 kartica bilo do cetiri dodira po kartici.
+  if (!okidaMehaniku('mehBrojac', 'mehPrag')) { commitCard(); return; }
+  // Uvjeti koji su i prije vrijedili ostaju netaknuti: "Tko je ovo od nas?"
+  // i dalje ide samo na pogodak, samo na sigurnu karticu i samo uz prekidac.
   const { outcome } = state.pendingResult;
   if (outcome === 'pogodili' && state.currentDraw.card.sigurno && session.tkoJeOvoOn) {
     startTkoJeOvo();
@@ -2129,8 +2150,7 @@ function showTkoTitula(actor) {
 function skipTkoJeOvo() {
   clearInterval(tkoTimer);
   state.pendingResult.tkoOdigrano = false;
-  renderZeton();
-  goScreen('zeton');
+  commitCard();   // "preskacemo" znaci sljedeca kartica, ne drugi ekran
 }
 
 /* ═══════════════════════════ POJAŠNJENJE POJMA ═══════════════════════════ */
