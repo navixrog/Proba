@@ -1799,12 +1799,18 @@ function revealCard() {
     channel,
     isRepeat: entry.isRepeat || (isEsk() && state.roundIndex > 0),
   };
-  // Ogranicenje se dodjeljuje samo u kooperativnom modu; u eskalaciji je
-  // kanal runde vec sam po sebi ogranicenje i drugo bi mu proturjecilo.
-  // Teske kartice ostaju bez ogranicenja: sala ili "opisi kroz nesto sto se
-  // dogodilo danas" na kartici o iskljucivanju trazi upravo ono od cega
-  // sigurnosni prekidac cuva dijete.
-  state.ogranicenje = (isEsk() || entry.card.teska) ? null : pickOgranicenje(entry.card, channel);
+  // Ogranicenja su prije bila iskljucena iz svih tri-rundnih modova, pa je
+  // eskalacija ostala bez glavnog izvora smijeha. Iskljucenje je bilo potrebno
+  // samo u rundi dva: "samo jedna rijec" ne trpi jos jedno pravilo povrh sebe.
+  // U rundama jedan i tri ogranicenje se bira iz skupine koja odgovara kanalu
+  // te runde (O, pa P).
+  // Teske kartice ostaju bez ogranicenja u svakom modu: sala ili "opisi kroz
+  // nesto sto se dogodilo danas" na kartici o iskljucivanju trazi upravo ono
+  // od cega sigurnosni prekidac cuva dijete.
+  state.ogranicenje = entry.card.teska ? null
+    : imaRunde()
+      ? (state.roundIndex === 1 ? null : pickOgranicenje(entry.card, roundDef().channel))
+      : pickOgranicenje(entry.card, channel);
   state.lastSnapshot = makeSnapshot();
 
   goScreen('kartica');
