@@ -1884,11 +1884,22 @@ function renderKarticaScreen() {
 }
 
 /* ═══════════════════════════ TIMER ═══════════════════════════ */
-const TURN_SECONDS = 60;
+const TURN_SECONDS = 60;                     // kooperativni mod — jedna runda
+// U rundi "samo jedna rijec" pojam padne u pet sekundi ili nikad, pa je 60 s
+// znacilo cetrdeset sekundi mrtve tisine. Pantomima treba manje od opisa, ali
+// vise od jedne rijeci.
+const TURN_SECONDS_RUNDA = [60, 25, 45];
+// Mladjoj djeci treba vise vremena i za izvedbu i za pogadjanje.
+const DOB_BONUS_SEKUNDI = 30;
+
+function turnSeconds() {
+  const base = imaRunde() ? TURN_SECONDS_RUNDA[state.roundIndex] : TURN_SECONDS;
+  return base + (state.dob === '4-6' ? DOB_BONUS_SEKUNDI : 0);
+}
 
 function startTimer() {
   state.revealTime = Date.now();
-  state.deadline = state.revealTime + TURN_SECONDS * 1000;
+  state.deadline = state.revealTime + turnSeconds() * 1000;
   state.lastBeepAt = null;
   clearInterval(state.timerInterval);
   tickTimer();
