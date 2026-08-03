@@ -303,7 +303,7 @@
         ste osjećaj, ali ne baš tu riječ) ili <b>NISMO</b>.
         Uz pojam ponekad dođe i <b>ograničenje izvedbe</b> — način na koji ga moraš prikazati.
         Ono je izvor smijeha, ne dodatna kazna, i svaki izvođač ga smije jednom zamijeniti.
-        Kartice su podijeljene po dobi, pa najmlađi ne dobivaju pojmove koje još ne mogu imenovati.
+        Kod špila TRENUCI pogađa se sam trenutak, a ne osjećaj — osjećaj dolazi na red poslije, u dodatku. Kartice su podijeljene po dobi, pa najmlađi ne dobivaju pojmove koje još ne mogu imenovati.
       </div>
       <div class="rules-card">
         <h3>Zajedno protiv snopa</h3>
@@ -364,7 +364,7 @@
     </div>
 
     <div class="toggle-row">
-      <span style="font-size:15px; font-weight:700;">„Tko je ovo od nas?“<span class="opt-sub">Nakon pogotka svi pokažu prstom. Nikad na teškim pojmovima.</span></span>
+      <span style="font-size:15px; font-weight:700;">„Tko je ovo od nas?“<span class="opt-sub">Nakon pogotka svi pokažu prstom. Kod trenutaka pita tko je najčešće u njima. Nikad na teškim pojmovima.</span></span>
       <div class="switch" id="tko-toggle" onclick="toggleTkoJeOvo()"></div>
     </div>
 
@@ -446,7 +446,7 @@
   <!-- 5c. TKO JE OVO OD NAS? -->
   <div id="screen-tkojeovo" class="screen">
     <div id="tko-phase-count" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-      <div class="pick-title">Tko je ovo od nas?</div>
+      <div class="pick-title" id="tko-naslov">Tko je ovo od nas?</div>
       <div class="pick-sub" id="tko-term"></div>
       <div class="countdown" id="tko-count">3</div>
       <div class="pick-sub">Na „1“ svi istovremeno pokažite prstom.</div>
@@ -476,6 +476,14 @@
       <button class="btn btn-miss" onclick="resolveKrada(false)">NETOČNO</button>
     </div>
     <div class="judge-hint">Ukradeni bod vrijedi 1 — ili pola, ako tim koji krade već vodi.</div>
+  </div>
+
+  <!-- 5f. TRENUTAK: KAKO SE TI OSJEĆAŠ U OVOME -->
+  <div id="screen-osjecaj" class="screen">
+    <div class="pick-title">Kako se ti osjećaš u ovome?</div>
+    <div class="pick-sub" id="osjecaj-term" style="font-size:16px;"></div>
+    <div class="pick-sub">Svatko kaže jednu riječ — u krug. Nema točnog odgovora i nema bodova.</div>
+    <button class="btn" onclick="commitCard()">DALJE</button>
   </div>
 
   <!-- 5d. OBAVEZNI REDAK NAKON TEŠKE KARTICE -->
@@ -1200,6 +1208,22 @@ const SINONIMI = {
   'nemirne noge': ['noge ne miruju'],
 };
 CARD_DB.forEach(c => { c.sinonimi = SINONIMI[c.term] || []; });
+/* ═══════════════════════════ VEDRI TRENUCI ═══════════════════════════ */
+// Dodatak "Tko je od nas najcesce u ovome?" uperi prst u stvarnu osobu, pa
+// smije ici samo na trenutke gdje je to simpaticno. Na "prekrsenom obecanju"
+// ili "ukradenim zaslugama" isto pitanje je optuzba, pa ti trenuci umjesto
+// toga dobivaju "Kako se ti osjecas u ovome?" — pitanje bez prsta i bez
+// tocnog odgovora.
+const TRENUCI_NEVEDRI = new Set([
+  'oteta igračka', 'pjevanje pred razredom', 'trema pred nastup', 'prijatelj se seli',
+  'zaboravljeni tekst', 'nepravedna ocjena', 'priznanje tajne', 'gorka pobjeda',
+  'prekršeno obećanje', 'prisilna isprika', 'biranje između prijatelja',
+  'prijatelj stalno otkazuje', 'poklon koji razočara', 'ukradene zasluge',
+]);
+CARD_DB.forEach(c => {
+  if (c.deck === 'TRENUCI') c.vedar = !c.teska && !TRENUCI_NEVEDRI.has(c.term);
+});
+
 
 /* ═══════════════════════════ OGRANIČENJA IZVEDBE ═══════════════════════════ */
 // Izvodjac uz pojam dobiva i nacin izvedbe. Metafora je istovremeno izvor
@@ -1681,8 +1705,11 @@ function renderKarticaScreen() {
   termEl.className = 'term ' + cls;
   termEl.textContent = cls.startsWith('sentence') ? term : term.toUpperCase();
 
+  // Kod TRENUTAKA je odgovor sam trenutak, ne osjecaj koji izaziva. Emocija
+  // dolazi na red poslije, u dodatku — ako se pogadja osjecaj, dva razlicita
+  // tocna odgovora ("tuga" i "prijatelj se seli") natjecu se za istu karticu.
   document.getElementById('card-note').textContent = d.deck === 'TRENUCI'
-    ? 'Izrazi emociju koju bi osjećao(la) u ovoj situaciji — tim pogađa EMOCIJU, ne situaciju.'
+    ? 'Prikaži sam trenutak — tim pogađa TRENUTAK, ne osjećaj.'
     : (isEsk() ? roundDef().hint : CHANNEL_HINT[d.channel]);
   document.getElementById('card-repeat').style.display = d.isRepeat ? 'inline-block' : 'none';
   // Izvodac presuduje BLIZU, pa mora vidjeti koje se rijeci priznaju kao ista stvar.
@@ -1877,10 +1904,20 @@ function afterCard() {
   // svakoj trecoj kartici. Prije se poslije svake kartice otvarao jedan od ova
   // dva ekrana, sto je uz 12 kartica bilo do cetiri dodira po kartici.
   if (!okidaMehaniku('mehBrojac', 'mehPrag')) { commitCard(); return; }
+  const { outcome } = state.pendingResult;
+  const card = state.currentDraw.card;
+  // Trenuci imaju svoj par dodataka: vedri idu u "Tko je od nas najcesce u
+  // ovome?", ostali u "Kako se ti osjecas u ovome?". Tako emocija ostaje dio
+  // igre, ali tek nakon sto je trenutak pogodjen — ne kao suparnicki odgovor.
+  if (outcome === 'pogodili' && card.deck === 'TRENUCI') {
+    if (card.vedar && session.tkoJeOvoOn) { startTkoJeOvo(); return; }
+    document.getElementById('osjecaj-term').textContent = card.term;
+    goScreen('osjecaj');
+    return;
+  }
   // Uvjeti koji su i prije vrijedili ostaju netaknuti: "Tko je ovo od nas?"
   // i dalje ide samo na pogodak, samo na sigurnu karticu i samo uz prekidac.
-  const { outcome } = state.pendingResult;
-  if (outcome === 'pogodili' && state.currentDraw.card.sigurno && session.tkoJeOvoOn) {
+  if (outcome === 'pogodili' && card.sigurno && session.tkoJeOvoOn) {
     startTkoJeOvo();
   } else {
     renderZeton();
@@ -1915,6 +1952,11 @@ function awardZeton(name) {
 let tkoTimer = null;
 
 function startTkoJeOvo() {
+  // Kod trenutaka se ne pita "tko JE ovo" nego "tko je najcesce U ovome" —
+  // trenutak se nekome dogadja, on nije necija osobina.
+  const jeTrenutak = state.currentDraw.card.deck === 'TRENUCI';
+  document.getElementById('tko-naslov').textContent =
+    jeTrenutak ? 'Tko je od nas najčešće u ovome?' : 'Tko je ovo od nas?';
   document.getElementById('tko-term').textContent = state.currentDraw.card.term;
   document.getElementById('tko-phase-count').style.display = 'flex';
   document.getElementById('tko-phase-pick').style.display = 'none';
@@ -1960,9 +2002,10 @@ function showTkoTitula(actor) {
   // ne mogu se pouzdano deklinirati — zato formulacija kojoj nominativ odgovara.
   // Titula kao natpis, ne kao predikat: "X je strucnjak" trazi rodnu
   // sroconost, pa uz djevojcicino ime zvuci sluzbenije nego sto ekran zeli.
+  const jeTrenutak = state.currentDraw.card.deck === 'TRENUCI';
   document.getElementById('tko-titula').innerHTML =
     `<span class="who">${escapeHtml(actor.name)}</span> ima novu titulu:<br>` +
-    `<span style="font-size:.8em; opacity:.85;">OBITELJSKI STRUČNJAK ZA</span><br>${escapeHtml(state.currentDraw.card.term)}`;
+    `<span style="font-size:.8em; opacity:.85;">${jeTrenutak ? 'OBITELJSKI REKORDER ZA' : 'OBITELJSKI STRUČNJAK ZA'}</span><br>${escapeHtml(state.currentDraw.card.term)}`;
   state.pendingResult.tkoOdigrano = true;
 }
 
