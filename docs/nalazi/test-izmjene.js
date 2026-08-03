@@ -15,39 +15,46 @@ const check = (n, c, e = '') => c ? (pass++, console.log('  ✓ ' + n)) : (fail+
   page.on('dialog', d => d.accept());
   await page.goto(FILE);
 
-  console.log('\n1) Razvojne faze — preseljene kartice');
+  console.log('\n1) Razvojne faze — popis v2.3');
   const f = await page.evaluate(() => {
     const g = t => (CARD_DB.find(c => c.term === t) || {}).faza;
-    return { smirenost: g('smirenost'), ugoda: g('ugoda'), znojni: g('znojni dlanovi'),
-      toplina: g('toplina'), prevrtanje: g('prevrtanje u krevetu bez sna'),
-      rezignacija: g('rezignacija'), polet: g('polet'), ocaranost: g('očaranost'),
-      studij: g('Stariji brat/sestra odlazi na studij.'), tajna: g('Priznaš tajnu koju već dugo skrivaš.'),
-      gadjenje: g('gađenje'), prevrtOcima: g('prevrtanje očima'), glumljenje: g('glumljenje da je sve u redu') };
+    const k = t => (CARD_DB.find(c => c.term === t) || {}).korak;
+    return {
+      sram: g('sram'), ponos: g('ponos'), zabrinutost: g('zabrinutost'), hrabrost: g('hrabrost'),
+      snijeg: g('prvi snijeg'), dekica: g('topla dekica'),
+      gorka: g('gorka pobjeda'), prisilna: g('prisilna isprika'),
+      krijesnice: g('lov na krijesnice'), krijesniceK: k('lov na krijesnice'),
+      cringe: g('sram zbog drugoga (cringe)'),
+      lazniOsmijeh: g('lažni osmijeh'), oprostitiSebi: g('oprostiti sebi'),
+      stucanje: g('štucanje'), toplinaPrsa: g('toplina u prsima'),
+    };
   });
-  check('smirenost → faza 2', f.smirenost === 2, String(f.smirenost));
-  check('ugoda → faza 2', f.ugoda === 2, String(f.ugoda));
-  check('znojni dlanovi → faza 2', f.znojni === 2, String(f.znojni));
-  check('toplina → faza 3 (metafora)', f.toplina === 3, String(f.toplina));
-  check('prevrtanje u krevetu bez sna → faza 1', f.prevrtanje === 1, String(f.prevrtanje));
-  check('rezignacija → faza 3', f.rezignacija === 3, String(f.rezignacija));
-  check('polet i očaranost → faza 3', f.polet === 3 && f.ocaranost === 3);
-  check('obje miješane situacije → faza 3', f.studij === 3 && f.tajna === 3);
-  check('gađenje ostaje faza 1 (uz sinonime)', f.gadjenje === 1, String(f.gadjenje));
-  check('regresija: prevrtanje očima=1, glumljenje=2', f.prevrtOcima === 1 && f.glumljenje === 2);
+  check('samosvjesne emocije ostaju u fazi 2, ne 1', [f.sram, f.ponos, f.zabrinutost, f.hrabrost].every(x => x >= 2),
+        `sram=${f.sram} ponos=${f.ponos} zabrinutost=${f.zabrinutost} hrabrost=${f.hrabrost}`);
+  check('osjetilni trenuci su faza 1', f.snijeg === 1 && f.dekica === 1, `${f.snijeg}/${f.dekica}`);
+  check('miješani i moralni trenuci su faza 3', f.gorka === 3 && f.prisilna === 3, `${f.gorka}/${f.prisilna}`);
+  check('korak ≠ faza: „lov na krijesnice“ korak 3, faza 1', f.krijesniceK === 3 && f.krijesnice === 1,
+        `korak=${f.krijesniceK} faza=${f.krijesnice}`);
+  check('„sram zbog drugoga“ traži tuđu perspektivu → faza 3', f.cringe === 3, String(f.cringe));
+  check('skrivanje osjećaja → faza 2', f.lazniOsmijeh === 2, String(f.lazniOsmijeh));
+  check('„oprostiti sebi“ traži unutarnji standard → faza 3', f.oprostitiSebi === 3, String(f.oprostitiSebi));
+  check('vidljive tjelesne reakcije → faza 1', f.stucanje === 1, String(f.stucanje));
+  check('interoceptivne tjelesne → faza 3', f.toplinaPrsa === 3, String(f.toplinaPrsa));
 
-  console.log('\n2) Sinonimi dječjeg registra');
-  const s = await page.evaluate(() => {
+  console.log('\n2) Sinonimi — dvojnici stoje uz nositelja');
+  const s2 = await page.evaluate(() => {
     const g = t => (CARD_DB.find(c => c.term === t) || {}).sinonimi || [];
-    return { gadjenje: g('gađenje'), srce: g('ubrzano lupanje srca'), koza: g('naježena koža'),
-      sreca: g('sreća'), koljena: g('klecanje koljena'),
-      nositeljiIskljuceni: CARD_DB.filter(c => c.sinonimi.length && c.iskljucena).length };
+    const termini = new Set(CARD_DB.map(c => c.term));
+    return { sreca: g('sreća'), gadjenje: g('gađenje'), smirenost: g('smirenost'),
+      anksioznost: termini.has('anksioznost'), tjeskoba: termini.has('tjeskoba'),
+      dvojnikKaoKartica: [].concat(...Object.values(SINONIMI)).filter(d => termini.has(d)) };
   });
-  check('gađenje → fuj, bljak', s.gadjenje.join(',') === 'fuj,bljak', s.gadjenje.join(','));
-  check('ubrzano lupanje srca ima dječju varijantu', s.srce.includes('srce lupa'), s.srce.join(','));
-  check('naježena koža → ježim se', s.koza.includes('ježim se'));
-  check('klecanje koljena ima dječju varijantu', s.koljena.length > 0);
-  check('stari sinonimi netaknuti (sreća)', s.sreca.join(',') === 'radost,veselje,vedrina', s.sreca.join(','));
-  check('nijedan nositelj nije isključen', s.nositeljiIskljuceni === 0);
+  check('sreća → radost, vedrina', s2.sreca.join(',') === 'radost,vedrina', s2.sreca.join(','));
+  check('gađenje zadržava dječje varijante', s2.gadjenje.includes('fuj'), s2.gadjenje.join(','));
+  check('smirenost → opuštenost, bezbrižnost', s2.smirenost.length === 2, s2.smirenost.join(','));
+  check('kad popis izbaci nositelja, sinonim postaje kartica', s2.anksioznost && !s2.tjeskoba,
+        `anksioznost=${s2.anksioznost} tjeskoba=${s2.tjeskoba}`);
+  check('nijedan dvojnik se ne izvlači', s2.dvojnikKaoKartica.length === 0, s2.dvojnikKaoKartica.join(','));
 
   console.log('\n3) Ograničenja se filtriraju po dobi');
   const METAFORE = ['prognozu', 'životinju', 'boju i zvuk', 'vijest na televiziji', 'bez riječi'];
@@ -117,22 +124,29 @@ const check = (n, c, e = '') => c ? (pass++, console.log('  ✓ ' + n)) : (fail+
   check('12 i 11.5 dijele vrh', l.p12 === l.p115 && l.p12.includes('Zabrinjavajuće'), `${l.p12} | ${l.p115}`);
   check('11 je i dalje stepenica niže', l.p11 !== l.p12 && l.p11.includes('Čitate'), l.p11);
 
-  console.log('\n7) Preimenovanja — muški rod i pojašnjenja');
+  console.log('\n7) Sadržaj — popis v2.3 u cijelosti');
   const r7 = await page.evaluate(() => {
-    const sit = CARD_DB.filter(c => c.deck === 'SITUACIJE' && !c.iskljucena);
     const musko = /\b(si|nisi)\s+\w+(ao|io)\b|\bPonosan si\b|\bDobio si\b/;
     return {
-      sporne: sit.filter(c => musko.test(c.term)).map(c => c.term),
-      bezPojasnjenja: CARD_DB.filter(c => !c.iskljucena && !POJASNJENJA[c.term]).map(c => c.term),
-      staro: CARD_DB.some(c => c.term === 'projiciranje ljutnje na krivu osobu'),
-      novo: CARD_DB.some(c => c.term === 'iskaljivanje ljutnje na krivoj osobi'),
-      ukupno: CARD_DB.filter(c => !c.iskljucena).length,
+      ukupno: CARD_DB.length,
+      spilovi: [...new Set(CARD_DB.map(c => c.deck))].sort(),
+      bezPojasnjenja: CARD_DB.filter(c => !POJASNJENJA[c.term]).map(c => c.term),
+      musko: CARD_DB.filter(c => musko.test(c.term)).map(c => c.term),
+      teske: CARD_DB.filter(c => c.teska).length,
+      teskeSigurne: CARD_DB.filter(c => c.teska && c.sigurno).length,
+      trenuciSigurni: CARD_DB.filter(c => c.deck === 'TRENUCI' && c.sigurno).length,
+      dupli: CARD_DB.length - new Set(CARD_DB.map(c => c.term)).size,
+      bezKanala: CARD_DB.filter(c => !c.channels || !c.channels.length).length,
     };
   });
-  check('nijedna situacija ne oslovljava dijete u muškom rodu', r7.sporne.length === 0, r7.sporne.slice(0, 3).join(' | '));
-  check('svaka aktivna kartica ima pojašnjenje', r7.bezPojasnjenja.length === 0, r7.bezPojasnjenja.slice(0, 3).join(' | '));
-  check('„iskaljivanje ljutnje na krivoj osobi“ zamijenilo staru formulaciju', r7.novo && !r7.staro);
-  check('broj aktivnih kartica nepromijenjen (247)', r7.ukupno === 247, String(r7.ukupno));
+  check('svaka kartica ima pojašnjenje', r7.bezPojasnjenja.length === 0, r7.bezPojasnjenja.slice(0, 3).join(' | '));
+  check('nijedan pojam nije u muškom rodu', r7.musko.length === 0, r7.musko.slice(0, 3).join(' | '));
+  check('četiri špila, TRENUCI zamijenili SITUACIJE', r7.spilovi.join(',') === 'EMOCIJE,PONASANJA,TJELESNE,TRENUCI', r7.spilovi.join(','));
+  check('10 teških tema vraćeno uz novi popis', r7.teske === 10, String(r7.teske));
+  check('nijedna teška kartica nije „sigurna“', r7.teskeSigurne === 0, String(r7.teskeSigurne));
+  check('TRENUCI nikad ne idu u „Tko je ovo od nas?“', r7.trenuciSigurni === 0, String(r7.trenuciSigurni));
+  check('nema duplikata', r7.dupli === 0, String(r7.dupli));
+  check('svaka kartica ima kanale', r7.bezKanala === 0, String(r7.bezKanala));
 
   console.log('\n8) Tempo — dob 6–8 sada ima duboke kartice');
   const t = await page.evaluate(() => {
