@@ -56,6 +56,38 @@ Napomena o okruženju: ako pokrećete u sandboxu/CI bez pristupa
 iscrpljenih retryja) — to je očekivano; struktura i sintaksa koda su
 testirane, ali stvarni fetch zahtijeva mrežni pristup s vašeg lokalnog stroja.
 
+### Ručni CSV export (kad stroj s analizom nema pristup Googleu)
+
+`analyze.py` i `analyze_hourly.py` **ne trebaju mrežu** — čitaju samo CSV.
+Ako stroj na kojem vrtiš analizu ne može do `trends.google.com` (npr. sandbox
+ili CI iza egress politike), podatke izvezi ručno iz preglednika i uvezi ih:
+
+1. Otvori Google Trends, unesi `insomnia` i `suicide` **zajedno** u istoj
+   usporedbi (bitno — zajednička 0-100 skala), postavi regiju United Kingdom
+   i željeni raspon.
+2. Na grafu *Interest over time* klikni gumb za download → dobiješ
+   `multiTimeline.csv`.
+3. Uvezi ga:
+
+```bash
+python import_csv.py --input ~/Downloads/multiTimeline.csv
+python analyze.py          # ili analyze_hourly.py, ovisno o rezoluciji
+```
+
+`import_csv.py` sam prepoznaje rezoluciju iz naziva vremenske kolone
+(`Month`/`Week`/`Day`/`Time`), skida sufiks `: (United Kingdom)` s naziva
+stupaca, i mapira Googleovu oznaku `<1` u 0 uz glasno upozorenje (to su
+stvarne niske vrijednosti, ne praznine). Krivi tip exporta (npr. *Interest by
+region*) odbija s jasnom porukom umjesto da tiho proizvede besmislicu.
+
+> **Zamka s vremenskom zonom kod satnog exporta:** Google UI izvozi satne
+> oznake u zoni **preglednika**, ne u UTC-u. `import_csv.py` ih zato tumači
+> prema `--tz` (zadano `Europe/London`) i pretvara u UTC. Ako si izvozio iz
+> preglednika u drugoj zoni, **moraš** to reći:
+> `python import_csv.py --input ... --tz Europe/Zagreb`.
+> Kriva zona pomakne akrofazu za cijeli sat (ili dva ljeti) i tiho iskrivi
+> cijeli kosinor nalaz.
+
 ### Cookie i User-Agent (ako Google odbija anonimne zahtjeve)
 
 Google često ne posluži scrape zahtjeve bez consent/NID cookieja i bez
@@ -186,6 +218,7 @@ trends-infodemiology/
   analyze.py
   fetch_hourly.py
   analyze_hourly.py
+  import_csv.py     # uvoz rucnog CSV exporta iz Google Trends sucelja
   requirements.txt
   data/raw/          # cache sirovih Google Trends odgovora (CSV, 24h TTL)
   output/
