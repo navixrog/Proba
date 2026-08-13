@@ -56,6 +56,41 @@ Napomena o okruženju: ako pokrećete u sandboxu/CI bez pristupa
 iscrpljenih retryja) — to je očekivano; struktura i sintaksa koda su
 testirane, ali stvarni fetch zahtijeva mrežni pristup s vašeg lokalnog stroja.
 
+### Cookie i User-Agent (ako Google odbija anonimne zahtjeve)
+
+Google često ne posluži scrape zahtjeve bez consent/NID cookieja i bez
+realističnog User-Agenta — simptomi su prazan odgovor, HTTP 429, ili redirect
+na consent stranicu. Oboje se predaje **kroz varijable okoline**, nikad kroz
+kod:
+
+```bash
+export GOOGLE_TRENDS_COOKIE='NID=...; CONSENT=...; SOCS=...'
+export GOOGLE_TRENDS_USER_AGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64) ... Chrome/122.0.0.0 ...'
+python fetch.py
+```
+
+Kako doći do cookieja: otvori `trends.google.com` u pregledniku (nakon što
+prihvatiš consent) → DevTools → Network → klikni bilo koji zahtjev prema
+`trends.google.com` → Request Headers → kopiraj **cijelu** vrijednost
+`cookie` zaglavlja.
+
+Sigurnosne napomene:
+
+- Cookie je **vjerodajnica** — vrijedi kao pristup tvom Google računu za
+  usluge koje ga prihvaćaju. Ne commitaj ga, ne dijeli ga, ne lijepi u
+  issue/chat. `.gitignore` već pokriva `.env`.
+- Alat logira samo **imena** cookieja i njihov broj, nikad vrijednosti.
+- Cookiei se šalju samo na domenu `.google.com` (provjereno testom da ne
+  odlaze na treće hostove).
+- Bez cookieja alat i dalje radi — samo ispiše upozorenje i šalje anonimne
+  zahtjeve.
+
+**Cookie NE pomaže ako je host blokiran na razini mreže.** Ako egress proxy
+ili firewall vrati `403` na `CONNECT trends.google.com:443`, blokada je prije
+TLS-a i prije ijednog HTTP zaglavlja — cookie se u tom slučaju nikad ni ne
+pošalje. Simptom: `curl: (56) CONNECT tunnel failed, response 403`. Rješenje
+je otvoriti mrežni pristup, ne mijenjati cookie.
+
 ## Metodologija
 
 ### Dohvat (`fetch.py`)

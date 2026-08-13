@@ -39,6 +39,7 @@ from fetch import (
     _fetch_with_retry,
     _load_cache,
     _save_cache,
+    build_client,
 )
 
 log = logging.getLogger("fetch_hourly")
@@ -85,7 +86,7 @@ def fetch_hourly_window(tr: Trends, w_start: date, w_end: date) -> pd.DataFrame:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-    tr = Trends(request_delay=MIN_REQUEST_DELAY, max_retries=3)
+    tr = build_client()
 
     windows = _week_windows()
     log.info("=== Satna rezolucija: %d uzastopnih tjedana, %s - %s ===", len(windows), windows[0][0], windows[-1][1])

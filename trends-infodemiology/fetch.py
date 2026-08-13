@@ -27,8 +27,8 @@ odstupanje od doslovno najuzeg moguceg prozora, ne bug.
 from __future__ import annotations
 
 import logging
+import os
 import time
-from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -52,6 +52,30 @@ MIN_REQUEST_DELAY = 2.5
 CACHE_MAX_AGE_HOURS = 24
 MAX_FETCH_ATTEMPTS = 6
 BACKOFF_BASE_SECONDS = 3.0
+
+# --- Cookie / User-Agent (opcionalno, samo za lokalno pokretanje) -------------
+# Google cesto odbija anonimne scrape zahtjeve (prazan odgovor, 429, ili
+# redirect na consent stranicu) dok se ne posalju consent/NID cookiei i
+# realistican User-Agent. Oboje se cita IZ OKOLINE - nikad se ne hardkodira
+# niti sprema u repozitorij:
+#
+#   export GOOGLE_TRENDS_COOKIE='NID=...; CONSENT=...; SOCS=...'
+#   export GOOGLE_TRENDS_USER_AGENT='Mozilla/5.0 (...) Chrome/...'
+#
+# Cookie se kopira iz preglednika: otvori trends.google.com prijavljen/nakon
+# prihvacanja consenta -> DevTools -> Network -> bilo koji zahtjev prema
+# trends.google.com -> Request Headers -> cijela vrijednost 'cookie' zaglavlja.
+#
+# Cookie je osobni podatak i vrijedi kao vjerodajnica: NE commitaj ga, ne
+# dijeli ga i ne stavljaj u logove. Ovaj modul logira samo IMENA cookieja i
+# njihov broj, nikad vrijednosti.
+COOKIE_ENV_VAR = "GOOGLE_TRENDS_COOKIE"
+USER_AGENT_ENV_VAR = "GOOGLE_TRENDS_USER_AGENT"
+COOKIE_DOMAIN = ".google.com"
+DEFAULT_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+)
 
 ROOT = Path(__file__).resolve().parent
 RAW_DIR = ROOT / "data" / "raw"
@@ -88,6 +112,65 @@ ZOOM_WINDOWS = [
 
 class EmptyTrendsResponseError(RuntimeError):
     """Google Trends je vratio prazan ili blokiran odgovor. NIKAD ne popunjavati izmisljenim vrijednostima."""
+
+
+def parse_cookie_header(raw: str) -> dict[str, str]:
+    """Pretvori sirovo 'cookie' zaglavlje ('k=v; k2=v2') u dict.
+
+    Tolerira visak razmaka, prazne segmente i vrijednosti koje same sadrze '='
+    (npr. base64), jer se dijeli samo na PRVOM '='.
+    """
+    cookies: dict[str, str] = {}
+    for segment in raw.split(";"):
+        segment = segment.strip()
+        if not segment or "=" not in segment:
+            continue
+        name, value = segment.split("=", 1)
+        name = name.strip()
+        if name:
+            cookies[name] = value.strip()
+    return cookies
+
+
+def build_client() -> Trends:
+    """Konstruiraj trendspy klijenta i, ako su postavljeni u okolini,
+    primijeni cookie i User-Agent.
+
+    Bez cookieja alat i dalje radi (Google ponekad posluzi anonimne zahtjeve),
+    ali s njim je bitno manja vjerojatnost praznog odgovora / 429 / consent
+    redirecta pri lokalnom pokretanju.
+    """
+    tr = Trends(request_delay=MIN_REQUEST_DELAY, max_retries=3)
+
+    user_agent = os.environ.get(USER_AGENT_ENV_VAR, "").strip() or DEFAULT_USER_AGENT
+    tr.session.headers.update({"user-agent": user_agent})
+
+    raw_cookie = os.environ.get(COOKIE_ENV_VAR, "").strip()
+    if not raw_cookie:
+        log.warning(
+            "%s nije postavljen - saljem anonimne zahtjeve. Ako Google vrati prazan "
+            "odgovor ili 429, kopiraj 'cookie' zaglavlje iz preglednika i postavi ga: "
+            "export %s='NID=...; CONSENT=...'",
+            COOKIE_ENV_VAR, COOKIE_ENV_VAR,
+        )
+        return tr
+
+    cookies = parse_cookie_header(raw_cookie)
+    if not cookies:
+        raise ValueError(
+            f"{COOKIE_ENV_VAR} je postavljen ali iz njega nije procitan nijedan "
+            "cookie. Ocekivan format je sirovo 'cookie' zaglavlje: 'NID=...; CONSENT=...'."
+        )
+
+    for name, value in cookies.items():
+        tr.session.cookies.set(name, value, domain=COOKIE_DOMAIN)
+
+    # NIKAD ne logiraj vrijednosti - cookie je vjerodajnica.
+    log.info(
+        "Primijenjeno %d cookieja iz %s (domena %s): %s",
+        len(cookies), COOKIE_ENV_VAR, COOKIE_DOMAIN, ", ".join(sorted(cookies)),
+    )
+    return tr
 
 
 def _cache_path(cache_key: str) -> Path:
@@ -197,7 +280,7 @@ def fetch_zoom_window(tr: Trends, window: dict) -> pd.DataFrame:
 
 
 def main() -> None:
-    tr = Trends(request_delay=MIN_REQUEST_DELAY, max_retries=3)
+    tr = build_client()
 
     log.info("=== Glavna serija (insomnia + suicide, GB, %s do %s, ZAJEDNICKI poziv) ===", MAIN_START, MAIN_END)
     main_df = fetch_main_series(tr)
