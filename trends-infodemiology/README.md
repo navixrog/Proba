@@ -31,18 +31,25 @@ pip install -r requirements.txt
 ## Pokretanje
 
 ```bash
-# 1. Dohvat podataka (treba internetski pristup trends.google.com)
+# 1. Dohvat mjesecne/tjedne serije (treba internetski pristup trends.google.com)
 python fetch.py
 
-# 2. Statisticka analiza glavne serije
+# 2. Statisticka analiza glavne (mjesecne) serije - STL, prewhitening, CCF
 python analyze.py
+
+# 3. Dohvat satne rezolucije (nedavni tjedni, za dnevnu/24h komponentu)
+python fetch_hourly.py
+
+# 4. Kosinor analiza dnevne (24h) komponente + testovi povezanosti
+python analyze_hourly.py
 ```
 
 `fetch.py` sprema sirove odgovore u `data/raw/` (cache, ponovno se koristi
 ako je mlađi od 24h) i glavni output u `output/raw_interest_over_time.csv`
 plus tri `output/zoom_NOT_COMPARABLE_*.csv` datoteke. `analyze.py` čita
 `output/raw_interest_over_time.csv` i generira sve ostale datoteke u
-`output/`.
+`output/`. Koraci 3-4 su neovisni o koracima 1-2 (druga vremenska skala,
+vidi niže) i mogu se pokrenuti zasebno.
 
 Napomena o okruženju: ako pokrećete u sandboxu/CI bez pristupa
 `trends.google.com`, `fetch.py` će pasti na prvom pokušaju dohvata (nakon
@@ -96,12 +103,54 @@ testirane, ali stvarni fetch zahtijeva mrežni pristup s vašeg lokalnog stroja.
    ARIMA red, CCF tablica, koji pomaci prelaze koju granicu), s upozorenjem
    s vrha ovog README-a na vrhu datoteke.
 
+### Dnevna (24h) komponenta — `fetch_hourly.py` + `analyze_hourly.py`
+
+Ovo je ODVOJENA analiza na SASVIM DRUGOJ vremenskoj skali od gornje mjesecne
+serije — pita se "u koje doba dana ljudi u UK-u pretražuju ove pojmove", ne
+"kako se traend mijenja kroz godine".
+
+- **Dohvat**: Google Trends vraća satnu rezoluciju samo za prozore duljine
+  72h-8 dana (vidi tablicu rezolucija u `fetch.py`). Zato je nemoguće dobiti
+  satnu rezoluciju za cijelo razdoblje 2015.-2026. u jednom pozivu.
+  `fetch_hourly.py` umjesto toga dohvaća **6 uzastopnih nedavnih punih
+  tjedana** (zadano; ~1008 satnih točaka, insomnia+suicide zajedno kao i
+  uvijek) i sprema ih u `output/raw_interest_over_time_hourly.csv`. Ovo je
+  namjerno **snimka nedavnog obrasca**, ne povijesna analiza — jasno
+  označeno u `summary_hourly.md`.
+- **Analiza** (`analyze_hourly.py`):
+  1. Satne oznake (Google ih vraća u UTC-u) konvertiraju se u UK lokalno
+     vrijeme (`Europe/London`, hvata BST automatski) — "sat u danu" ima
+     smisla samo u lokalnom vremenu regije.
+  2. **Kosinor model** (Nelson, Tong, Lee & Halberg 1979) po pojmu:
+     `y = M + β·cos(2πh/24) + γ·sin(2πh/24)`, h = sat dana. Iz toga se čita
+     mesor `M`, amplituda `A`, akrofaza (sat predviđenog dnevnog maksimuma)
+     i "zero-amplitude" F-test (postoji li uopće značajan 24h ritam) →
+     `output/cosinor_insomnia.png`, `output/cosinor_suicide.png`,
+     `output/cosinor_results.csv`.
+  3. **Tri testa povezanosti** dnevnog obrasca između `insomnia` i
+     `suicide`, namjerno razdvojena da se ne pomiješu:
+     - sirova korelacija svih uparenih satnih točaka (naivna, dijelom je
+       nužno posljedica toga što obje serije imaju vlastiti 24h ritam),
+     - korelacija REZIDUALA nakon što je svakoj seriji oduzet njezin
+       vlastiti kosinor fit (povezanost IZVAN zajedničkog dnevnog oblika —
+       konceptualno isto kao prewhitening+CCF u `analyze.py`, samo na
+       satnoj/24h skali),
+     - korelacija prosječnih profila po satu dana (24 uparene točke) — 
+       najizravnije mjeri poklapaju li se vrhovi/padovi dana.
+     Rezultati u `output/hourly_association.csv` i `output/residual_scatter.png`.
+  4. `output/summary_hourly.md` — isto upozorenje s vrha ovog README-a PLUS
+     dodatna napomena da je ovo snimka nedavnih tjedana, da dan tjedna
+     (radni dan/vikend) nije kontroliran, i da kosinor model hvata samo
+     jednu (24h) periodičnu komponentu.
+
 ## Struktura
 
 ```
 trends-infodemiology/
   fetch.py
   analyze.py
+  fetch_hourly.py
+  analyze_hourly.py
   requirements.txt
   data/raw/          # cache sirovih Google Trends odgovora (CSV, 24h TTL)
   output/
@@ -112,6 +161,14 @@ trends-infodemiology/
     cross_correlation.png
     cross_correlation.csv
     summary.md
+    raw_interest_over_time_hourly.csv
+    cosinor_insomnia.png
+    cosinor_suicide.png
+    hourly_profiles_overlay.png
+    residual_scatter.png
+    cosinor_results.csv
+    hourly_association.csv
+    summary_hourly.md
 ```
 
 ## Ograničenja i poznata odstupanja
@@ -124,3 +181,8 @@ trends-infodemiology/
 - `analyze.py` baca iznimku ako serija nakon poravnavanja na mjesečnu
   frekvenciju sadrži praznine (nedostajuće mjesece) — namjerno, da se ne
   prikrije problem s podacima interpolacijom.
+- `fetch_hourly.py`/`analyze_hourly.py` analiziraju samo NEDAVNE tjedne
+  (zadano 6), ne cijelo povijesno razdoblje, i ne stratificiraju po danu
+  tjedna — obrazac radnog dana i vikenda je pomiješan u istom kosinor fitu.
+  Kosinor model pretpostavlja jedan glatki 24h ciklus; ne modelira nagle
+  promjene niti sub-dnevne (npr. 12h) komponente.
