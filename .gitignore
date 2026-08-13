@@ -1,5 +1,7 @@
 node_modules/
 .expo/
+__pycache__/
+*.pyc
 dist/
 web-build/
 npm-debug.*
@@ -10,3 +12,12 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 .env
+
+# trends-infodemiology tool: generated data/plots, keep the tool itself
+trends-infodemiology/data/raw/*.csv
+trends-infodemiology/data/raw/*.parquet
+trends-infodemiology/output/*.csv
+trends-infodemiology/output/*.png
+trends-infodemiology/output/*.md
+!trends-infodemiology/data/raw/.gitkeep
+!trends-infodemiology/output/.gitkeep
