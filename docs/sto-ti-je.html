@@ -259,6 +259,18 @@
     transition: opacity .2s; z-index: 50; max-width: 88vw; text-align: center;
   }
   .toast.show { opacity: 1; }
+
+  /* ── Nacin za najmladje (dob 4–6): dijete ne cita, pa slika nosi znacenje ── */
+  .card-emoji { display: none; line-height: 1; margin-bottom: 4px; }
+  .term-card.kids .card-emoji { display: block; font-size: clamp(72px, 26vw, 110px); }
+  .term-card.kids .term.single   { font-size: clamp(32px, 11vw, 46px); }
+  .term-card.kids .term.medium   { font-size: clamp(27px, 8.6vw, 38px); }
+  .term-card.kids .term.sentence { font-size: clamp(22px, 6.6vw, 29px); }
+  .term-card.kids .term.sentence.long { font-size: clamp(19px, 5.6vw, 25px); }
+  .term-card.kids .card-note { font-size: 16px; font-weight: 800; color: var(--card-text); }
+  .term-card.kids .syn-line, .term-card.kids .stars-line { font-size: 15px; }
+  .kids-emoji-small { display: none; }
+  .verzija { font-size: 12px; color: var(--text-dim); opacity: .7; letter-spacing: .04em; }
   .top-bar { display: flex; align-items: center; gap: 8px; }
   .top-bar h2 { font-size: 17px; margin-right: auto; }
   /* ── Pravila ── */
@@ -288,6 +300,7 @@
     </div>
     <div class="tagline">Pogodi što mi je — prije nego što ti kažem.</div>
     <div class="record-line" id="naslovna-rekord" style="display:none;"></div>
+    <div class="verzija">v2.3 · špil od 315 kartica</div>
     <button class="btn" onclick="startNewGame()">NOVA IGRA</button>
     <button class="btn btn-outline" onclick="showPravila('naslovna')">KAKO SE IGRA</button>
     <button class="btn btn-outline btn-small" id="naslovna-stat-btn" style="display:none;" onclick="goScreen('statistika')">Statistika igranja</button>
@@ -399,6 +412,7 @@
     <div class="timer-display" id="timer-display">60</div>
     <div class="term-card" id="term-card">
       <div class="deck-name" id="card-deck-name"></div>
+      <div class="card-emoji" id="card-emoji"></div>
       <div class="stars-line" id="card-stars"></div>
       <div class="term" id="card-term"></div>
       <div class="card-note" id="card-note"></div>
@@ -411,10 +425,10 @@
       <div class="repeat-tag" id="card-repeat" style="display:none;">↺ ponovljena kartica</div>
     </div>
     <div class="judge-col">
-      <button class="btn btn-ok" onclick="judge('pogodili')">POGODILI</button>
+      <button class="btn btn-ok" onclick="judge('pogodili')">✅ POGODILI</button>
       <div class="judge-pair">
-        <button class="btn btn-close" onclick="judge('blizu')">BLIZU</button>
-        <button class="btn btn-miss" onclick="judge('nismo')">NISMO</button>
+        <button class="btn btn-close" onclick="judge('blizu')">🤏 BLIZU</button>
+        <button class="btn btn-miss" onclick="judge('nismo')">❌ NISMO</button>
       </div>
       <button class="btn btn-outline btn-small" id="safety-skip" style="display:none;" onclick="safetySkip()">PRESKAČEM OVU KARTICU</button>
       <div class="judge-hint">Ti presuđuješ. BLIZU je za odgovor koji je pogodio osjećaj, ali ne baš tu riječ.</div>
@@ -1208,6 +1222,49 @@ const SINONIMI = {
   'nemirne noge': ['noge ne miruju'],
 };
 CARD_DB.forEach(c => { c.sinonimi = SINONIMI[c.term] || []; });
+/* ═══════════════════════════ EMOJI UZ POJAM ═══════════════════════════ */
+// Dijete od cetiri godine ne cita, a izvodac je taj koji drzi uredjaj — bez
+// slike bi mu pojam bio nedostupan. Zato svaka kartica faze 1 (jedini spil
+// koji dob 4-6 uopce dobiva) ima emoji. Za starije je emoji sitan podsjetnik,
+// za najmladje je glavni nositelj znacenja.
+const EMOJI = {
+// ── EMOCIJE ──
+"sreća":"😄","tuga":"😢","ljutnja":"😠","strah":"😨","iznenađenje":"😲","gađenje":"🤢",
+"umor":"🥱","dosada":"😑","uzbuđenje":"🤩","znatiželja":"🔍","ljubav":"❤️","razigranost":"🤸",
+"nježnost":"🥰","zaštićenost":"🛡️","zbunjenost":"😕","nestrpljivost":"⏳",
+// ── TRENUCI ──
+"prvi snijeg":"❄️","topla dekica":"🛌","čokolada":"🍫","miris kiše":"🌧️","zagrljaj psa":"🐶",
+"pidžama-dan":"🩱","palačinke nedjeljom":"🥞","pjevanje u autu":"🚗","skakanje po lokvama":"👢",
+"sladoled ljeti":"🍦","spavanje kod bake":"👵","kućica od deka":"🏕️","prvi dan praznika":"🎉",
+"topli kakao zimi":"☕","crtići u pidžami":"📺","zalazak sunca":"🌅","duga poslije kiše":"🌈",
+"grudanje":"⛄","pravljenje snjegovića":"☃️","promatranje zvijezda":"🌟","puhanje maslačka":"🌼",
+"prve pahulje":"🌨️","skakanje u more":"🌊","pješčani dvorac":"🏰","traženje školjki":"🐚",
+"vožnja trajektom":"⛴️","omiljeni keksi":"🍪","film i kokice":"🍿","zub pod jastukom":"🦷",
+"novac u džepu":"🪙","smijanje do suza":"😹","dugo željeni poklon":"🎁",
+"pronađena izgubljena igračka":"🧸","oteta igračka":"😧","šuštanje lišća":"🍂",
+"anđeli u snijegu":"👼","branje trešanja":"🍒","trčanje po travi":"🏃","pun mjesec":"🌕",
+"sladoled na plaži":"🏖️","piknik na dekici":"🧺","put na more":"🚙","pas te dočeka":"🐕",
+"nedjeljni ručak":"🍽️","topla peciva ujutro":"🥐","kiša po prozoru":"🪟","drijemanje na kauču":"😴",
+"svježa posteljica":"🧺","zadnji dan škole":"🎒","lov na krijesnice":"✨","dan na plaži":"🏝️",
+"roštilj u dvorištu":"🍖","vesele životinje":"🐾","mačka koja prede":"🐱","lizanje zdjele tijesta":"🥣",
+"prva jagoda sezone":"🍓","čitanje do kasno":"📖","jutro bez žurbe":"🌤️","spavanje do podne":"🛏️",
+"pogled iz vlaka":"🚆","pjesma s radija":"📻","ples po boravku":"💃",
+// ── TJELESNE ──
+"drhtanje":"🥶","crvenjenje":"😳","ubrzano lupanje srca":"💓","suze u očima":"😥",
+"nezaustavljiv smijeh":"🤣","skakanje na mjestu":"⬆️","kruljenje u trbuhu":"🍽️","štucanje":"😬",
+"zijevanje":"🥱","cvokotanje zubi":"🦷","trljanje očiju":"😪","vrpoljenje":"🌀","široki osmijeh":"😁",
+"pucketanje prstima":"🤞","naježena koža":"🐔","klecanje koljena":"🦵","uzdah olakšanja":"😮‍💨",
+"stisnute šake":"✊","nemirne noge":"🦶","prevrtanje u krevetu":"🛏️",
+// ── PONASANJA ──
+"zagrljaj":"🤗","tješenje":"🫂","isprika":"🙏","dijeljenje":"🤝","pomaganje":"🙋","plakanje":"😭",
+"durenje":"😤","mrštenje":"😖","slijeganje ramenima":"🤷","čestitanje":"🎊","zahvaljivanje":"🙇",
+"pljeskanje":"👏","„daj pet“":"🙌","držanje za ruku":"🫱","nasmijavanje nekoga":"🤪",
+"prevrtanje očima":"🙄","cmizdrenje":"😩","traženje zagrljaja":"🫶",
+// ── teska kartica koja pada u fazu 1 ──
+"Netko se smije tvojoj frizuri.":"💇",
+};
+CARD_DB.forEach(c => { c.emoji = EMOJI[c.term] || ''; });
+
 /* ═══════════════════════════ VEDRI TRENUCI ═══════════════════════════ */
 // Dodatak "Tko je od nas najcesce u ovome?" uperi prst u stvarnu osobu, pa
 // smije ici samo na trenutke gdje je to simpaticno. Na "prekrsenom obecanju"
@@ -1267,6 +1324,14 @@ const OGRANICENJA = [
 ];
 
 const CHANNEL_LABEL = { O: 'OPIŠI', C: 'NACRTAJ', P: 'ODGLUMI' };
+const CHANNEL_EMOJI = { O: '🗣️', C: '✏️', P: '🎭' };
+// Za neslovnu djecu uputa mora stati u jednu kratku recenicu koju odrasla
+// osoba procita jednom, a dijete zapamti.
+const KIDS_HINT = {
+  O: '🗣️ Pričaj — ali ne smiješ reći tu riječ!',
+  C: '✏️ Crtaj — bez slova i brojki!',
+  P: '🎭 Glumi — bez riječi i bez glasa!',
+};
 const CHANNEL_HINT = {
   O: 'Opisuj riječima — bez izgovaranja samog pojma.',
   C: 'Nacrtaj na papiru — bez slova i brojki.',
@@ -1530,6 +1595,17 @@ function buildSnop(n) {
     uzeto.add(card);
     chosen.push(card);
   }
+  // Emocionalno nabijen trenutak dva puta zaredom skrene partiju u niz teskih
+  // pitanja — isti razlog zbog kojeg RITAM ne dopusta tri duboke kartice.
+  // Zamjena ide samo unaprijed, pa nikad ne moze zavrtjeti petlju.
+  const nabijen = c => c.deck === 'TRENUCI' && !c.vedar;
+  for (let i = 1; i < chosen.length; i++) {
+    if (!nabijen(chosen[i]) || !nabijen(chosen[i - 1])) continue;
+    // Zamjena mora biti istog tempa, inace bi razbila RITAM — dvije mjere
+    // koje cuvaju tempo partije ne smiju raditi jedna protiv druge.
+    const j = chosen.findIndex((c, k) => k > i && !nabijen(c) && c.tempo === chosen[i].tempo);
+    if (j > -1) { const t = chosen[i]; chosen[i] = chosen[j]; chosen[j] = t; }
+  }
   return chosen.map(c => {
     const isRepeat = c.everUsed;
     c.everUsed = true;
@@ -1687,11 +1763,19 @@ function renderSynLine(id, card) {
   el.style.display = html ? 'block' : 'none';
 }
 
+function jeMaliUzrast() { return state.dob === '4-6'; }
+
 function renderKarticaScreen() {
   const d = state.currentDraw;
+  const kids = jeMaliUzrast();
+  const kartica = document.getElementById('term-card');
+  kartica.classList.toggle('kids', kids);
+  document.getElementById('card-emoji').textContent = d.card.emoji || '❓';
   document.getElementById('card-deck-name').textContent = DECK_LABEL[d.deck];
-  document.getElementById('card-stars').textContent = isEsk() ? roundDef().label : CHANNEL_LABEL[d.channel];
-  document.getElementById('term-card').style.borderColor = DECK_COLOR[d.deck];
+  document.getElementById('card-stars').textContent = isEsk()
+    ? roundDef().label
+    : CHANNEL_EMOJI[d.channel] + ' ' + CHANNEL_LABEL[d.channel];
+  kartica.style.borderColor = DECK_COLOR[d.deck];
 
   // Duži tekst se u verzalu čita osjetno sporije, a djeca koja tek čitaju gube
   // se u njemu — zato velika slova samo za kratke pojmove.
@@ -1699,7 +1783,7 @@ function renderKarticaScreen() {
   const term = d.card.term;
   const len = term.length;
   let cls;
-  if (d.deck === 'TRENUCI' || len > 34) cls = len > 50 ? 'sentence long' : 'sentence';
+  if (len > 34) cls = len > 50 ? 'sentence long' : 'sentence';
   else if (len > 18) cls = 'medium';
   else cls = 'single';
   termEl.className = 'term ' + cls;
@@ -1708,8 +1792,9 @@ function renderKarticaScreen() {
   // Kod TRENUTAKA je odgovor sam trenutak, ne osjecaj koji izaziva. Emocija
   // dolazi na red poslije, u dodatku — ako se pogadja osjecaj, dva razlicita
   // tocna odgovora ("tuga" i "prijatelj se seli") natjecu se za istu karticu.
-  document.getElementById('card-note').textContent = d.deck === 'TRENUCI'
-    ? 'Prikaži sam trenutak — tim pogađa TRENUTAK, ne osjećaj.'
+  document.getElementById('card-note').textContent =
+    kids ? (d.deck === 'TRENUCI' ? '👀 Pokaži taj trenutak!' : KIDS_HINT[d.channel])
+    : d.deck === 'TRENUCI' ? 'Prikaži sam trenutak — tim pogađa TRENUTAK, ne osjećaj.'
     : (isEsk() ? roundDef().hint : CHANNEL_HINT[d.channel]);
   document.getElementById('card-repeat').style.display = d.isRepeat ? 'inline-block' : 'none';
   // Izvodac presuduje BLIZU, pa mora vidjeti koje se rijeci priznaju kao ista stvar.
@@ -2021,12 +2106,13 @@ function showExplanation() {
   const d = state.currentDraw;
   const isSituacija = d.deck === 'TRENUCI';
 
-  document.getElementById('exp-deck').textContent = DECK_LABEL[d.deck];
+  document.getElementById('exp-deck').textContent =
+    (d.card.emoji ? d.card.emoji + '  ' : '') + DECK_LABEL[d.deck];
   document.getElementById('exp-card').style.borderColor = DECK_COLOR[d.deck];
 
   const termEl = document.getElementById('exp-term');
   const len = d.card.term.length;
-  const sentence = isSituacija || len > 34;
+  const sentence = len > 34;
   termEl.className = 'term ' + (sentence ? (len > 50 ? 'sentence long' : 'sentence') : (len > 18 ? 'medium' : 'single'));
   termEl.textContent = sentence ? d.card.term : d.card.term.toUpperCase();
 
@@ -2046,12 +2132,13 @@ function showKrada() {
   const drugi = protivnik();
   document.getElementById('krada-tko').textContent =
     `${drugi.name}, recite naglas što ste zapisali.`;
-  document.getElementById('krada-deck').textContent = DECK_LABEL[d.deck];
+  document.getElementById('krada-deck').textContent =
+    (d.card.emoji ? d.card.emoji + '  ' : '') + DECK_LABEL[d.deck];
   document.getElementById('krada-card').style.borderColor = DECK_COLOR[d.deck];
 
   const termEl = document.getElementById('krada-term');
   const len = d.card.term.length;
-  const sentence = d.deck === 'TRENUCI' || len > 34;
+  const sentence = len > 34;
   termEl.className = 'term ' + (sentence ? (len > 50 ? 'sentence long' : 'sentence') : (len > 18 ? 'medium' : 'single'));
   termEl.textContent = sentence ? d.card.term : d.card.term.toUpperCase();
   renderSynLine('krada-syn', d.card);
